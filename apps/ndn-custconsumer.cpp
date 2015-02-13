@@ -215,7 +215,7 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      else
 		      {
 		    	  strStateTemplate << ",";
-		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << Names::FindName(otherNode) << "," << face->getMetric();;
+		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << Names::FindName(otherNode) << "," << face->getMetric();
 		      }
 		    }
 		}
