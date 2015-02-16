@@ -124,6 +124,16 @@ std::string ControllerApp::extractNodeName(std::string strPacketName) {
 	return fields[2];
 }
 
+std::string ControllerApp::extractNodeRequestType(std::string strPrefixName) {
+	std::vector<std::string> fields;
+	boost::algorithm::split(fields, strPrefixName,
+			boost::algorithm::is_any_of("/"));
+	//for (size_t n = 0; n < fields.size(); n++)
+	//	std::cout << fields[n] << "\"\n";
+	//cout << endl;
+	return fields[3];
+}
+
 
  void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 	std::vector<std::string> fields;
@@ -152,6 +162,28 @@ std::string ControllerApp::extractNodeName(std::string strPacketName) {
 }
 
 
+void ControllerApp::sendInterestPacket(std::string strPrefix){
+
+	shared_ptr<Name> nameWithSequence = make_shared<Name>(strPrefix);
+	shared_ptr<Interest> interestConto = make_shared<Interest>();
+	interestConto->setNonce(m_rand.GetValue());
+	interestConto->setName(*nameWithSequence);
+	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
+	interestConto->setInterestLifetime(interestLifeTime);
+
+	m_transmittedInterests(interestConto, this, m_face);
+	m_face->onReceiveInterest(*interestConto);
+
+	std::cout << "\n" << endl;
+	std::cout << "\n";
+
+}
+
+void ControllerApp::sendDataPacket(std::shared_ptr<const Interest> interest){
+
+}
+
+
 void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	App::OnInterest(interest); // tracing inside
 	NS_LOG_FUNCTION(this << interest);
@@ -162,28 +194,28 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	if (!m_active)
 		return;
 
+
+	std::string strPrefix;
+	std::string strRequestType = extractNodeRequestType(interest->getName().toUri());
 	std::string strInterestNodePrefix = extractNodeName(interest->getName().toUri());
-	std::cout << "CentralizedControllerApp: Sending interest packet to  " << strInterestNodePrefix << "  with acknowledge interest -> " << "/" + strInterestNodePrefix + "/controller" << std::endl;
 
-	//Ptr<Name> nameWithSequence = Create<Name>("/" + strInterestNodePrefix + "/controller");
+	if (strRequestType.compare("req_route") == 0)
+	{
+		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/req_route";
+		std::cout << "CentralizedControllerApp: Sending interest packet to  " << strInterestNodePrefix << "  with acknowledge interest -> " << strPrefix << std::endl;
+		sendInterestPacket(strPrefix);
+	}
+	else if(strRequestType.compare("res_route") == 0)
+	{
+		std::cout << "CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
+		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
+		sendDataPacket(interest);
+	}
+	else{
+		strPrefix = "/";
+		sendInterestPacket(strPrefix);
+	}
 
-	shared_ptr<Name> nameWithSequence = make_shared<Name>("/" + strInterestNodePrefix + "/controller");
-	//Ptr<Interest> interestConto = Create<Interest>();
-	shared_ptr<Interest> interestConto = make_shared<Interest>();
-	//nameWithSequence->append(m_postfix);
-	interestConto->setNonce(m_rand.GetValue());
-	interestConto->setName(*nameWithSequence);
-	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
-	interestConto->setInterestLifetime(interestLifeTime);
-
-	//FwHopCountTag hopCountTag;
-	//interestConto->GetPayload()->AddPacketTag(hopCountTag);
-
-	m_transmittedInterests(interestConto, this, m_face);
-	m_face->onReceiveInterest(*interestConto);
-
-	std::cout << "\n" << endl;
-	std::cout << "\n";
 }
 
 
@@ -192,16 +224,22 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	NS_LOG_FUNCTION(this << contentObject);
 	if (!m_active)
     	return;
-	std::cout << "\n";
 	NS_LOG_INFO ("Received content object: " << boost::cref(*contentObject));
 	std::cout << "CentralizedControllerApp: Received Data packet -> "
 			<< contentObject->getName() << std::endl;
-	std::cout << "Printing data contain" <<std::endl;
 	std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 			contentObject->getContent().value_size());
 	//std::cout << msg<< std::endl;
+
 	cout << "Packet Data ->  "<< msg <<endl;
 	extractNodeLinkInfo(msg);
+//	if (extractNodeLinkInfo(msg))
+//	{
+		//calculate the route here...
+		std:string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri()) + "/controller" + "/res_route";
+		sendInterestPacket(strInterestPrefix);
+//	}
+
 	std::cout << "\n" << endl;
 	std::cout<< "####################################### Stop Three Way Communication with Controller ###############################################################"<< std::endl;
 }

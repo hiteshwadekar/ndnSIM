@@ -137,7 +137,7 @@ void CustConsumer::SendInterestPacket() {
 
 	//Ptr<Name> nameWithSequence = Create<Name>("/controller/" + strNodeName);
 
-	shared_ptr<Name> nameWithSequence = make_shared<Name>("/controller/" + strNodeName);
+	shared_ptr<Name> nameWithSequence = make_shared<Name>("/controller/" + strNodeName + "/req_route");
 
 	//Ptr<Interest> interestConto = Create<Interest>();
 
@@ -237,8 +237,8 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest) {
 	dPacket->setFreshnessPeriod(ndn::time::milliseconds(3000));
 	std::string strTemplateNode = GetLocalLinkInfo();
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
-	ndn::StackHelper::getKeyChain().sign(*dPacket);
-	/*
+	//ndn::StackHelper::getKeyChain().sign(*dPacket);
+
 	Signature signature;
 	 SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
 	 if (m_keyLocator.size() > 0) {
@@ -249,7 +249,7 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest) {
 
 	 dPacket->setSignature(signature);
 	 dPacket->wireEncode();
-*/
+
 	 std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face << std::endl;
 	 m_transmittedDatas(dPacket, this, m_face);
 	 m_face->onReceiveData(*dPacket);
