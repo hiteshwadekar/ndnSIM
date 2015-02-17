@@ -77,7 +77,8 @@ public:
   std::string extractNodeRequestType(std::string strPrefixName);
   void sendInterestPacket(std::string strPrefix);
   void sendDataPacket(shared_ptr<const Interest> interest);
-  void extractNodeLinkInfo(std::string strNodeLinkInfo);
+  std::string extractNodeLinkInfo(std::string strNodeLinkInfo);
+  std::string getTheCalculationPath(std::string strForNode);
 
 protected:
   // inherited from Application base class.

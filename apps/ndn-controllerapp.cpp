@@ -114,6 +114,8 @@ void ControllerApp::StopApplication() {
 }
 
 std::string ControllerApp::extractNodeName(std::string strPacketName, int n) {
+
+	std::cout << strPacketName;
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, strPacketName,
 			boost::algorithm::is_any_of("/"));
@@ -135,7 +137,7 @@ std::string ControllerApp::extractNodeRequestType(std::string strPrefixName) {
 }
 
 
- void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
+std::string ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, strNodeLinkInfo,
 				boost::algorithm::is_any_of(","));
@@ -146,7 +148,6 @@ std::string ControllerApp::extractNodeRequestType(std::string strPrefixName) {
 		NS_ASSERT_MSG (node1 != 0, fields[n] << "is not a Node");
 
 		Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
-
 		NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 
 		shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
@@ -181,20 +182,60 @@ void ControllerApp::sendInterestPacket(std::string strPrefix){
 
 }
 
+std::string ControllerApp::getTheCalculationPath(std::string strForNode){
+	// We need to send following information to node in order to travel packet to shortest distance.
+	// Node Id
+	// Prefix
+	// Face ID
+	// Distance
+	// Delay
+	std::string strPath="";
+	strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
+	return strPath;
+}
+
+
+
 void ControllerApp::sendDataPacket(std::shared_ptr<const Interest> interest){
 
+	if (!m_active)
+		return;
+	NS_LOG_FUNCTION_NOARGS ();
+	NS_LOG_FUNCTION(this << interest);
+
+	std::cout<< "ControllerApp: Sending a Data Packet -> "<< interest->getName() << std::endl;
+	Name dataName(interest->getName());
+	auto dPacket = make_shared<Data>();
+	dPacket->setName(dataName);
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(3000));
+	std::string strTemplateNode = getTheCalculationPath(extractNodeName(interest->getName().toUri(), 2));
+	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
+	//ndn::StackHelper::getKeyChain().sign(*dPacket);
+
+	Signature signature;
+	SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+	if (m_keyLocator.size() > 0) {
+		signatureInfo.setKeyLocator(m_keyLocator);
+	}
+	signature.setInfo(signatureInfo);
+	signature.setValue(Block(&m_signature, sizeof(m_signature)));
+
+	dPacket->setSignature(signature);
+	dPacket->wireEncode();
+
+	std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face << std::endl;
+	m_transmittedDatas(dPacket, this, m_face);
+	m_face->onReceiveData(*dPacket);
+	std::cout << "\n";
 }
 
 
 void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	App::OnInterest(interest); // tracing inside
 	NS_LOG_FUNCTION(this << interest);
-
 	std::cout << "\n CentralizedControllerApp: Received interest packet -> " << interest->getName() << std::endl;
-
 	if (!m_active)
 		return;
-
 
 	std::string strPrefix;
 	std::string strRequestType = extractNodeRequestType(interest->getName().toUri());
@@ -232,16 +273,19 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 			contentObject->getContent().value_size());
 	//std::cout << msg<< std::endl;
 
+
 	cout << "Packet Data ->  "<< msg <<endl;
 	extractNodeLinkInfo(msg);
 
-	cout << "\n ******* Starting the controller to Consumer Communication **********";
-	std::cout << "\n CentralizedControllerApp: Sending Interest Packet -> "
-				<< contentObject->getName() << std::endl;
+	std::cout << "\n ******* Starting Controller to Consumer Communication **********";
+	//std::cout << "\n CentralizedControllerApp: Sending Interest Packet -> " << extractNodeName(contentObject->getName().toUri(), 1) << std::endl;
 
-	std:string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
-	sendInterestPacket(strInterestPrefix);
 
+	std::string strNodeName = extractNodeName(contentObject->getName().toUri().c_str(), 1);
+
+	std::string strInterestPrefix = "/" + strNodeName + "/controller" + "/res_route";
+	std::cout << strInterestPrefix;
+	//sendInterestPacket(strInterestPrefix);
 
 }
 
