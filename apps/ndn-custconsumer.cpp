@@ -106,8 +106,15 @@ void CustConsumer::StartApplication() {
 
 	//fibEntry->UpdateStatus(m_face, fib::FaceMetric::NDN_FIB_GREEN);
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
-	//SendInterestPacket();
-	Simulator::Schedule(Seconds(1.0), &CustConsumer::SendInterestPacket, this);
+
+	std::cout<< "####################################### Start Three Way Communication with Controller (Requesting routes)###############################################################"<< std::endl;
+	std::cout << "\n";
+	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
+
+	std::cout<< "CustConsumerApp: Sending an Interest Packets -> "<< "/controller/" + strNodeName + "/req_route" << std::endl;
+	std::string strPrefixToController = "/controller/" + strNodeName + "/req_route";
+	SendInterestPacket(strPrefixToController);
+	 //Simulator::Schedule(Seconds(1.0), &CustConsumer::SendInterestPacket, this);
 
 	// // make face green, so it will be used primarily
 	// StaticCast<fib::FibImpl> (fib)->modify (fibEntry,
@@ -123,38 +130,40 @@ void CustConsumer::StopApplication() {
 }
 
 
-void CustConsumer::SendInterestPacket() {
+std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
+	std::vector<std::string> fields;
+	boost::algorithm::split(fields, strPrefixName,
+			boost::algorithm::is_any_of("/"));
+	//for (size_t n = 0; n < fields.size(); n++)
+	//	std::cout << fields[n] << "\"\n";
+	//cout << endl;
+	return fields[3];
+}
+
+void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
+	// Update the FIB and face metrics with calculated distance by controller.
+	std::cout<<"\n";
+	std::cout << "CustConsumer:: (updateNodeLinkInfo): Updating FIB with the provided information "<<std::endl;
+	cout << "Packet Data ->  "<< strLinkInfo <<endl;
+}
+
+
+void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 	if (!m_active)
 		return;
 
 	NS_LOG_FUNCTION_NOARGS ();
-	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
-	std::cout<< "####################################### Start Three Way Communication with Controller ###############################################################"<< std::endl;
-	std::cout << "\n";
-	std::cout<< "CustConsumerApp: Sending an Interest Packets -> "<< "/controller/" + strNodeName << std::endl;
-	std::cout << "Node Name is -> " << strNodeName <<std::endl;
-
-
-	//Ptr<Name> nameWithSequence = Create<Name>("/controller/" + strNodeName);
-
-	shared_ptr<Name> nameWithSequence = make_shared<Name>("/controller/" + strNodeName + "/req_route");
-
+	shared_ptr<Name> nameWithSequence = make_shared<Name>(strPrefixToController);
 	//Ptr<Interest> interestConto = Create<Interest>();
-
 	shared_ptr<Interest> interestConto = make_shared<Interest>();
 	//nameWithSequence->append(m_postfix);
-
 	UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
 	interestConto->setNonce(m_rand.GetValue());
 	interestConto->setName(*nameWithSequence);
-	time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
+	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
 	interestConto->setInterestLifetime(interestLifeTime);
-
-	//FwHopCountTag hopCountTag;
-	//interestConto->GetPayload()->AddPacketTag(hopCountTag);
 	m_transmittedInterests(interestConto, this, m_face);
 	m_face->onReceiveInterest(*interestConto);
-
 	std::cout << "\n";
 }
 
@@ -270,7 +279,25 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 		return;
 	NS_LOG_FUNCTION(this << interest);
 	std::cout << "\n CustConsumerApp: Received Interest Packet -> " << interest->getName() << std::endl;
-	SendDataPacket(interest);
+	std::string strRequestType = extractNodeRequestType(interest->getName().toUri());
+	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
+	std::string strPrefix = "";
+
+	if (strRequestType.compare("req_route") == 0)
+	{
+		SendDataPacket(interest);
+	}
+	else if(strRequestType.compare("res_route") == 0)
+	{
+		strPrefix = "/controller/" + strNodeName + "/res_route";
+		std::cout << "\n CustConsumerApp: Sending interest packet ack to controller -> " << strPrefix << std::endl;
+		SendInterestPacket(strPrefix);
+	}
+	else
+	{
+		strPrefix = "/";
+		SendInterestPacket(strPrefix);
+	}
 
 }
 
@@ -279,6 +306,27 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 	NS_LOG_FUNCTION(this << contentObject);
 	std::cout << "\n CustConsumerApp: Received Data packet -> "
 			<< contentObject->getName() << std::endl;
+
+	std::string strRequestType = extractNodeRequestType(contentObject->getName().toUri());
+	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
+	std::string strPrefix = "";
+	if (strRequestType.compare("req_route") == 0)
+	{
+		//Do nothing...really? oowoow.
+	}
+	else if(strRequestType.compare("res_route") == 0)
+	{
+		// We got the data packet for updating the routes.
+		std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
+					contentObject->getContent().value_size());
+		updateNodeLinkInfo(msg);
+		std::cout << "\n" << endl;
+		std::cout<< "####################################### Stop Three Way Communication with Controller ###############################################################"<< std::endl;
+	}
+	else
+	{
+
+	}
 	std::cout << "\n";
 }
 

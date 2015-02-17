@@ -113,7 +113,7 @@ void ControllerApp::StopApplication() {
 	App::StopApplication();
 }
 
-std::string ControllerApp::extractNodeName(std::string strPacketName) {
+std::string ControllerApp::extractNodeName(std::string strPacketName, int n) {
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, strPacketName,
 			boost::algorithm::is_any_of("/"));
@@ -121,7 +121,7 @@ std::string ControllerApp::extractNodeName(std::string strPacketName) {
 	//	std::cout << fields[n] << "\"\n";
 	//cout << endl;
 
-	return fields[2];
+	return fields[n];
 }
 
 std::string ControllerApp::extractNodeRequestType(std::string strPrefixName) {
@@ -164,6 +164,8 @@ std::string ControllerApp::extractNodeRequestType(std::string strPrefixName) {
 
 void ControllerApp::sendInterestPacket(std::string strPrefix){
 
+	std::cout << "\n sending interest packet " << strPrefix<<std::endl;
+
 	shared_ptr<Name> nameWithSequence = make_shared<Name>(strPrefix);
 	shared_ptr<Interest> interestConto = make_shared<Interest>();
 	interestConto->setNonce(m_rand.GetValue());
@@ -188,8 +190,7 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	App::OnInterest(interest); // tracing inside
 	NS_LOG_FUNCTION(this << interest);
 
-	std::cout << "\n";
-	std::cout << "CentralizedControllerApp: Received interest packet -> " << interest->getName() << std::endl;
+	std::cout << "\n CentralizedControllerApp: Received interest packet -> " << interest->getName() << std::endl;
 
 	if (!m_active)
 		return;
@@ -197,7 +198,7 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 
 	std::string strPrefix;
 	std::string strRequestType = extractNodeRequestType(interest->getName().toUri());
-	std::string strInterestNodePrefix = extractNodeName(interest->getName().toUri());
+	std::string strInterestNodePrefix = extractNodeName(interest->getName().toUri(), 2);
 
 	if (strRequestType.compare("req_route") == 0)
 	{
@@ -207,7 +208,7 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	}
 	else if(strRequestType.compare("res_route") == 0)
 	{
-		std::cout << "CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
+		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
 		sendDataPacket(interest);
 	}
@@ -233,15 +234,15 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 
 	cout << "Packet Data ->  "<< msg <<endl;
 	extractNodeLinkInfo(msg);
-//	if (extractNodeLinkInfo(msg))
-//	{
-		//calculate the route here...
-		std:string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri()) + "/controller" + "/res_route";
-		sendInterestPacket(strInterestPrefix);
-//	}
 
-	std::cout << "\n" << endl;
-	std::cout<< "####################################### Stop Three Way Communication with Controller ###############################################################"<< std::endl;
+	cout << "\n ******* Starting the controller to Consumer Communication **********";
+	std::cout << "\n CentralizedControllerApp: Sending Interest Packet -> "
+				<< contentObject->getName() << std::endl;
+
+	std:string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
+	sendInterestPacket(strInterestPrefix);
+
+
 }
 
 void ControllerApp::OnNack(std::shared_ptr<const ndn::Interest> interest) {

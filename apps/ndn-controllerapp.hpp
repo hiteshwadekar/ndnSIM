@@ -73,7 +73,7 @@ public:
   virtual void
   OnData (shared_ptr<const Data> contentObject);
 
-  std::string extractNodeName(std::string strPacketName);
+  std::string extractNodeName(std::string strPacketName, int n);
   std::string extractNodeRequestType(std::string strPrefixName);
   void sendInterestPacket(std::string strPrefix);
   void sendDataPacket(shared_ptr<const Interest> interest);

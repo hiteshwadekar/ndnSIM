@@ -107,10 +107,12 @@ protected:
   Name     m_interestName;        ///< \brief NDN Name of the Interest (use Name)
   Time               m_interestLifeTime;    ///< \brief LifeTime for interest packet
 
-  void SendInterestPacket();
+  void SendInterestPacket(std::string strPrefixToController);
+  void updateNodeLinkInfo(std::string strLinkInfo);
   void SendDataPacket(std::shared_ptr<const Interest> interest);
   std::string GetLocalLinkInfo();
   std::string extractNodeName(std::string strPacketName);
+  std::string extractNodeRequestType(std::string strPrefixName);
   void getOSPFfromNodeName(std::string FromNodeName, std::string ToNodeName);
 };
 
