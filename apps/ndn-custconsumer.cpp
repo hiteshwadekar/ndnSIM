@@ -145,6 +145,7 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 	std::cout<<"\n";
 	std::cout << "CustConsumer:: (updateNodeLinkInfo): Updating FIB with the provided information "<<std::endl;
 	cout << "Packet Data ->  "<< strLinkInfo <<endl;
+	std::cout << "\n ******* ****************************** Stopping Controller to Consumer Communication ************************************************************"<<std::endl;
 }
 
 
