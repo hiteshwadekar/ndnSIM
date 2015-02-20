@@ -114,6 +114,7 @@ protected:
   std::string extractNodeName(std::string strPacketName);
   std::string extractNodeRequestType(std::string strPrefixName);
   void getOSPFfromNodeName(std::string FromNodeName, std::string ToNodeName);
+  std::string getAttributeInfo(std::string attributeName, Ptr<Node> Node);
 };
 
 } // namespace ndn

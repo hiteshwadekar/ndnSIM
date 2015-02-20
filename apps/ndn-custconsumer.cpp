@@ -169,6 +169,27 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 }
 
 
+std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> NodeObj)
+{
+	std::string attrValue="";
+	TypeId m_tid = this->GetTypeId();
+	struct TypeId::AttributeInformation info;
+	if (!m_tid.LookupAttributeByName (attributeName, &info))
+	{
+	     NS_FATAL_ERROR ("Invalid attribute set (" << attributeName << ") on " << m_tid.GetName ());
+	     return attrValue;
+	}
+	//Ptr<AttributeValue> v = info.checker->CreateValidValue (value);
+	attrValue = info.initialValue->SerializeToString(info.checker);
+	//if (v == 0)
+//	{
+	//	NS_FATAL_ERROR ("Invalid value for attribute set (" << name << ") on " << m_tid.GetName ());
+		//return attrValue;
+	//}
+	return attrValue;
+}
+
+
 std::string CustConsumer::GetLocalLinkInfo()
 {
 	std::stringstream strStateTemplate;
@@ -214,6 +235,7 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
 		      if (nd == otherSide) continue;
 		      Ptr<Node> otherNode = otherSide->GetNode ();
+		      std::cout << "Node prefix information -> " << getAttributeInfo("Prefix", otherNode) <<std::endl;
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
