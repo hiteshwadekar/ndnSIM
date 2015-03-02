@@ -56,6 +56,7 @@ namespace ll = boost::lambda;
 NS_LOG_COMPONENT_DEFINE("ndn.CustConsumer");
 
 using namespace std;
+using namespace nfd;
 
 namespace ns3 {
 namespace ndn {
@@ -66,7 +67,7 @@ TypeId CustConsumer::GetTypeId(void) {
 	static TypeId tid =
 			TypeId("ns3::ndn::CustConsumer").SetGroupName("Ndn").SetParent<App>().AddConstructor<
 			CustConsumer>().AddAttribute("Prefix",
-					"Prefix, for which producer has the data", StringValue("/"),
+					"Prefix, cust consumer application prefix", StringValue("/"),
 					MakeNameAccessor(&CustConsumer::m_prefix), MakeNameChecker())
 					.AddAttribute("Frequency",
 					"Frequency of interest packets", StringValue("1.0"),
@@ -152,7 +153,6 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 	if (!m_active)
 		return;
-
 	NS_LOG_FUNCTION_NOARGS ();
 	shared_ptr<Name> nameWithSequence = make_shared<Name>(strPrefixToController);
 	//Ptr<Interest> interestConto = Create<Interest>();
@@ -169,11 +169,72 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 }
 
 
+
+std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> NodeObj)
+{
+
+
+	std::string attrValue="";
+	/*
+	TypeId m_tid = this->GetTypeId();
+	Ptr<Application> app;
+	cout << "Node Name -> "<< Names::FindName(NodeObj)<<endl;
+	cout << "Number of application -> "<< NodeObj->GetNApplications()<<endl;
+	for (uint32_t i = 0; i < NodeObj->GetNApplications(); i++)
+	{
+	  app = NodeObj->GetApplication(i);
+
+	  cout << "\n App Id -> "<< app->GetTypeId();
+	  cout << "\n m_tid -> "<<m_tid;
+	  TypeId m_apptid = app->GetTypeId();
+	 // if (m_apptid == m_tid)
+	  //{
+		 ObjectFactory factory;
+		 factory.SetTypeId (m_tid);
+		 cout << "Factory -> " << factory << endl;
+	  //}
+	}
+
+	*/
+	/*
+	Ptr<ndn::L3Protocol> l3 = NodeObj->GetObject<ndn::L3Protocol>();
+	std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
+	ndn::nfd::Fib& fib = fw->getFib();
+
+	for (const auto& fibEntry : fib) {
+	  std::cout << "  -" << fibEntry.getPrefix() << std::endl;
+	  for (const auto& nh : fibEntry.getNextHops()) {
+	    std::cout << "    - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+	  }
+	}
+	*/
+	return attrValue;
+}
+
+
+/*
+
 std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> NodeObj)
 {
 	std::string attrValue="";
 	TypeId m_tid = this->GetTypeId();
 	struct TypeId::AttributeInformation info;
+
+	TypeId tid;
+	TypeId nextTid = this->GetTypeId();
+	do {
+	      tid = nextTid;
+	      for (uint32_t i = 0; i < tid.GetAttributeN (); i++)
+	        {
+	          struct TypeId::AttributeInformation tmp = tid.GetAttribute(i);
+	          std::cout << tmp.name << std::endl;
+	          std::cout << tmp.initialValue->SerializeToString(tmp.checker) << std::endl;
+	        }
+	      nextTid = tid.GetParent ();
+	 } while (nextTid != tid);
+
+
+
 	if (!m_tid.LookupAttributeByName (attributeName, &info))
 	{
 	     NS_FATAL_ERROR ("Invalid attribute set (" << attributeName << ") on " << m_tid.GetName ());
@@ -181,6 +242,7 @@ std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> 
 	}
 	//Ptr<AttributeValue> v = info.checker->CreateValidValue (value);
 	attrValue = info.initialValue->SerializeToString(info.checker);
+
 	//if (v == 0)
 //	{
 	//	NS_FATAL_ERROR ("Invalid value for attribute set (" << name << ") on " << m_tid.GetName ());
@@ -188,6 +250,7 @@ std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> 
 	//}
 	return attrValue;
 }
+*/
 
 
 std::string CustConsumer::GetLocalLinkInfo()
@@ -235,7 +298,7 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
 		      if (nd == otherSide) continue;
 		      Ptr<Node> otherNode = otherSide->GetNode ();
-		      std::cout << "Node prefix information -> " << getAttributeInfo("Prefix", otherNode) <<std::endl;
+		      std::cout << "Node prefix information -> " << getAttributeInfo("Prefix", localNode) <<std::endl;
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");

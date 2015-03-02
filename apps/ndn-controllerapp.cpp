@@ -71,7 +71,7 @@ TypeId ControllerApp::GetTypeId(void) {
 	static TypeId tid =
 			TypeId("ns3::ndn::ControllerApp").SetGroupName("Ndn").SetParent<App>().AddConstructor<
 					ControllerApp>().AddAttribute("Prefix",
-					"Prefix, for which producer has the data", StringValue("/"),
+					"Prefix, Controller prefix information", StringValue("/"),
 					MakeNameAccessor(&ControllerApp::m_prefix),
 					MakeNameChecker())
 					.AddAttribute("Frequency",
