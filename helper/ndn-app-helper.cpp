@@ -46,10 +46,10 @@ void
 AppHelper::SetPrefix(const std::string& prefix)
 {
   m_factory.Set("Prefix", StringValue(prefix));
-  m_prefixlist.push_back(prefix);
+  m_prefixlist = prefix;
 }
 
-std::list<std::string>
+std::string
 AppHelper::GetPrefix()
 {
   return m_prefixlist;

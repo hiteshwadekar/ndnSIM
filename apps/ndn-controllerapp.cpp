@@ -142,7 +142,7 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 	boost::algorithm::split(fields, strNodeLinkInfo,
 				boost::algorithm::is_any_of(","));
 
-	for (size_t n = 0; n < fields.size(); n+=4)
+	for (size_t n = 0; n < fields.size(); n+=6)
 	{
 		Ptr<Node> node1 = Names::Find<Node> (fields[n]);
 		NS_ASSERT_MSG (node1 != 0, fields[n] << "is not a Node");
@@ -156,7 +156,7 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 		Ptr<Node> node2 = Names::Find<Node> (fields[n+2]);
 		NS_ASSERT_MSG (node1 != 0, fields[n] << "is not a Node");
 
-		cout << "\n 1: " << fields[n] << " 2: " <<  fields[n+1] << " 3: " << fields[n+2] << " 4: " << fields[n+3] << endl;
+		cout << "\n 1: " << fields[n] << " 2: " <<  fields[n+1] << " 3: " << fields[n+2] << " 4: " << fields[n+3] << " 5: " << fields[n+4]<<" 6: " << fields[n+5] << endl;
 
 	}
 

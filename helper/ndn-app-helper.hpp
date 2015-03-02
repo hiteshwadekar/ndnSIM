@@ -66,7 +66,7 @@ public:
   /**
    * @brief Set the prefix consumer will be requesting
    */
-  std::list<std::string>
+  std::string
   GetPrefix();
 
   /**
@@ -121,7 +121,7 @@ private:
   Ptr<Application>
   InstallPriv(Ptr<Node> node);
   ObjectFactory m_factory;
-  std::list<std::string> m_prefixlist;
+  std::string m_prefixlist;
 };
 
 } // namespace ndn

@@ -49,13 +49,13 @@ public:
   GetL3Protocol() const;
 
   void
-  SetMap(TypeId m_tid, std::list<std::string> m_prxlist);
+  SetMap(TypeId m_tid, std::string);
 
-  std::map<TypeId, std::list<std::string>>
+  std::map<TypeId, std::string>
   GetMap();
 
 private:
-  std::map<TypeId, std::list<std::string>> m_prefixmap;
+  std::map<TypeId, std::string> m_prefixmap;
   static uint32_t m_idCounter;
   uint32_t m_id;
   Ptr<L3Protocol> m_ndn;

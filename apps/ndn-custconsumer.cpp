@@ -18,6 +18,8 @@
 //#include "ns3/ndn-fib.h"
 
 #include "string.h"
+#include <map>
+#include <iostream>
 
 #include "model/ndn-l3-protocol.hpp"
 #include "helper/ndn-fib-helper.hpp"
@@ -50,6 +52,8 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/algorithm/string.hpp>
+
+#include "helper/ndn-app-prefix-helper.hpp"
 
 namespace ll = boost::lambda;
 
@@ -169,12 +173,25 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 }
 
 
-
-std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> NodeObj)
+std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 {
-
-
 	std::string attrValue="";
+	Ptr<AppPrefixHelper> appfxHelper = NodeObj->GetObject<AppPrefixHelper>();
+	if (appfxHelper != 0) {
+		std::map<TypeId, std::string> m_prefixmap = appfxHelper->GetMap();
+
+		std::cout << "Size of map is -> " << m_prefixmap.size()<<endl;
+		std::map<TypeId,std::string>::iterator itr;
+		for (itr=m_prefixmap.begin(); itr!=m_prefixmap.end(); ++itr)
+		{
+			TypeId m_tid = itr->first;
+			if(m_tid == this->GetTypeId())
+			{
+				attrValue=itr->second;
+			}
+		}
+	  }
+
 	/*
 	TypeId m_tid = this->GetTypeId();
 	Ptr<Application> app;
@@ -212,45 +229,6 @@ std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> 
 }
 
 
-/*
-
-std::string CustConsumer::getAttributeInfo(std::string attributeName, Ptr<Node> NodeObj)
-{
-	std::string attrValue="";
-	TypeId m_tid = this->GetTypeId();
-	struct TypeId::AttributeInformation info;
-
-	TypeId tid;
-	TypeId nextTid = this->GetTypeId();
-	do {
-	      tid = nextTid;
-	      for (uint32_t i = 0; i < tid.GetAttributeN (); i++)
-	        {
-	          struct TypeId::AttributeInformation tmp = tid.GetAttribute(i);
-	          std::cout << tmp.name << std::endl;
-	          std::cout << tmp.initialValue->SerializeToString(tmp.checker) << std::endl;
-	        }
-	      nextTid = tid.GetParent ();
-	 } while (nextTid != tid);
-
-
-
-	if (!m_tid.LookupAttributeByName (attributeName, &info))
-	{
-	     NS_FATAL_ERROR ("Invalid attribute set (" << attributeName << ") on " << m_tid.GetName ());
-	     return attrValue;
-	}
-	//Ptr<AttributeValue> v = info.checker->CreateValidValue (value);
-	attrValue = info.initialValue->SerializeToString(info.checker);
-
-	//if (v == 0)
-//	{
-	//	NS_FATAL_ERROR ("Invalid value for attribute set (" << name << ") on " << m_tid.GetName ());
-		//return attrValue;
-	//}
-	return attrValue;
-}
-*/
 
 
 std::string CustConsumer::GetLocalLinkInfo()
@@ -298,19 +276,19 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
 		      if (nd == otherSide) continue;
 		      Ptr<Node> otherNode = otherSide->GetNode ();
-		      std::cout << "Node prefix information -> " << getAttributeInfo("Prefix", localNode) <<std::endl;
+		      std::cout << "Node prefix information -> " << getPrefix(localNode) <<std::endl;
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
 		      if(!firstVisit)
 		      {
 		    	  firstVisit=true;
-		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << Names::FindName(otherNode) << "," << face->getMetric();
+		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric() << "," <<getPrefix(otherNode);
 		      }
 		      else
 		      {
 		    	  strStateTemplate << ",";
-		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << Names::FindName(otherNode) << "," << face->getMetric();
+		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric() << "," <<getPrefix(otherNode);
 		      }
 		    }
 		}

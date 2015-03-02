@@ -51,12 +51,13 @@ AppPrefixHelper::GetL3Protocol() const
 }
 
 void
-AppPrefixHelper::SetMap(TypeId m_tid, std::list<std::string> m_prxlist)
+AppPrefixHelper::SetMap(TypeId m_tid, std::string m_prxlist)
 {
-	m_prefixmap[m_tid]=m_prxlist;
+	//m_prefixmap[m_tid]=m_prxlist;
+	m_prefixmap.insert(std::make_pair(m_tid,m_prxlist));
 }
 
-std::map<TypeId, std::list<std::string>>
+std::map<TypeId, std::string>
 AppPrefixHelper::GetMap()
 {
   return m_prefixmap;
