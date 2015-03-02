@@ -20,6 +20,18 @@
 #ifndef NDN_APP_HELPER_H
 #define NDN_APP_HELPER_H
 
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
+#endif
+
+
+#include "model/ndn-l3-protocol.hpp"
+#include "helper/ndn-app-prefix-helper.hpp"
+#include "ns3/object.h"
+#include "ns3/node.h"
+
 #include "ns3/ndnSIM/model/ndn-common.hpp"
 
 #include "ns3/object-factory.h"
@@ -50,6 +62,12 @@ public:
    */
   void
   SetPrefix(const std::string& prefix);
+
+  /**
+   * @brief Set the prefix consumer will be requesting
+   */
+  std::list<std::string>
+  GetPrefix();
 
   /**
    * \brief Helper function used to set the underlying application attributes.
@@ -103,6 +121,7 @@ private:
   Ptr<Application>
   InstallPriv(Ptr<Node> node);
   ObjectFactory m_factory;
+  std::list<std::string> m_prefixlist;
 };
 
 } // namespace ndn

@@ -23,6 +23,7 @@
 #include "ns3/names.h"
 
 #include "apps/ndn-app.hpp"
+#include "ns3/object.h"
 
 #ifdef NS3_MPI
 #include "ns3/mpi-interface.h"
@@ -31,7 +32,10 @@
 NS_LOG_COMPONENT_DEFINE("ndn.AppHelper");
 
 namespace ns3 {
+class Node;
+
 namespace ndn {
+class AppPrefixHelper;
 
 AppHelper::AppHelper(const std::string& app)
 {
@@ -42,6 +46,13 @@ void
 AppHelper::SetPrefix(const std::string& prefix)
 {
   m_factory.Set("Prefix", StringValue(prefix));
+  m_prefixlist.push_back(prefix);
+}
+
+std::list<std::string>
+AppHelper::GetPrefix()
+{
+  return m_prefixlist;
 }
 
 void
@@ -94,6 +105,10 @@ AppHelper::InstallPriv(Ptr<Node> node)
   Ptr<Application> app = m_factory.Create<Application>();
   node->AddApplication(app);
 
+  Ptr<ndn::AppPrefixHelper> AppPfxHelper;
+  AppPfxHelper = CreateObject<ndn::AppPrefixHelper>();
+  AppPfxHelper->SetMap(m_factory.GetTypeId(), m_prefixlist);
+  node->AggregateObject(AppPfxHelper);
   return app;
 }
 
