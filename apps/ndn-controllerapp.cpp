@@ -150,7 +150,7 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 		Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
 		NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 
-			shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
+		shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
 		//Ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace>(atoi(fields[n+1].c_str())));
 
 		Ptr<Node> node2 = Names::Find<Node> (fields[n+2]);

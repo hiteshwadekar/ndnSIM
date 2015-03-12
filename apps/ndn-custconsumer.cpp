@@ -178,6 +178,8 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 }
 
 
+
+
 std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 {
 	std::string attrValue="";
@@ -231,8 +233,14 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	  }
 	}
 
+
+
 	return attrValue;
 }
+
+
+
+
 
 
 std::string CustConsumer::GetLocalLinkInfo()
@@ -319,10 +327,10 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest) {
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
 	//ndn::StackHelper::getKeyChain().sign(*dPacket);
 
-	Signature signature;
+	 Signature signature;
 	 SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
 	 if (m_keyLocator.size() > 0) {
-	    signatureInfo.setKeyLocator(m_keyLocator);
+		signatureInfo.setKeyLocator(m_keyLocator);
 	 }
 	 signature.setInfo(signatureInfo);
 	 signature.setValue(Block(&m_signature, sizeof(m_signature)));
