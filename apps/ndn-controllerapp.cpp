@@ -142,7 +142,7 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 	boost::algorithm::split(fields, strNodeLinkInfo,
 				boost::algorithm::is_any_of(","));
 
-	for (size_t n = 0; n < fields.size(); n+=6)
+	for (size_t n = 0; n < fields.size(); n+=5)
 	{
 		Ptr<Node> node1 = Names::Find<Node> (fields[n]);
 		NS_ASSERT_MSG (node1 != 0, fields[n] << "is not a Node");
@@ -150,13 +150,13 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 		Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
 		NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 
-		shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
+			shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
 		//Ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace>(atoi(fields[n+1].c_str())));
 
 		Ptr<Node> node2 = Names::Find<Node> (fields[n+2]);
 		NS_ASSERT_MSG (node1 != 0, fields[n] << "is not a Node");
 
-		cout << "\n 1: " << fields[n] << " 2: " <<  fields[n+1] << " 3: " << fields[n+2] << " 4: " << fields[n+3] << " 5: " << fields[n+4]<<" 6: " << fields[n+5] << endl;
+		cout << "\n 1: " << fields[n] << " 2: " <<  fields[n+1] << " 3: " << fields[n+2] << " 4: " << fields[n+3] << " 5: " << fields[n+4]<< endl;
 
 	}
 
@@ -187,7 +187,8 @@ std::string ControllerApp::getTheCalculationPath(std::string strForNode){
 	// Distance
 	// Delay
 	std::string strPath="";
-	strPath = "Node Name -> " + strForNode + "," + "\t Prefix Name -> " + "/controller" + "," + "\t Face ID -> " + "256" + "," + "\t Face Metrics (Link weight) -> " + "3" + "," + "\t Face delay-> " + "0";
+	//strPath = "Node Name -> " + strForNode + "," + "\t Prefix Name -> " + "/controller" + "," + "\t Face ID -> " + "256" + "," + "\t Face Metrics (Link weight) -> " + "3" + "," + "\t Face delay-> " + "0";
+	strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
 	return strPath;
 }
 
