@@ -17,8 +17,8 @@
  * ndnSIM, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef NDN_CONTROLLER_STRING_PARSER_H
-#define NDN_CONTROLLER_STRING_PARSER_H
+#ifndef NDN_CONTROLLER_STRING_H
+#define NDN_CONTROLLER_STRING_H
 
 #include <map>
 #include <list>
@@ -36,27 +36,21 @@
 
 namespace ll = boost::lambda;
 
+using namespace std;
+
 namespace ns3 {
 namespace ndn {
 
-using namespace std;
-
-class NdnControllerString : public Object{
+class NdnControllerString{
 public:
-
-  static TypeId
-  GetTypeId();
 
   NdnControllerString();
 
-  uint32_t
-  GetId() const;
+  std::string
+  GetSubString(int start_pos, int end_pos);
 
   std::string
-  GetSubString(int pos);
-
-  std::string
-  stringAppend(string strApString) const;
+  stringAppend(string strApString);
 
   std::string
   GetSourceNode();
@@ -68,10 +62,10 @@ public:
   GetAppPrefixInfo();
 
   std::string
-  GetNodePrefixInfo();
+  find(std::string strSubString);
 
   std::string
-  SetNodePrefixInfo(string strNodePrefix);
+  GetNodePrefixInfo();
 
   std::string
   SetSourceNode(string strSourceNode);
@@ -87,9 +81,12 @@ public:
 
 private:
   std::string m_string;
+  static uint32_t m_linkinfoCounter;
+  static uint32_t m_AppPrefixCounter;
+  static uint32_t m_NodePrefixCounter;
 };
 
 } // namespace ndn
 } // namespace ns3
 
-#endif // NDN_CONTROLLER_STRING_PARSER_H
+#endif // NDN_CONTROLLER_STRING_H

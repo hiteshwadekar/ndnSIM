@@ -186,7 +186,6 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	Ptr<AppPrefixHelper> appfxHelper = NodeObj->GetObject<AppPrefixHelper>();
 	if (appfxHelper != 0) {
 		std::map<TypeId, std::string> m_prefixmap = appfxHelper->GetMap();
-
 		std::cout << "Size of map is -> " << m_prefixmap.size()<<endl;
 		std::map<TypeId,std::string>::iterator itr;
 		for (itr=m_prefixmap.begin(); itr!=m_prefixmap.end(); ++itr)
@@ -194,11 +193,14 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 			TypeId m_tid = itr->first;
 			if(m_tid == this->GetTypeId())
 			{
-				attrValue=itr->second;
+				if(!attrValue.empty())
+				{
+					attrValue.append(",");
+				}
+				attrValue.append(itr->second);
 			}
 		}
 	  }
-
 	/*
 	TypeId m_tid = this->GetTypeId();
 	Ptr<Application> app;
@@ -226,21 +228,19 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 
 	std::cout << "FIB information along with next hop: " << std::endl;
 	for (const auto& fibEntry : fib) {
-	  std::cout << "  -" << fibEntry.getPrefix() << std::endl;
-	  std::cout << "Next hop: " << std::endl;
-	  for (const auto& nh : fibEntry.getNextHops()) {
-	    std::cout << "    - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+	  if(!attrValue.empty())
+	  {
+		  attrValue.append(",");
 	  }
+	  attrValue.append(fibEntry.getPrefix().toUri().c_str());
+	  //std::cout << "  -" << fibEntry.getPrefix() << std::endl;
+	  //std::cout << "Next hop: " << std::endl;
+	  //for (const auto& nh : fibEntry.getNextHops()) {
+	    //std::cout << "    - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+	  //}
 	}
-
-
-
 	return attrValue;
 }
-
-
-
-
 
 
 std::string CustConsumer::GetLocalLinkInfo()
@@ -298,16 +298,24 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      if(!firstVisit)
 		      {
 		    	  firstVisit=true;
-		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric();
+		    	  strStateTemplate << "(" <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric() << ")";
+		    	  //strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric();
 		      }
 		      else
 		      {
 		    	  strStateTemplate << ",";
-		    	  strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric();
+		    	  strStateTemplate << "(" <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric() << ")";
+		    	  //strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric();
 		      }
 		    }
 		}
 	 }
+
+
+
+
+
+
 	return strStateTemplate.str();
 }
 
