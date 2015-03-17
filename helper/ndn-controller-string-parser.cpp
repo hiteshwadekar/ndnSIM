@@ -15,9 +15,9 @@ uint32_t NdnControllerString::m_linkinfoCounter=0;
 uint32_t NdnControllerString::m_AppPrefixCounter=0;
 uint32_t NdnControllerString::m_NodePrefixCounter=0;
 
-NdnControllerString::NdnControllerString()
+NdnControllerString::NdnControllerString(string strInitial)
 {
-	m_string="";
+	m_string=strInitial;
 }
 
 string
@@ -39,12 +39,22 @@ NdnControllerString::stringAppend(string strApString){
 
 string
 NdnControllerString::GetSourceNode(){
-	return m_string;
+	string strSourceNode;
+	if (!m_string.empty())
+	{
+		strSourceNode = extractInformation(SOURCE_NODE_NAME,",");
+	}
+	return strSourceNode;
 }
 
 string
 NdnControllerString::GetLinkInfo(){
-	return m_string;
+	string strLinkInfo;
+	if (!m_string.empty())
+	{
+		strLinkInfo = extractInformation(LINK_INFORMATION,"}");
+	}
+	return strLinkInfo;
 }
 
 string
@@ -54,14 +64,19 @@ NdnControllerString::GetAppPrefixInfo(){
 
 string
 NdnControllerString::GetNodePrefixInfo(){
-	return m_string;
+	string strNodePrefixInfo;
+	if (!m_string.empty())
+	{
+		strNodePrefixInfo = extractInformation(NODE_PREFIX,"}");
+	}
+	return strNodePrefixInfo;
 }
 
 string
 NdnControllerString::SetSourceNode(string strSourceNode){
 	if (m_string.empty() and !strSourceNode.empty())
 	{
-		m_string = "Source_Node_Name:" + strSourceNode + ",";
+		m_string = SOURCE_NODE_NAME + strSourceNode + ",";
 	}
 	return m_string;
 }
@@ -70,14 +85,14 @@ string
 NdnControllerString::SetLinkInfo(string strLinkInfo){
 	if(!strLinkInfo.empty())
 	{
-		m_string = m_string + "Link_Information:{" + strLinkInfo + "}" +"," ;
+		m_string = m_string + LINK_INFORMATION + strLinkInfo + "}" +"," ;
 	}
 	return m_string;
 }
 
 string
 NdnControllerString::SetAppPrefixInfo(string strAppPrefix){
-	m_string = m_string + "App_Prefix:{" + strAppPrefix + "}";
+	m_string = m_string + APP_PREFIX + strAppPrefix + "}";
 	return m_string;
 }
 
@@ -85,15 +100,21 @@ string
 NdnControllerString::SetNodePrefixInfo(string strNodePrefix){
 	if(!strNodePrefix.empty())
 	{
-		m_string = m_string + "Node_Prefix:{" + strNodePrefix + "}" +"," ;
+		m_string = m_string + NODE_PREFIX + strNodePrefix + "}" +"," ;
 	}
 	return m_string;
 }
 
-string
-NdnControllerString::find(std::string strSubString){
-
-	return m_string;
+string NdnControllerString::extractInformation(string key, string strPattern)
+{
+  string s = key;
+  size_t p1 = m_string.find(s);
+  if (string::npos != p1)
+    p1 += s.size();
+  size_t p2 = m_string.find_first_of(strPattern, p1);
+  if (string::npos != p2)
+    return m_string.substr(p1,p2-p1);
+  return "";
 }
 
 } // namespace ndn

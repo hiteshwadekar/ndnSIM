@@ -41,6 +41,8 @@
 #include "ns3/channel-list.h"
 #include "ns3/object-factory.h"
 
+#include "helper/ndn-controller-string-parser.hpp"
+
 
 #include "ns3/ndnSIM/helper/ndn-stack-helper.hpp"
 #include "ns3/ndnSIM/helper/ndn-fib-helper.hpp"
@@ -268,7 +270,12 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 			<< contentObject->getName() << std::endl;
 	std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 			contentObject->getContent().value_size());
-	cout << "\n Packet Data ->  "<< msg <<endl;
+	NdnControllerString strControllerData = NdnControllerString(msg);
+	cout <<"\nPacket Data from Consumer:- ";
+	cout << "\nSourceNode: " << strControllerData.GetSourceNode();
+	cout << "\nLinkInfo: " << strControllerData.GetLinkInfo();
+	cout << "\nNodePrefix: " << strControllerData.GetNodePrefixInfo();
+
 	//extractNodeLinkInfo(msg);
 
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;

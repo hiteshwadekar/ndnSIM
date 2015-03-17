@@ -36,6 +36,12 @@
 
 namespace ll = boost::lambda;
 
+static const std::string SOURCE_NODE_NAME = "Source_Node_Name:";
+static const std::string LINK_INFORMATION = "Link_Information:{";
+static const std::string NODE_PREFIX = "Node_Prefix:{";
+static const std::string APP_PREFIX = "App_Prefix:{";
+
+
 using namespace std;
 
 namespace ns3 {
@@ -44,7 +50,7 @@ namespace ndn {
 class NdnControllerString{
 public:
 
-  NdnControllerString();
+  NdnControllerString(string strInitial);
 
   std::string
   GetSubString(int start_pos, int end_pos);
@@ -65,7 +71,7 @@ public:
   GetAppPrefixInfo();
 
   std::string
-  find(std::string strSubString);
+  extractInformation(string key, string strPattern);
 
   std::string
   GetNodePrefixInfo();

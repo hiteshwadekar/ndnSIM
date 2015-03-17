@@ -197,9 +197,9 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 			{
 				if(!attrValue.empty())
 				{
-					attrValue.append(",");
+					//attrValue.append(",");
 				}
-				attrValue.append(itr->second);
+				//attrValue.append(itr->second);
 			}
 		}
 	  }
@@ -227,8 +227,6 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	Ptr<ndn::L3Protocol> l3 = NodeObj->GetObject<ndn::L3Protocol>();
 	std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
 	ndn::nfd::Fib& fib = fw->getFib();
-
-	std::cout << "FIB information along with next hop: " << std::endl;
 	for (const auto& fibEntry : fib) {
 	  if(!attrValue.empty())
 	  {
@@ -257,7 +255,7 @@ std::string CustConsumer::GetLocalLinkInfo()
 	Ptr<L3Protocol> ndn = localNode->GetObject<L3Protocol> ();
 	NS_ASSERT_MSG (ndn != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 
-	NdnControllerString strControllerData = NdnControllerString();
+	NdnControllerString strControllerData = NdnControllerString("");
 	strControllerData.SetSourceNode(Names::FindName(localNode).c_str());
 
 	for (auto& faceId : ndn->getForwarder()->getFaceTable())
@@ -297,21 +295,16 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      std::cout << "Node prefix information -> " << getPrefix(localNode) <<std::endl;
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
-		      //std::cout <<"Face information Remote uri: " << face->getRemoteUri().toString() <<std::endl;
-		      //std::cout <<"Face information Local uri: " << face->getRemoteUri().toString() <<std::endl;
-
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
 		      if(!firstVisit)
 		      {
 		    	  firstVisit=true;
 		    	  strStateTemplate << "(" <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric() << ")";
-		    	  //strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric();
 		      }
 		      else
 		      {
 		    	  strStateTemplate << ",";
 		    	  strStateTemplate << "(" <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric() << ")";
-		    	  //strStateTemplate << Names::FindName(localNode) << "," <<  face->getId() << "," << getPrefix(localNode) << "," << Names::FindName(otherNode) << "," << face->getMetric();
 		      }
 		    }
 		}
