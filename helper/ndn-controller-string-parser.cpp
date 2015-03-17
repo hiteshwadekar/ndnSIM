@@ -26,6 +26,12 @@ NdnControllerString::GetSubString(int start_pos, int end_pos){
 }
 
 string
+NdnControllerString::GetString(){
+	return m_string;
+}
+
+
+string
 NdnControllerString::stringAppend(string strApString){
 
 	return m_string;
@@ -71,7 +77,7 @@ NdnControllerString::SetLinkInfo(string strLinkInfo){
 
 string
 NdnControllerString::SetAppPrefixInfo(string strAppPrefix){
-	m_string = m_string + "Node_Prefix:{" + strAppPrefix + "}";
+	m_string = m_string + "App_Prefix:{" + strAppPrefix + "}";
 	return m_string;
 }
 

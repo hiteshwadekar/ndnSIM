@@ -50,6 +50,9 @@ public:
   GetSubString(int start_pos, int end_pos);
 
   std::string
+  GetString();
+
+  std::string
   stringAppend(string strApString);
 
   std::string

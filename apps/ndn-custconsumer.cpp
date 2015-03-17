@@ -25,6 +25,8 @@
 #include "helper/ndn-fib-helper.hpp"
 #include "model/ndn-net-device-face.hpp"
 
+#include "helper/ndn-controller-string-parser.hpp"
+
 #include "daemon/table/fib.hpp"
 #include "daemon/fw/forwarder.hpp"
 #include "daemon/table/fib-entry.hpp"
@@ -246,6 +248,7 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 std::string CustConsumer::GetLocalLinkInfo()
 {
 	std::stringstream strStateTemplate;
+	//std::string strStateTemplate;
 	bool firstVisit = false;
 
 	Ptr<Node> localNode = GetNode ();
@@ -253,6 +256,9 @@ std::string CustConsumer::GetLocalLinkInfo()
 
 	Ptr<L3Protocol> ndn = localNode->GetObject<L3Protocol> ();
 	NS_ASSERT_MSG (ndn != 0, "Ndn protocol hasn't been installed on a node, please install it first");
+
+	NdnControllerString strControllerData = NdnControllerString();
+	strControllerData.SetSourceNode(Names::FindName(localNode).c_str());
 
 	for (auto& faceId : ndn->getForwarder()->getFaceTable())
 	 //for (uint32_t faceId = 0; faceId < ndn->GetNFaces (); faceId++)
@@ -291,8 +297,8 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      std::cout << "Node prefix information -> " << getPrefix(localNode) <<std::endl;
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
-		      std::cout <<"Face information Remote uri: " << face->getRemoteUri().toString() <<std::endl;
-		      std::cout <<"Face information Local uri: " << face->getRemoteUri().toString() <<std::endl;
+		      //std::cout <<"Face information Remote uri: " << face->getRemoteUri().toString() <<std::endl;
+		      //std::cout <<"Face information Local uri: " << face->getRemoteUri().toString() <<std::endl;
 
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
 		      if(!firstVisit)
@@ -311,12 +317,11 @@ std::string CustConsumer::GetLocalLinkInfo()
 		}
 	 }
 
+	strControllerData.SetLinkInfo(strStateTemplate.str());
+	strControllerData.SetNodePrefixInfo(getPrefix(localNode));
+	strControllerData.SetAppPrefixInfo("");
 
-
-
-
-
-	return strStateTemplate.str();
+	return strControllerData.GetString();
 }
 
 

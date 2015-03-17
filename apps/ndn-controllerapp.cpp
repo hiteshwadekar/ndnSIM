@@ -269,7 +269,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 			contentObject->getContent().value_size());
 	cout << "\n Packet Data ->  "<< msg <<endl;
-	extractNodeLinkInfo(msg);
+	//extractNodeLinkInfo(msg);
 
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
 	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
