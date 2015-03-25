@@ -88,6 +88,9 @@ public:
   std::string
   SetNodePrefixInfo(string strNodePrefix);
 
+  std::string
+  extractLinkInformation(string key, string strPattern);
+
 private:
   std::string m_string;
   static uint32_t m_linkinfoCounter;

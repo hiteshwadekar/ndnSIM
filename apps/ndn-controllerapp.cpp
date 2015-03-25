@@ -270,6 +270,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 			<< contentObject->getName() << std::endl;
 	std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 			contentObject->getContent().value_size());
+
 	NdnControllerString strControllerData = NdnControllerString(msg);
 	cout <<"\nPacket Data from Consumer:- ";
 	cout << "\nSourceNode: " << strControllerData.GetSourceNode();
@@ -277,6 +278,11 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	cout << "\nNodePrefix: " << strControllerData.GetNodePrefixInfo();
 
 	//extractNodeLinkInfo(msg);
+
+
+
+
+
 
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
 	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
