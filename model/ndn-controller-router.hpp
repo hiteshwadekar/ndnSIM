@@ -4,29 +4,24 @@
 #include "ns3/ndnSIM/model/ndn-common.hpp"
 #include "ns3/ndnSIM/model/ndn-face.hpp"
 
-#include "ns3/object.h"
 #include "ns3/ptr.h"
 
 #include <list>
 #include <tuple>
 
 namespace ns3 {
-
-class Channel;
-
 namespace ndn {
-
-class L3Protocol;
 /**
  * @ingroup ndn-helpers
  * @brief Class representing controller router interface for ndnSIM
  */
-class ControllerRouter: public Object {
+class ControllerRouter
+{
 public:
   /**
    * @brief Graph edge
    */
-  typedef std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>> Incidency;
+  typedef std::tuple<shared_ptr<ControllerRouter>, shared_ptr<Face>, shared_ptr<ControllerRouter>> Incidency;
   /**
    * @brief List of graph edges
    */
@@ -38,17 +33,12 @@ public:
   /**
    * @brief Default constructor
    */
-  ControllerRouter(std::string &strSourceNode);
+  ControllerRouter(std::string strSourceNode);
   /**
    * @brief Get numeric ID of the node (internally assigned)
    */
   uint32_t
   GetId() const;
-  /**
-   * @brief Helper function to get smart pointer to ndn::L3Protocol object (basically, self)
-   */
-  Ptr<L3Protocol>
-  GetL3Protocol() const;
   /**
    * @brief Add new locally exported prefix
    * @param prefix Prefix
@@ -77,7 +67,6 @@ public:
 private:
   uint32_t m_id;
   std::string m_sourcenode;
-  Ptr<L3Protocol> m_ndn;
   LocalPrefixList m_localPrefixes;
   IncidencyList m_incidencies;
 

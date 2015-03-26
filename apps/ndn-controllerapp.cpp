@@ -284,6 +284,9 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 
 
 
+
+
+
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
 	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
 	std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;

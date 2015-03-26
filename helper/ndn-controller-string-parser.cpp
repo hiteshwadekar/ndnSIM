@@ -53,6 +53,7 @@ NdnControllerString::GetLinkInfo(){
 	if (!m_string.empty())
 	{
 		strLinkInfo = extractInformation(LINK_INFORMATION,"}");
+		extractLinkInformation(strLinkInfo,",");
 	}
 	return strLinkInfo;
 }
@@ -122,11 +123,13 @@ string NdnControllerString::extractLinkInformation(string key, string strPattern
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, key, boost::algorithm::is_any_of(strPattern));
 
-	for (size_t n = 0; n < fields.size(); n+=5)
+	/*
+	for (size_t n = 0; n < fields.size(); n+=3)
 	{
-		cout << "\n 1: " << fields[n] << " 2: " <<  fields[n+1] << " 3: " << fields[n+2] << " 4: " << fields[n+3] << " 5: " << fields[n+4]<< endl;
+		cout << "\n Extracting link information: "<<endl;
+		cout << "\n 1: " << fields[n] << " 2: " <<  fields[n+1] << " 3: " << fields[n+2] << endl;
 	}
-
+  */
   return "";
 }
 

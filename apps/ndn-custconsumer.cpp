@@ -185,6 +185,7 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 {
 	std::string attrValue="";
+	std::string strTempString;
 	Ptr<AppPrefixHelper> appfxHelper = NodeObj->GetObject<AppPrefixHelper>();
 	if (appfxHelper != 0) {
 		std::map<TypeId, std::string> m_prefixmap = appfxHelper->GetMap();
@@ -223,16 +224,19 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	  //}
 	}
 	*/
-
 	Ptr<ndn::L3Protocol> l3 = NodeObj->GetObject<ndn::L3Protocol>();
 	std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
 	ndn::nfd::Fib& fib = fw->getFib();
 	for (const auto& fibEntry : fib) {
-	  if(!attrValue.empty())
-	  {
-		  attrValue.append(",");
-	  }
-	  attrValue.append(fibEntry.getPrefix().toUri().c_str());
+		strTempString = fibEntry.getPrefix().toUri().c_str();
+		if(strTempString.compare("/localhost/nfd")!= 0)
+		{
+			if(!attrValue.empty())
+			{
+				attrValue.append(",");
+			}
+			attrValue.append(fibEntry.getPrefix().toUri().c_str());
+		}
 	  //std::cout << "  -" << fibEntry.getPrefix() << std::endl;
 	  //std::cout << "Next hop: " << std::endl;
 	  //for (const auto& nh : fibEntry.getNextHops()) {
@@ -299,12 +303,12 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      if(!firstVisit)
 		      {
 		    	  firstVisit=true;
-		    	  strStateTemplate << "(" <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric() << ")";
+		    	  strStateTemplate << Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric();
 		      }
 		      else
 		      {
 		    	  strStateTemplate << ",";
-		    	  strStateTemplate << "(" <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric() << ")";
+		    	  strStateTemplate <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric();
 		      }
 		    }
 		}

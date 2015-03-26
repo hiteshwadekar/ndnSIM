@@ -1,15 +1,13 @@
 #include "ndn-controller-router.hpp"
-#include "model/ndn-l3-protocol.hpp"
 #include "model/ndn-face.hpp"
 
-#include "ns3/channel.h"
 
 namespace ns3 {
 namespace ndn {
 
 uint32_t ControllerRouter::m_idCounter = 0;
 
-ControllerRouter::ControllerRouter(std::string &strSourceNode)
+ControllerRouter::ControllerRouter(std::string strSourceNode)
 {
   m_sourcenode = strSourceNode;
   m_id = m_idCounter;
@@ -20,12 +18,6 @@ uint32_t
 ControllerRouter::GetId() const
 {
   return m_id;
-}
-
-Ptr<L3Protocol>
-ControllerRouter::GetL3Protocol() const
-{
-  return m_ndn;
 }
 
 void
