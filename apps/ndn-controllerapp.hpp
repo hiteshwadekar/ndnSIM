@@ -31,17 +31,22 @@
 #include "ns3/random-variable.h"
 #include "ns3/nstime.h"
 #include "ns3/data-rate.h"
+#include "ns3/names.h"
 
 #include <set>
 #include <map>
+
+#include "helper/ndn-controller-string-parser.hpp"
+#include "helper/ndn-controller-node-container.hpp"
+#include "model/ndn-controller-router.hpp"
+
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/tag.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
 
-
-
+using namespace std;
 
 namespace ns3 {
 namespace ndn {
@@ -79,6 +84,8 @@ public:
   void sendDataPacket(shared_ptr<const Interest> interest);
   void extractNodeLinkInfo(std::string strNodeLinkInfo);
   std::string getTheCalculationPath(std::string strForNode);
+  void AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields);
+  void AddPrefix(Ptr<ControllerRouter> node, std::vector<string> fields);
 
 protected:
   // inherited from Application base class.
@@ -103,6 +110,7 @@ protected:
   Time               m_offTime;             ///< \brief Time interval between packets
   Name     m_interestName;        ///< \brief NDN Name of the Interest (use Name)
   Time               m_interestLifeTime;    ///< \brief LifeTime for interest packet
+  ControllerNodeContainer m_controller_node_container;
 
 };
 

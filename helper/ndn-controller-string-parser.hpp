@@ -64,7 +64,7 @@ public:
   std::string
   GetSourceNode();
 
-  std::string
+  std::vector<std::string>
   GetLinkInfo();
 
   std::string
@@ -73,7 +73,7 @@ public:
   std::string
   extractInformation(string key, string strPattern);
 
-  std::string
+  vector<std::string>
   GetNodePrefixInfo();
 
   std::string
@@ -88,7 +88,7 @@ public:
   std::string
   SetNodePrefixInfo(string strNodePrefix);
 
-  std::string
+  std::vector<std::string>
   extractLinkInformation(string key, string strPattern);
 
 private:

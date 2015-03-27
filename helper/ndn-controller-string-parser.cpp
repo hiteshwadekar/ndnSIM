@@ -47,15 +47,16 @@ NdnControllerString::GetSourceNode(){
 	return strSourceNode;
 }
 
-string
+vector<std::string>
 NdnControllerString::GetLinkInfo(){
-	string strLinkInfo;
+	std::string strLinkInfo;
+	std::vector<std::string> fields;
 	if (!m_string.empty())
 	{
 		strLinkInfo = extractInformation(LINK_INFORMATION,"}");
-		extractLinkInformation(strLinkInfo,",");
+		fields=extractLinkInformation(strLinkInfo,",");
 	}
-	return strLinkInfo;
+	return fields;
 }
 
 string
@@ -63,14 +64,16 @@ NdnControllerString::GetAppPrefixInfo(){
 	return m_string;
 }
 
-string
+vector<std::string>
 NdnControllerString::GetNodePrefixInfo(){
 	string strNodePrefixInfo;
+	std::vector<std::string> fields;
 	if (!m_string.empty())
 	{
 		strNodePrefixInfo = extractInformation(NODE_PREFIX,"}");
+		fields=extractLinkInformation(strNodePrefixInfo,",");
 	}
-	return strNodePrefixInfo;
+	return fields;
 }
 
 string
@@ -118,11 +121,10 @@ string NdnControllerString::extractInformation(string key, string strPattern)
   return "";
 }
 
-string NdnControllerString::extractLinkInformation(string key, string strPattern)
+std::vector<std::string> NdnControllerString::extractLinkInformation(string key, string strPattern)
 {
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, key, boost::algorithm::is_any_of(strPattern));
-
 	/*
 	for (size_t n = 0; n < fields.size(); n+=3)
 	{
@@ -130,7 +132,7 @@ string NdnControllerString::extractLinkInformation(string key, string strPattern
 		cout << "\n 1: " << fields[n] << " 2: " <<  fields[n+1] << " 3: " << fields[n+2] << endl;
 	}
   */
-  return "";
+  return fields;
 }
 
 

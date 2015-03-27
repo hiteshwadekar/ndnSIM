@@ -41,9 +41,6 @@
 #include "ns3/channel-list.h"
 #include "ns3/object-factory.h"
 
-#include "helper/ndn-controller-string-parser.hpp"
-
-
 #include "ns3/ndnSIM/helper/ndn-stack-helper.hpp"
 #include "ns3/ndnSIM/helper/ndn-fib-helper.hpp"
 
@@ -259,6 +256,33 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 
 }
 
+void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields)
+{
+	if (!fields.empty() and fields.size() >= 3)
+	{
+		for (size_t n = 0; n < fields.size(); n+=3)
+			{
+				std::string strTemp = fields[n];
+				Ptr<ControllerRouter> otherNode = CreateObject<ControllerRouter>(fields[n]);
+				m_controller_node_container.Add(otherNode);
+				auto faceId = make_shared<size_t>(atoi(fields[n+1].c_str()));
+				node->AddIncidency(faceId, otherNode);
+			}
+	}
+}
+
+void ControllerApp::AddPrefix(Ptr<ControllerRouter> node, std::vector<string> fields)
+{
+	if (!fields.empty() and fields.size() >= 3)
+	{
+		for (size_t n = 0; n < fields.size(); n+=1)
+			{
+				auto name = make_shared<Name>(fields[n]);
+				node->AddLocalPrefix(name);
+			}
+	}
+}
+
 
 void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	App::OnData(contentObject); // tracing inside
@@ -271,22 +295,21 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 			contentObject->getContent().value_size());
 
+
+
 	NdnControllerString strControllerData = NdnControllerString(msg);
 	cout <<"\nPacket Data from Consumer:- ";
 	cout << "\nSourceNode: " << strControllerData.GetSourceNode();
-	cout << "\nLinkInfo: " << strControllerData.GetLinkInfo();
-	cout << "\nNodePrefix: " << strControllerData.GetNodePrefixInfo();
+	//cout << "\nLinkInfo: " << strControllerData.GetLinkInfo();
+	//cout << "\nNodePrefix: " << strControllerData.GetNodePrefixInfo();
+
+	Ptr<ControllerRouter> node = CreateObject<ControllerRouter>(strControllerData.GetSourceNode());
+	m_controller_node_container.Add(node);
+	AddIncidency(node, strControllerData.GetLinkInfo());
+	AddPrefix(node, strControllerData.GetNodePrefixInfo());
+
 
 	//extractNodeLinkInfo(msg);
-
-
-
-
-
-
-
-
-
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
 	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
 	std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;

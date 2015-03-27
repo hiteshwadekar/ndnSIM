@@ -16,7 +16,7 @@ ControllerRouter::ControllerRouter()
 	m_idCounter++;
 }
 
-ControllerRouter::ControllerRouter(std::string strSourceNode)
+ControllerRouter::ControllerRouter(std::string& strSourceNode)
 {
   m_sourcenode = strSourceNode;
   m_id = m_idCounter;
@@ -49,9 +49,9 @@ ControllerRouter::AddLocalPrefix(shared_ptr<Name> prefix)
 }
 
 void
-ControllerRouter::AddIncidency(shared_ptr<Face> face, Ptr<ControllerRouter> gr)
+ControllerRouter::AddIncidency(shared_ptr<size_t> faceId, Ptr<ControllerRouter> gr)
 {
-  m_incidencies.push_back(std::make_tuple(this, face, gr));
+  m_incidencies.push_back(std::make_tuple(this, faceId, gr));
 }
 
 ControllerRouter::IncidencyList&
