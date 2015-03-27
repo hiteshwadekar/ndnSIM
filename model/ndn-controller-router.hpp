@@ -4,6 +4,7 @@
 #include "ns3/ndnSIM/model/ndn-common.hpp"
 #include "ns3/ndnSIM/model/ndn-face.hpp"
 
+#include "ns3/object.h"
 #include "ns3/ptr.h"
 
 #include <list>
@@ -15,13 +16,12 @@ namespace ndn {
  * @ingroup ndn-helpers
  * @brief Class representing controller router interface for ndnSIM
  */
-class ControllerRouter
-{
+class ControllerRouter: public Object {
 public:
   /**
    * @brief Graph edge
    */
-  typedef std::tuple<shared_ptr<ControllerRouter>, shared_ptr<Face>, shared_ptr<ControllerRouter>> Incidency;
+  typedef std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>> Incidency;
   /**
    * @brief List of graph edges
    */
@@ -31,14 +31,23 @@ public:
    */
   typedef std::list<shared_ptr<Name>> LocalPrefixList;
   /**
-   * @brief Default constructor
+   * \brief Interface ID
+   *
+   * \return interface ID
    */
-  ControllerRouter(std::string strSourceNode);
+  static TypeId
+  GetTypeId();
   /**
-   * @brief Get numeric ID of the node (internally assigned)
-   */
+    * @brief Get numeric ID of the node (internally assigned)
+    */
   uint32_t
   GetId() const;
+  /**
+   * @brief Default constructor
+   */
+  ControllerRouter();
+
+  ControllerRouter(std::string strSourceNode);
   /**
    * @brief Add new locally exported prefix
    * @param prefix Prefix
@@ -63,7 +72,11 @@ public:
   const LocalPrefixList&
   GetLocalPrefixes() const;
 
-
+  // ??
+protected:
+  virtual void
+  NotifyNewAggregate(); ///< @brief Notify when the object is aggregated to another object (e.g.,
+                       /// Node)
 private:
   uint32_t m_id;
   std::string m_sourcenode;

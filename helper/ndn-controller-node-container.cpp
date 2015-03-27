@@ -5,6 +5,7 @@
 namespace ns3 {
 namespace ndn{
 
+
 ControllerNodeContainer::ControllerNodeContainer ()
 {
 }
@@ -112,22 +113,6 @@ ControllerNodeContainer::operator [] (uint32_t i)
 }
 
 void
-ControllerNodeContainer::Create (uint32_t n)
-{
-  for (uint32_t i = 0; i < n; i++)
-    {
-      m_nodes.push_back (CreateObject<ControllerRouter> ());
-    }
-}
-void
-ControllerNodeContainer::Create (uint32_t n, uint32_t systemId)
-{
-  for (uint32_t i = 0; i < n; i++)
-    {
-      m_nodes.push_back (CreateObject<ControllerRouter> (systemId));
-    }
-}
-void
 ControllerNodeContainer::Add (ControllerNodeContainer other)
 {
   for (Iterator i = other.Begin (); i != other.End (); i++)
@@ -147,6 +132,7 @@ ControllerNodeContainer::Add (std::string nodeName)
   m_nodes.push_back (node);
 }
 
+/*
 ControllerNodeContainer
 ControllerNodeContainer::GetGlobal (void)
 {
@@ -156,6 +142,6 @@ ControllerNodeContainer::GetGlobal (void)
       c.Add (*i);
     }
   return c;
-}
+}*/
 }  // namespace ndn
 } // namespace ns3

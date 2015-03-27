@@ -221,32 +221,6 @@ public:
   operator [] (uint32_t i); /// @brief STL-like method, @see Get
 
   /**
-   * \brief Create n nodes and append pointers to them to the end of this
-   * ControllerNodeContainer.
-   *
-   * Nodes are at the heart of any ns-3 simulation.  One of the first tasks that
-   * any simulation needs to do is to create a number of nodes.  This method
-   * automates that task.
-   *
-   * \param n The number of Nodes to create
-   */
-  void Create (uint32_t n);
-
-  /**
-   * \brief Create n nodes with specified systemId for distributed simulations
-   * and append pointers to them to the end of this ControllerNodeContainer.
-   *
-   * Nodes are at the heart of any ns-3 simulation.  One of the first tasks that
-   * any simulation needs to do is to create a number of nodes.  This method
-   * automates that task, and adds the ability to specify systemId for
-   * distributed simulations.
-   *
-   * \param n The number of Nodes to create
-   * \param systemId The system id or rank associated with this node
-   */
-  void Create (uint32_t n, uint32_t systemId);
-
-  /**
    * \brief Append the contents of another ControllerNodeContainer to the end of
    * this container.
    *
@@ -268,20 +242,6 @@ public:
    * \param nodeName The name of the ControllerRouter Object to add to the container.
    */
   void Add (std::string nodeName);
-
-  /**
-   * \brief Create a ControllerNodeContainer that contains a list of _all_ nodes
-   * created through ControllerNodeContainer::Create() and stored in the
-   * ns3::NodeList.
-   *
-   * Whenever a ControllerRouter is created, a Ptr<ControllerRouter> is added to a global list of all
-   * nodes in the system.  It is sometimes useful to be able to get to all
-   * nodes in one place.  This method creates a ControllerNodeContainer that is
-   * initialized to contain all of the simulation nodes,
-   *
-   * \returns a NoceContainer which contains a list of all Nodes.
-   */
-  static ControllerNodeContainer GetGlobal (void);
 
 private:
   std::vector<Ptr<ControllerRouter> > m_nodes; //!< Nodes smart pointers

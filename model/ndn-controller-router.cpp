@@ -1,11 +1,20 @@
 #include "ndn-controller-router.hpp"
 #include "model/ndn-face.hpp"
 
+#include <list>
+#include <tuple>
 
 namespace ns3 {
 namespace ndn {
 
 uint32_t ControllerRouter::m_idCounter = 0;
+NS_OBJECT_ENSURE_REGISTERED(ControllerRouter);
+
+ControllerRouter::ControllerRouter()
+{
+	m_id = m_idCounter;
+	m_idCounter++;
+}
 
 ControllerRouter::ControllerRouter(std::string strSourceNode)
 {
@@ -14,10 +23,23 @@ ControllerRouter::ControllerRouter(std::string strSourceNode)
   m_idCounter++;
 }
 
+TypeId
+ControllerRouter::GetTypeId()
+{
+  static TypeId tid = TypeId("ns3::ndn::ControllerRouter").SetGroupName("Ndn").SetParent<Object>();
+  return tid;
+}
+
 uint32_t
 ControllerRouter::GetId() const
 {
   return m_id;
+}
+
+void
+ControllerRouter::NotifyNewAggregate()
+{
+  Object::NotifyNewAggregate();
 }
 
 void
