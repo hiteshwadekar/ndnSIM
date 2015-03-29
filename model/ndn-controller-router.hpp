@@ -73,6 +73,15 @@ public:
   const LocalPrefixList&
   GetLocalPrefixes() const;
 
+  std::string&
+  GetSourceNode();
+
+  bool
+  GetStatus();
+
+  void
+    PrintInfo();
+
   // ??
 protected:
   virtual void
@@ -80,6 +89,7 @@ protected:
                        /// Node)
 private:
   uint32_t m_id;
+  static bool m_status;
   std::string m_sourcenode;
   LocalPrefixList m_localPrefixes;
   IncidencyList m_incidencies;

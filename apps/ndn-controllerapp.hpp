@@ -86,6 +86,8 @@ public:
   std::string getTheCalculationPath(std::string strForNode);
   void AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields);
   void AddPrefix(Ptr<ControllerRouter> node, std::vector<string> fields);
+  Ptr<ControllerRouter> IsNodePresent(std::string strNodeName);
+  bool IsNodeActive(Ptr<ControllerRouter> node);
 
 protected:
   // inherited from Application base class.

@@ -8,6 +8,7 @@ namespace ns3 {
 namespace ndn {
 
 uint32_t ControllerRouter::m_idCounter = 0;
+bool ControllerRouter::m_status = false;
 NS_OBJECT_ENSURE_REGISTERED(ControllerRouter);
 
 ControllerRouter::ControllerRouter()
@@ -19,6 +20,7 @@ ControllerRouter::ControllerRouter()
 ControllerRouter::ControllerRouter(std::string& strSourceNode)
 {
   m_sourcenode = strSourceNode;
+  m_status = false;
   m_id = m_idCounter;
   m_idCounter++;
 }
@@ -52,6 +54,7 @@ void
 ControllerRouter::AddIncidency(shared_ptr<size_t> faceId, Ptr<ControllerRouter> gr)
 {
   m_incidencies.push_back(std::make_tuple(this, faceId, gr));
+  m_status=true;
 }
 
 ControllerRouter::IncidencyList&
@@ -64,6 +67,24 @@ const ControllerRouter::LocalPrefixList&
 ControllerRouter::GetLocalPrefixes() const
 {
   return m_localPrefixes;
+}
+
+std::string&
+ControllerRouter::GetSourceNode()
+{
+  return m_sourcenode;
+}
+
+bool
+ControllerRouter::GetStatus()
+{
+  return m_status;
+}
+
+void
+ControllerRouter::PrintInfo()
+{
+	std::cout << "SourceNode name -> " << m_sourcenode << std::endl;
 }
 
 } // namespace ndn

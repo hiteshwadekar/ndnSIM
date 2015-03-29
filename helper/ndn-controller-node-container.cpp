@@ -125,6 +125,7 @@ ControllerNodeContainer::Add (Ptr<ControllerRouter> node)
 {
   m_nodes.push_back (node);
 }
+
 void
 ControllerNodeContainer::Add (std::string nodeName)
 {

@@ -161,6 +161,37 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 
 }
 
+Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
+{
+
+	cout <<"IsNodePresent Called"<<endl;
+	cout <<"strNodeName Called" <<strNodeName<<endl;
+
+	Ptr<ControllerRouter> node=NULL;
+	ControllerNodeContainer::Iterator i;
+	for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
+	{
+		if ((*i)->GetSourceNode().compare(strNodeName)==0)
+		{
+			node=(*i);
+		}
+	}
+	return node;
+}
+
+bool ControllerApp::IsNodeActive(Ptr<ControllerRouter> node)
+{
+	ControllerNodeContainer::Iterator i;
+	for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
+	{
+		if((*i)==node)
+		{
+			return (*i)->GetStatus();
+		}
+	}
+	return false;
+}
+
 
 void ControllerApp::sendInterestPacket(std::string strPrefix){
 	shared_ptr<Name> nameWithSequence = make_shared<Name>(strPrefix);
@@ -188,6 +219,12 @@ std::string ControllerApp::getTheCalculationPath(std::string strForNode){
 	std::string strPath="";
 	//strPath = "Node Name -> " + strForNode + "," + "\t Prefix Name -> " + "/controller" + "," + "\t Face ID -> " + "256" + "," + "\t Face Metrics (Link weight) -> " + "3" + "," + "\t Face delay-> " + "0";
 	strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
+
+	ControllerNodeContainer::Iterator i;
+	for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
+	{
+		 	 (*i)->PrintInfo();
+	}
 	return strPath;
 }
 
@@ -262,9 +299,12 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 	{
 		for (size_t n = 0; n < fields.size(); n+=3)
 			{
-				std::string strTemp = fields[n];
-				Ptr<ControllerRouter> otherNode = CreateObject<ControllerRouter>(fields[n]);
-				m_controller_node_container.Add(otherNode);
+				Ptr<ControllerRouter> otherNode = IsNodePresent(fields[n]);
+				if(otherNode==NULL)
+				{
+					Ptr<ControllerRouter> otherNode = CreateObject<ControllerRouter>(fields[n]);
+					m_controller_node_container.Add(otherNode);
+				}
 				auto faceId = make_shared<size_t>(atoi(fields[n+1].c_str()));
 				node->AddIncidency(faceId, otherNode);
 			}
@@ -298,16 +338,23 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 
 
 	NdnControllerString strControllerData = NdnControllerString(msg);
+	std::string strSourceNode ="";
+	strSourceNode=strControllerData.GetSourceNode();
+
 	cout <<"\nPacket Data from Consumer:- ";
-	cout << "\nSourceNode: " << strControllerData.GetSourceNode();
+	cout << "\nSourceNode: " << strSourceNode;
 	//cout << "\nLinkInfo: " << strControllerData.GetLinkInfo();
 	//cout << "\nNodePrefix: " << strControllerData.GetNodePrefixInfo();
 
-	Ptr<ControllerRouter> node = CreateObject<ControllerRouter>(strControllerData.GetSourceNode());
-	m_controller_node_container.Add(node);
+
+	Ptr<ControllerRouter> node = IsNodePresent(strSourceNode);
+	if(node==NULL)
+	{
+		Ptr<ControllerRouter> node = CreateObject<ControllerRouter>(strControllerData.GetSourceNode());
+		m_controller_node_container.Add(node);
+	}
 	AddIncidency(node, strControllerData.GetLinkInfo());
 	AddPrefix(node, strControllerData.GetNodePrefixInfo());
-
 
 	//extractNodeLinkInfo(msg);
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
