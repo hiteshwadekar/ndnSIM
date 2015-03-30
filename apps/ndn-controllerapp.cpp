@@ -163,17 +163,17 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 
 Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
 {
-
-	cout <<"IsNodePresent Called"<<endl;
-	cout <<"strNodeName Called" <<strNodeName<<endl;
-
 	Ptr<ControllerRouter> node=NULL;
-	ControllerNodeContainer::Iterator i;
-	for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
+	if (m_controller_node_container.size() > 0)
 	{
-		if ((*i)->GetSourceNode().compare(strNodeName)==0)
+		ControllerNodeContainer::Iterator i;
+		for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
 		{
-			node=(*i);
+			(*i)->PrintInfo();
+			if ((*i)->GetSourceNode().compare(strNodeName)==0)
+			{
+				node=(*i);
+			}
 		}
 	}
 	return node;
@@ -181,12 +181,15 @@ Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
 
 bool ControllerApp::IsNodeActive(Ptr<ControllerRouter> node)
 {
-	ControllerNodeContainer::Iterator i;
-	for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
+	if (m_controller_node_container.size() > 0)
 	{
-		if((*i)==node)
+		ControllerNodeContainer::Iterator i;
+		for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
 		{
-			return (*i)->GetStatus();
+			if((*i)==node)
+			{
+				return (*i)->GetStatus();
+			}
 		}
 	}
 	return false;
@@ -305,7 +308,8 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 					Ptr<ControllerRouter> otherNode = CreateObject<ControllerRouter>(fields[n]);
 					m_controller_node_container.Add(otherNode);
 				}
-				auto faceId = make_shared<size_t>(atoi(fields[n+1].c_str()));
+				size_t faceid = atoi(fields[n+1].c_str());
+				auto faceId = std::make_shared<size_t>(faceid);
 				node->AddIncidency(faceId, otherNode);
 			}
 	}
@@ -353,6 +357,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 		Ptr<ControllerRouter> node = CreateObject<ControllerRouter>(strControllerData.GetSourceNode());
 		m_controller_node_container.Add(node);
 	}
+
 	AddIncidency(node, strControllerData.GetLinkInfo());
 	AddPrefix(node, strControllerData.GetNodePrefixInfo());
 
