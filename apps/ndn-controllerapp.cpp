@@ -209,7 +209,8 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 				}
 				size_t faceid = atoi(fields[n+1].c_str());
 				auto faceId = std::make_shared<size_t>(faceid);
-				node->AddIncidency(faceId, otherNode);
+				auto faceMetric = std::make_shared<size_t>(atoi(fields[n+2].c_str()));
+				node->AddIncidency(faceId, otherNode, faceMetric);
 			}
 	}
 }

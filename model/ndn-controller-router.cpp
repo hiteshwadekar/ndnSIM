@@ -51,9 +51,9 @@ ControllerRouter::AddLocalPrefix(shared_ptr<Name> prefix)
 }
 
 void
-ControllerRouter::AddIncidency(shared_ptr<size_t> faceId, Ptr<ControllerRouter> gr)
+ControllerRouter::AddIncidency(shared_ptr<size_t> faceId, Ptr<ControllerRouter> gr, shared_ptr<size_t> faceMetrics)
 {
-  m_incidencies.push_back(std::make_tuple(this, faceId, gr));
+  m_incidencies.push_back(std::make_tuple(this, faceId, gr, faceMetrics));
   m_status=true;
 }
 
