@@ -49,6 +49,8 @@
 #include <boost/concept/assert.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
+#include "helper/boost-graph-ndn-controller-routing-helper.hpp"
+
 #include <boost/ref.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
@@ -159,6 +161,75 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 
 	}
 
+}
+
+void
+ControllerApp::CalculateRoutes()
+{
+  /**
+   * Implementation of route calculation is heavily based on Boost Graph Library
+   * See http://www.boost.org/doc/libs/1_49_0/libs/graph/doc/table_of_contents.html for more details
+   */
+
+  BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnControllerRouterGraph>));
+  BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
+
+  boost::NdnControllerRouterGraph graph = new boost::NdnControllerRouterGraph(m_controller_node_container);
+  // typedef graph_traits < NdnControllerRouterGraph >::vertex_descriptor vertex_descriptor;
+
+  // For now we doing Dijkstra for every node.  Can be replaced with Bellman-Ford or Floyd-Warshall.
+  // Other algorithms should be faster, but they need additional EdgeListGraph concept provided by
+  // the graph, which
+  // is not obviously how implement in an efficient manner
+
+  ControllerNodeContainer::Iterator node;
+
+  for (node = m_controller_node_container.Begin (); node != m_controller_node_container.End (); ++node) {
+    Ptr<ControllerRouter> source = (*node);
+    if (source == NULL) {
+      NS_LOG_DEBUG("No node present in controller container");
+      continue;
+    }
+
+    boost::DistancesMap distances;
+    dijkstra_shortest_paths(graph, source,
+                            // predecessor_map (boost::ref(predecessors))
+                            // .
+                            distance_map(boost::ref(distances))
+                              .distance_inf(boost::WeightInf)
+                              .distance_zero(boost::WeightZero)
+                              .distance_compare(boost::WeightCompare())
+                              .distance_combine(boost::WeightCombine()));
+
+    // NS_LOG_DEBUG (predecessors.size () << ", " << distances.size ());
+
+    //Ptr<L3Protocol> L3protocol = (*node)->GetObject<L3Protocol>();
+    //shared_ptr<nfd::Forwarder> forwarder = L3protocol->getForwarder();
+
+    //NS_LOG_DEBUG("Reachability from Node: " << source->GetObject<Node>()->GetId());
+    for (const auto& dist : distances) {
+      if (dist.first == source)
+        continue;
+      else {
+        // cout << "  Node " << dist.first->GetObject<Node> ()->GetId ();
+        if (std::get<0>(dist.second) == 0) {
+          // cout << " is unreachable" << endl;
+        }
+        else {
+          for (const auto& prefix : dist.first->GetLocalPrefixes()) {
+            //NS_LOG_DEBUG(" prefix " << prefix << " reachable via face " << *std::get<0>(dist.second)
+             //            << " with distance " << std::get<1>(dist.second) << " with delay "
+              //           << std::get<2>(dist.second));
+            cout << " prefix " << prefix << " reachable via face " << *std::get<0>(dist.second)
+                 << " with distance " << std::get<1>(dist.second) << " with delay "
+                 << std::get<2>(dist.second);
+            //FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
+                                //std::get<1>(dist.second));
+          }
+        }
+      }
+    }
+  }
 }
 
 Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)

@@ -88,6 +88,7 @@ public:
   void AddPrefix(Ptr<ControllerRouter> node, std::vector<string> fields);
   Ptr<ControllerRouter> IsNodePresent(std::string strNodeName);
   bool IsNodeActive(Ptr<ControllerRouter> node);
+  void CalculateRoutes();
 
 protected:
   // inherited from Application base class.

@@ -6,7 +6,12 @@
 #include "model/ndn-controller-router.hpp"
 
 namespace ns3 {
-namespace ndn {
+
+using namespace ndn;
+
+class ndn::ControllerRouter;
+class CallbackBase;
+
 /**
  * \brief keep track of a set of node pointers.
  *
@@ -20,9 +25,9 @@ class ControllerNodeContainer
 {
 public:
   /// ControllerRouter container iterator
-  typedef std::vector<Ptr<ControllerRouter> >::const_iterator Iterator;
-  typedef std::vector<Ptr<ControllerRouter> >::iterator iterator;
-  typedef std::vector<Ptr<ControllerRouter> >::const_iterator const_iterator;
+  typedef std::vector<Ptr<ndn::ControllerRouter> >::const_iterator Iterator;
+  typedef std::vector<Ptr<ndn::ControllerRouter> >::iterator iterator;
+  typedef std::vector<Ptr<ndn::ControllerRouter> >::const_iterator const_iterator;
 
   /**
    * Create an empty ControllerControllerNodeContainer.
@@ -35,7 +40,7 @@ public:
    *
    * \param node The Ptr<ControllerRouter> to add to the container.
    */
-  ControllerNodeContainer (Ptr<ControllerRouter> node);
+  ControllerNodeContainer (Ptr<ndn::ControllerRouter> node);
 
   /**
    * Create a ControllerControllerNodeContainer with exactly one node which has been previously
@@ -44,7 +49,7 @@ public:
    *
    * \param nodeName The name of the ControllerRouter Object to add to the container.
    */
-  ControllerNodeContainer (std::string nodeName);
+  //ControllerNodeContainer (std::string nodeName);
 
   /**
    * Create a node container which is a concatenation of two input
@@ -247,7 +252,6 @@ private:
   std::vector<Ptr<ControllerRouter> > m_nodes; //!< Nodes smart pointers
 };
 
-}
 } // namespace ns3
 
 #endif /* NDN_CONROLLER_NODE_CONTAINER_H */

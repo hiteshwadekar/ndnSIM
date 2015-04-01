@@ -1,10 +1,10 @@
 #include "ndn-controller-node-container.hpp"
 #include "ns3/node-list.h"
 #include "ns3/names.h"
+#include "model/ndn-controller-router.hpp"
+
 
 namespace ns3 {
-namespace ndn{
-
 
 ControllerNodeContainer::ControllerNodeContainer ()
 {
@@ -14,11 +14,14 @@ ControllerNodeContainer::ControllerNodeContainer (Ptr<ControllerRouter> node)
 {
   m_nodes.push_back (node);
 }
+
+/*
 ControllerNodeContainer::ControllerNodeContainer (std::string nodeName)
 {
-  Ptr<ControllerRouter> node = Names::Find<ControllerRouter> (nodeName);
+  Ptr<ControllerRouter> node = Names::Find<ns3::ndn::ControllerRouter> (nodeName);
   m_nodes.push_back (node);
-}
+}*/
+
 ControllerNodeContainer::ControllerNodeContainer (const ControllerNodeContainer &a, const ControllerNodeContainer &b)
 {
   Add (a);
@@ -144,5 +147,4 @@ ControllerNodeContainer::GetGlobal (void)
     }
   return c;
 }*/
-}  // namespace ndn
 } // namespace ns3
