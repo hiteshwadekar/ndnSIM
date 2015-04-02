@@ -22,7 +22,7 @@ public:
    * @brief Graph edge
    */
   //typedef std::tuple<Ptr<ControllerRouter>, size_t faceId, Ptr<ControllerRouter>> Incidency;
-  typedef std::tuple<Ptr<ControllerRouter>,shared_ptr<size_t>, Ptr<ControllerRouter>, size_t> Incidency;
+  typedef std::tuple<Ptr<ControllerRouter>,shared_ptr<Face>, Ptr<ControllerRouter>, size_t> Incidency;
   /**
    * @brief List of graph edges
    */
@@ -61,7 +61,7 @@ public:
    * @param ndn GlobalRouter of another node
    */
   void
-  AddIncidency(shared_ptr<size_t> faceId, Ptr<ControllerRouter> ndn, size_t faceMetric);
+  AddIncidency(shared_ptr<Face> faceId, Ptr<ControllerRouter> ndn, size_t faceMetric);
   /**
    * @brief Get list of edges that are connected to this node
    */

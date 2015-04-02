@@ -38,6 +38,7 @@ public:
 	  {
 			  ns3::Ptr<ns3::ndn::ControllerRouter> gr = (*j);
 			  (*j)->PrintInfo();
+			  std::cout << "\n Node id is -> " << (*j)->GetId() << endl;
 			  m_vertices.push_back(gr);
 	  }
   }
@@ -52,7 +53,7 @@ public:
   std::list<Vertice> m_vertices;
 };
 
-class ndn_global_router_graph_category : public virtual vertex_list_graph_tag,
+class ndn_controller_router_graph_category : public virtual vertex_list_graph_tag,
                                          public virtual incidence_graph_tag {
 };
 
@@ -63,7 +64,7 @@ struct graph_traits<NdnControllerRouterGraph> {
   typedef ns3::ndn::ControllerRouter::Incidency edge_descriptor;
   typedef directed_tag directed_category;
   typedef disallow_parallel_edge_tag edge_parallel_category;
-  typedef ndn_global_router_graph_category traversal_category;
+  typedef ndn_controller_router_graph_category traversal_category;
 
   // VertexList concept
   typedef std::list<vertex_descriptor>::const_iterator vertex_iterator;
@@ -243,7 +244,7 @@ put(reference_wrapper<M> mapp, K a, V p)
 inline uint32_t
 get(const boost::VertexIds&, ns3::Ptr<ns3::ndn::ControllerRouter>& gr)
 {
-  return gr->GetId();
+	return gr->GetId();
 }
 
 inline property_traits<EdgeWeights>::reference
@@ -257,7 +258,7 @@ get(const boost::EdgeWeights&, ns3::ndn::ControllerRouter::Incidency& edge)
     //                                                 std::get<1>(edge)->getMetric()),
     //                                               0.0);
     //return property_traits<EdgeWeights>::reference(std::get<1>(edge), static_cast<uint16_t>(std::get<3>(edge)),0.0);
-	  return property_traits<EdgeWeights>::reference(nullptr, 0, 0.0);
+	  return property_traits<EdgeWeights>::reference(std::get<1>(edge), 0, 0.0);
 
   }
 }

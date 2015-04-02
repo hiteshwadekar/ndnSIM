@@ -7,7 +7,7 @@
 namespace ns3 {
 namespace ndn {
 
-uint32_t ControllerRouter::m_idCounter = 0;
+uint32_t ControllerRouter::m_idCounter = 1;
 bool ControllerRouter::m_status = false;
 NS_OBJECT_ENSURE_REGISTERED(ControllerRouter);
 
@@ -51,7 +51,7 @@ ControllerRouter::AddLocalPrefix(shared_ptr<Name> prefix)
 }
 
 void
-ControllerRouter::AddIncidency(shared_ptr<size_t> faceId, Ptr<ControllerRouter> gr, size_t faceMetrics)
+ControllerRouter::AddIncidency(shared_ptr<Face> faceId, Ptr<ControllerRouter> gr, size_t faceMetrics)
 {
   m_incidencies.push_back(std::make_tuple(this, faceId, gr, faceMetrics));
   m_status=true;

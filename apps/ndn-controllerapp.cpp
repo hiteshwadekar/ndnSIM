@@ -188,7 +188,7 @@ ControllerApp::CalculateRoutes()
   // the graph, which
   // is not obviously how implement in an efficient manner
 
-  ControllerNodeContainer::Iterator node;
+  //ControllerNodeContainer::Iterator node;
 
   //for (node = ControllerNodeContainer::Begin (); node != ControllerNodeContainer::End (); ++node)
   for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
@@ -301,6 +301,8 @@ bool ControllerApp::IsNodeActive(Ptr<ControllerRouter> node)
 	return false;
 }
 
+
+
 void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields)
 {
 	if (!fields.empty() and fields.size() >= 3)
@@ -314,10 +316,16 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 					//m_controller_node_container.Add(otherNode);
 					ns3::ndn::ControllerNodeList::Add(otherNode);
 				}
-				size_t faceid = atoi(fields[n+1].c_str());
-				auto faceId = std::make_shared<size_t>(faceid);
-				//auto faceMetric = std::make_shared<size_t>(atoi(fields[n+2].c_str()));
-				node->AddIncidency(faceId, otherNode, atoi(fields[n+2].c_str()));
+
+				Ptr<Node> node1 = Names::Find<Node> (node->GetSourceNode());
+				NS_ASSERT_MSG (node1 != 0, node->GetSourceNode() << "is not a Node");
+
+				Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
+				NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
+
+				shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
+
+				node->AddIncidency(face, otherNode, atoi(fields[n+2].c_str()));
 			}
 	}
 }
