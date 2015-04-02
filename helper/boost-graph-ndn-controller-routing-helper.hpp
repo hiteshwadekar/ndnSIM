@@ -14,6 +14,8 @@
 #include "helper/ndn-controller-string-parser.hpp"
 #include "helper/ndn-controller-node-container.hpp"
 #include "model/ndn-controller-router.hpp"
+#include "helper/controller-node-list.hpp"
+
 
 #include "ns3/node-list.h"
 #include "ns3/channel-list.h"
@@ -29,17 +31,15 @@ public:
   typedef uint16_t edge_property_type;
   typedef uint32_t vertex_property_type;
 
-  NdnControllerRouterGraph(ns3::ControllerNodeContainer& ctrContainerObject)
+  NdnControllerRouterGraph()
   {
-	  if(ctrContainerObject.size()>1)
+	  std::cout << "\n Printing all nodes present in container " << endl;
+	  for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
 	  {
-		  ns3::ControllerNodeContainer::Iterator node;
-		  for (node = ns3::ControllerNodeContainer::Begin(); node != ns3::ControllerNodeContainer::End();
-			node++) {
-			  ns3::Ptr<ns3::ndn::ControllerRouter> gr = (*node);
+			  ns3::Ptr<ns3::ndn::ControllerRouter> gr = (*j);
+			  (*j)->PrintInfo();
 			  m_vertices.push_back(gr);
 	  }
-    }
   }
 
   const std::list<Vertice>&
@@ -252,10 +252,13 @@ get(const boost::EdgeWeights&, ns3::ndn::ControllerRouter::Incidency& edge)
   if (std::get<1>(edge) == 0)
     return property_traits<EdgeWeights>::reference(nullptr, 0, 0.0);
   else {
-    return property_traits<EdgeWeights>::reference(std::get<1>(edge),
-                                                   static_cast<uint16_t>(
-                                                     std::get<1>(edge)->getMetric()),
-                                                   0.0);
+    //return property_traits<EdgeWeights>::reference(std::get<1>(edge),
+    //                                               static_cast<uint16_t>(
+    //                                                 std::get<1>(edge)->getMetric()),
+    //                                               0.0);
+    //return property_traits<EdgeWeights>::reference(std::get<1>(edge), static_cast<uint16_t>(std::get<3>(edge)),0.0);
+	  return property_traits<EdgeWeights>::reference(nullptr, 0, 0.0);
+
   }
 }
 

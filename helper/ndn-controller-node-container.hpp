@@ -6,10 +6,9 @@
 #include "model/ndn-controller-router.hpp"
 
 namespace ns3 {
+namespace ndn {
 
-using namespace ndn;
-
-class ndn::ControllerRouter;
+class ControllerRouter;
 class CallbackBase;
 
 /**
@@ -25,10 +24,9 @@ class ControllerNodeContainer
 {
 public:
   /// ControllerRouter container iterator
-  typedef std::vector<Ptr<ndn::ControllerRouter> >::const_iterator Iterator;
-  typedef std::vector<Ptr<ndn::ControllerRouter> >::iterator iterator;
-  typedef std::vector<Ptr<ndn::ControllerRouter> >::const_iterator const_iterator;
-
+  typedef std::vector<Ptr<ControllerRouter> >::const_iterator Iterator;
+  typedef std::vector<Ptr<ControllerRouter> >::iterator iterator;
+  typedef std::vector<Ptr<ControllerRouter> >::const_iterator const_iterator;
   /**
    * Create an empty ControllerControllerNodeContainer.
    */
@@ -251,7 +249,7 @@ public:
 private:
   std::vector<Ptr<ControllerRouter> > m_nodes; //!< Nodes smart pointers
 };
-
+} // namespace ndn
 } // namespace ns3
 
 #endif /* NDN_CONROLLER_NODE_CONTAINER_H */

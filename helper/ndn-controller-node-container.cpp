@@ -5,6 +5,7 @@
 
 
 namespace ns3 {
+namespace ndn {
 
 ControllerNodeContainer::ControllerNodeContainer ()
 {
@@ -147,4 +148,5 @@ ControllerNodeContainer::GetGlobal (void)
     }
   return c;
 }*/
+} // namespace ndn
 } // namespace ns3

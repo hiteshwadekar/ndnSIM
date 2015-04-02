@@ -41,6 +41,7 @@
 #include "ns3/channel-list.h"
 #include "ns3/object-factory.h"
 
+
 #include "ns3/ndnSIM/helper/ndn-stack-helper.hpp"
 #include "ns3/ndnSIM/helper/ndn-fib-helper.hpp"
 
@@ -50,6 +51,8 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 
 #include "helper/boost-graph-ndn-controller-routing-helper.hpp"
+#include "helper/controller-node-list.hpp"
+
 
 #include <boost/ref.hpp>
 #include <boost/lambda/lambda.hpp>
@@ -163,6 +166,9 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 
 }
 
+
+
+
 void
 ControllerApp::CalculateRoutes()
 {
@@ -174,7 +180,7 @@ ControllerApp::CalculateRoutes()
   BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnControllerRouterGraph>));
   BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
 
-  boost::NdnControllerRouterGraph graph = new boost::NdnControllerRouterGraph(m_controller_node_container);
+  boost::NdnControllerRouterGraph graph;
   // typedef graph_traits < NdnControllerRouterGraph >::vertex_descriptor vertex_descriptor;
 
   // For now we doing Dijkstra for every node.  Can be replaced with Bellman-Ford or Floyd-Warshall.
@@ -184,7 +190,9 @@ ControllerApp::CalculateRoutes()
 
   ControllerNodeContainer::Iterator node;
 
-  for (node = m_controller_node_container.Begin (); node != m_controller_node_container.End (); ++node) {
+  //for (node = ControllerNodeContainer::Begin (); node != ControllerNodeContainer::End (); ++node)
+  for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
+  {
     Ptr<ControllerRouter> source = (*node);
     if (source == NULL) {
       NS_LOG_DEBUG("No node present in controller container");
@@ -232,11 +240,15 @@ ControllerApp::CalculateRoutes()
   }
 }
 
+
 Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
 {
 	Ptr<ControllerRouter> node=NULL;
-	if (m_controller_node_container.size() > 0)
-	{
+
+	//if (m_controller_node_container.size() > 0)
+	//{
+
+		/*
 		ControllerNodeContainer::Iterator i;
 		for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
 		{
@@ -246,14 +258,29 @@ Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
 				node=(*i);
 			}
 		}
-	}
+
+		*/
+		for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
+		//for (ControllerNodeList::Iterator j = ControllerNodeList::Begin (); j != ControllerNodeList::End (); ++j)
+		{
+
+			if ((*j)->GetSourceNode().compare(strNodeName)==0)
+			{
+				//cout << "Node present" <<endl;
+				(*j)->PrintInfo();
+				node=(*j);
+			}
+		}
+
+	//}
 	return node;
 }
 
 bool ControllerApp::IsNodeActive(Ptr<ControllerRouter> node)
 {
-	if (m_controller_node_container.size() > 0)
-	{
+	//if (m_controller_node_container.size() > 0)
+	//{
+		/*
 		ControllerNodeContainer::Iterator i;
 		for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
 		{
@@ -262,7 +289,15 @@ bool ControllerApp::IsNodeActive(Ptr<ControllerRouter> node)
 				return (*i)->GetStatus();
 			}
 		}
-	}
+		*/
+		for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
+		{
+			if((*j)==node)
+			{
+				return (*j)->GetStatus();
+			}
+		}
+	//}
 	return false;
 }
 
@@ -276,12 +311,13 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 				if(otherNode==NULL)
 				{
 					Ptr<ControllerRouter> otherNode = CreateObject<ControllerRouter>(fields[n]);
-					m_controller_node_container.Add(otherNode);
+					//m_controller_node_container.Add(otherNode);
+					ns3::ndn::ControllerNodeList::Add(otherNode);
 				}
 				size_t faceid = atoi(fields[n+1].c_str());
 				auto faceId = std::make_shared<size_t>(faceid);
-				auto faceMetric = std::make_shared<size_t>(atoi(fields[n+2].c_str()));
-				node->AddIncidency(faceId, otherNode, faceMetric);
+				//auto faceMetric = std::make_shared<size_t>(atoi(fields[n+2].c_str()));
+				node->AddIncidency(faceId, otherNode, atoi(fields[n+2].c_str()));
 			}
 	}
 }
@@ -324,11 +360,17 @@ std::string ControllerApp::getTheCalculationPath(std::string strForNode){
 	//strPath = "Node Name -> " + strForNode + "," + "\t Prefix Name -> " + "/controller" + "," + "\t Face ID -> " + "256" + "," + "\t Face Metrics (Link weight) -> " + "3" + "," + "\t Face delay-> " + "0";
 	strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
 
-	ControllerNodeContainer::Iterator i;
-	for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
+#if 0
+	//ControllerNodeContainer::Iterator i;
+	//for (i = m_controller_node_container.Begin (); i != m_controller_node_container.End (); ++i)
+	//{
+		 	 //(*i)->PrintInfo();
+	//}
+	for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
 	{
-		 	 (*i)->PrintInfo();
+			(*j)->PrintInfo();
 	}
+#endif
 	return strPath;
 }
 
@@ -388,6 +430,10 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	{
 		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
+		if (strInterestNodePrefix.compare("Node3") == 0)
+		{
+			CalculateRoutes();
+		}
 		sendDataPacket(interest);
 	}
 	else{
@@ -415,12 +461,12 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	if(node==NULL)
 	{
 		node = CreateObject<ControllerRouter>(strControllerData.GetSourceNode());
-		m_controller_node_container.Add(node);
+		//m_controller_node_container.Add(node);
+		size_t k = ns3::ndn::ControllerNodeList::Add(node);
+		cout <<"\n Node has been added " << k << endl;
 	}
-
 	AddIncidency(node, strControllerData.GetLinkInfo());
 	AddPrefix(node, strControllerData.GetNodePrefixInfo());
-
 	//extractNodeLinkInfo(msg);
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
 	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
