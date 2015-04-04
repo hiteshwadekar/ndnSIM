@@ -22,7 +22,7 @@ public:
    * @brief Graph edge
    */
   //typedef std::tuple<Ptr<ControllerRouter>, size_t faceId, Ptr<ControllerRouter>> Incidency;
-  typedef std::tuple<Ptr<ControllerRouter>,shared_ptr<Face>, Ptr<ControllerRouter>, size_t> Incidency;
+  typedef std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t> Incidency;
   /**
    * @brief List of graph edges
    */
@@ -101,7 +101,7 @@ inline bool
 operator==(const ControllerRouter::Incidency& a, const ControllerRouter::Incidency& b)
 {
   return std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b)
-         && std::get<2>(a) == std::get<2>(b);
+         && std::get<2>(a) == std::get<2>(b) && std::get<3>(a) == std::get<3>(b);
 }
 
 inline bool

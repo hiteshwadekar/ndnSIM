@@ -1,6 +1,8 @@
 #include "ndn-controller-router.hpp"
 #include "model/ndn-face.hpp"
 
+#include <exception>
+
 #include <list>
 #include <tuple>
 
@@ -9,13 +11,17 @@ namespace ndn {
 
 uint32_t ControllerRouter::m_idCounter = 1;
 bool ControllerRouter::m_status = false;
+
 NS_OBJECT_ENSURE_REGISTERED(ControllerRouter);
 
+
+#if 0
 ControllerRouter::ControllerRouter()
 {
 	m_id = m_idCounter;
 	m_idCounter++;
 }
+#endif
 
 ControllerRouter::ControllerRouter(std::string& strSourceNode)
 {
@@ -35,7 +41,7 @@ ControllerRouter::GetTypeId()
 uint32_t
 ControllerRouter::GetId() const
 {
-  return m_id;
+	return m_id;
 }
 
 void

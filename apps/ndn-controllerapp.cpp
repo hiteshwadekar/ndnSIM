@@ -53,6 +53,7 @@
 #include "helper/boost-graph-ndn-controller-routing-helper.hpp"
 #include "helper/controller-node-list.hpp"
 
+#include "helper/ndn-app-prefix-helper.hpp"
 
 #include <boost/ref.hpp>
 #include <boost/lambda/lambda.hpp>
@@ -228,7 +229,7 @@ ControllerApp::CalculateRoutes()
             //NS_LOG_DEBUG(" prefix " << prefix << " reachable via face " << *std::get<0>(dist.second)
              //            << " with distance " << std::get<1>(dist.second) << " with delay "
               //           << std::get<2>(dist.second));
-            cout << " prefix " << prefix << " reachable via face " << *std::get<0>(dist.second)
+            cout << " prefix " << prefix->toUri().c_str() << " reachable via face " << *std::get<0>(dist.second)
                  << " with distance " << std::get<1>(dist.second) << " with delay "
                  << std::get<2>(dist.second);
             //FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
@@ -301,10 +302,153 @@ bool ControllerApp::IsNodeActive(Ptr<ControllerRouter> node)
 	return false;
 }
 
-
-
-void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields)
+std::string ControllerApp::getPrefix(Ptr<Node> NodeObj)
 {
+	std::string attrValue="";
+	std::string strTempString;
+	Ptr<AppPrefixHelper> appfxHelper = NodeObj->GetObject<AppPrefixHelper>();
+	if (appfxHelper != 0) {
+		std::map<TypeId, std::string> m_prefixmap = appfxHelper->GetMap();
+		std::cout << "Size of map is -> " << m_prefixmap.size()<<endl;
+		std::map<TypeId,std::string>::iterator itr;
+		for (itr=m_prefixmap.begin(); itr!=m_prefixmap.end(); ++itr)
+		{
+			TypeId m_tid = itr->first;
+			if(m_tid == this->GetTypeId())
+			{
+				if(!attrValue.empty())
+				{
+					//attrValue.append(",");
+				}
+				//attrValue.append(itr->second);
+			}
+		}
+	  }
+	/*
+	TypeId m_tid = this->GetTypeId();
+	Ptr<Application> app;
+	cout << "Node Name -> "<< Names::FindName(NodeObj)<<endl;
+	cout << "Number of application -> "<< NodeObj->GetNApplications()<<endl;
+	for (uint32_t i = 0; i < NodeObj->GetNApplications(); i++)
+	{
+	  app = NodeObj->GetApplication(i);
+
+	  cout << "\n App Id -> "<< app->GetTypeId();
+	  cout << "\n m_tid -> "<<m_tid;
+	  TypeId m_apptid = app->GetTypeId();
+	 // if (m_apptid == m_tid)
+	  //{
+		 ObjectFactory factory;
+		 factory.SetTypeId (m_tid);
+		 cout << "Factory -> " << factory << endl;
+	  //}
+	}
+	*/
+	Ptr<ndn::L3Protocol> l3 = NodeObj->GetObject<ndn::L3Protocol>();
+	std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
+	ndn::nfd::Fib& fib = fw->getFib();
+	for (const auto& fibEntry : fib) {
+		strTempString = fibEntry.getPrefix().toUri().c_str();
+		if(strTempString.compare("/localhost/nfd")!= 0)
+		{
+			if(!attrValue.empty())
+			{
+				attrValue.append(",");
+			}
+			attrValue.append(fibEntry.getPrefix().toUri().c_str());
+		}
+	  //std::cout << "  -" << fibEntry.getPrefix() << std::endl;
+	  //std::cout << "Next hop: " << std::endl;
+	  //for (const auto& nh : fibEntry.getNextHops()) {
+	    //std::cout << "    - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+	  //}
+	}
+	return attrValue;
+}
+
+
+std::string ControllerApp::GetLocalLinkInfo()
+{
+	std::stringstream strStateTemplate;
+	//std::string strStateTemplate;
+	bool firstVisit = false;
+
+	Ptr<Node> localNode = GetNode ();
+	cout << "\n CustConsumerApp: Collecting Local Link Information of Node -> " << Names::FindName(localNode);
+
+	Ptr<L3Protocol> ndn = localNode->GetObject<L3Protocol> ();
+	NS_ASSERT_MSG (ndn != 0, "Ndn protocol hasn't been installed on a node, please install it first");
+
+	NdnControllerString strControllerData = NdnControllerString("");
+	strControllerData.SetSourceNode(Names::FindName(localNode).c_str());
+
+	for (auto& faceId : ndn->getForwarder()->getFaceTable())
+	 //for (uint32_t faceId = 0; faceId < ndn->GetNFaces (); faceId++)
+	    {
+	      //Ptr<NetDeviceFace> face = DynamicCast<NetDeviceFace> (ndn->GetFace (faceId));
+	      shared_ptr<NetDeviceFace> face = std::dynamic_pointer_cast<NetDeviceFace>(faceId);
+
+	      if (face == 0)
+		{
+		  NS_LOG_DEBUG ("Skipping non-netdevice face");
+		  continue;
+		}
+
+	      Ptr<NetDevice> nd = face->GetNetDevice ();
+	      if (nd == 0)
+		{
+		  NS_LOG_DEBUG ("Not a NetDevice associated with NetDeviceFace");
+		  continue;
+		}
+
+	      Ptr<Channel> ch = nd->GetChannel ();
+
+	      if (ch == 0)
+		{
+		  NS_LOG_DEBUG ("Channel is not associated with NetDevice");
+		  continue;
+		}
+
+	      if (ch->GetNDevices () == 2) // e.g., point-to-point channel
+		{
+		  for (uint32_t deviceId = 0; deviceId < ch->GetNDevices (); deviceId ++)
+		    {
+		      Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
+		      if (nd == otherSide) continue;
+		      Ptr<Node> otherNode = otherSide->GetNode ();
+		      std::cout << "Node prefix information -> " << getPrefix(localNode) <<std::endl;
+		      NS_ASSERT (otherNode != 0);
+		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
+		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
+		      if(!firstVisit)
+		      {
+		    	  firstVisit=true;
+		    	  strStateTemplate << Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric();
+		      }
+		      else
+		      {
+		    	  strStateTemplate << ",";
+		    	  strStateTemplate <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric();
+		      }
+		    }
+		}
+	 }
+
+	strControllerData.SetLinkInfo(strStateTemplate.str());
+	strControllerData.SetNodePrefixInfo(getPrefix(localNode));
+	strControllerData.SetAppPrefixInfo("");
+
+	return strControllerData.GetString();
+}
+
+
+void ControllerApp::AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouterNode)
+{
+	std::string strLinkInfo = GetLocalLinkInfo();
+	NdnControllerString strControllerData = NdnControllerString(strLinkInfo);
+	std::string strSourceNode ="";
+	strSourceNode=strControllerData.GetSourceNode();
+	std::vector<string> fields = strControllerData.GetLinkInfo();
 	if (!fields.empty() and fields.size() >= 3)
 	{
 		for (size_t n = 0; n < fields.size(); n+=3)
@@ -316,6 +460,35 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 					//m_controller_node_container.Add(otherNode);
 					ns3::ndn::ControllerNodeList::Add(otherNode);
 				}
+				Ptr<Node> node1 = Names::Find<Node> (ControllerRouterNode->GetSourceNode());
+				NS_ASSERT_MSG (node1 != 0, ControllerRouterNode->GetSourceNode() << "is not a Node");
+				Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
+				NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
+				shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
+				ControllerRouterNode->AddIncidency(face, otherNode, atoi(fields[n+2].c_str()));
+			}
+	}
+	AddPrefix(ControllerRouterNode, strControllerData.GetNodePrefixInfo());
+}
+
+
+void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields)
+{
+	if (!fields.empty() and fields.size() >= 3)
+	{
+		for (size_t n = 0; n < fields.size(); n+=3)
+			{
+				Ptr<ControllerRouter> otherNode = IsNodePresent(fields[n]);
+				if(otherNode==NULL)
+				{
+					otherNode = CreateObject<ControllerRouter>(fields[n]);
+					ns3::ndn::ControllerNodeList::Add(otherNode);
+				}
+
+				if ((otherNode->GetSourceNode().compare("Node1") == 0) and !otherNode->GetStatus())
+				{
+					AddControllerNodeInfo(otherNode);
+				}
 
 				Ptr<Node> node1 = Names::Find<Node> (node->GetSourceNode());
 				NS_ASSERT_MSG (node1 != 0, node->GetSourceNode() << "is not a Node");
@@ -324,7 +497,6 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 				NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 
 				shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
-
 				node->AddIncidency(face, otherNode, atoi(fields[n+2].c_str()));
 			}
 	}

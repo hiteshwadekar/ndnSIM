@@ -89,6 +89,9 @@ public:
   Ptr<ControllerRouter> IsNodePresent(std::string strNodeName);
   bool IsNodeActive(Ptr<ControllerRouter> node);
   void CalculateRoutes();
+  std::string GetLocalLinkInfo();
+  std::string getPrefix(Ptr<Node> NodeObj);
+  void AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouterNode);
 
 protected:
   // inherited from Application base class.

@@ -11,14 +11,8 @@
 
 #include "ns3/ndnSIM/model/ndn-face.hpp"
 
-#include "helper/ndn-controller-string-parser.hpp"
-#include "helper/ndn-controller-node-container.hpp"
 #include "model/ndn-controller-router.hpp"
 #include "helper/controller-node-list.hpp"
-
-
-#include "ns3/node-list.h"
-#include "ns3/channel-list.h"
 
 #include <list>
 #include <map>
@@ -33,13 +27,13 @@ public:
 
   NdnControllerRouterGraph()
   {
-	  std::cout << "\n Printing all nodes present in container " << endl;
 	  for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
 	  {
-			  ns3::Ptr<ns3::ndn::ControllerRouter> gr = (*j);
-			  (*j)->PrintInfo();
-			  std::cout << "\n Node id is -> " << (*j)->GetId() << endl;
-			  m_vertices.push_back(gr);
+		  	  if((*j)->GetId() != 0)
+		  	  {
+		  		  ns3::Ptr<ns3::ndn::ControllerRouter> gr = (*j);
+		  		  m_vertices.push_back(gr);
+		  	  }
 	  }
   }
 
@@ -116,7 +110,7 @@ out_edges(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const Ndn
 inline graph_traits<NdnControllerRouterGraph>::degree_size_type
 out_degree(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
 {
-  return u->GetIncidencies().size();
+	return u->GetIncidencies().size();
 }
 
 //////////////////////////////////////////////////////////////
@@ -257,9 +251,7 @@ get(const boost::EdgeWeights&, ns3::ndn::ControllerRouter::Incidency& edge)
     //                                               static_cast<uint16_t>(
     //                                                 std::get<1>(edge)->getMetric()),
     //                                               0.0);
-    //return property_traits<EdgeWeights>::reference(std::get<1>(edge), static_cast<uint16_t>(std::get<3>(edge)),0.0);
-	  return property_traits<EdgeWeights>::reference(std::get<1>(edge), 0, 0.0);
-
+    return property_traits<EdgeWeights>::reference(std::get<1>(edge), static_cast<uint32_t>(std::get<3>(edge)),0.0);
   }
 }
 
