@@ -332,7 +332,7 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest) {
 	Name dataName(interest->getName());
 	auto dPacket = make_shared<Data>();
 	dPacket->setName(dataName);
-	dPacket->setFreshnessPeriod(ndn::time::milliseconds(3000));
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
 	std::string strTemplateNode = GetLocalLinkInfo();
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
 	//ndn::StackHelper::getKeyChain().sign(*dPacket);

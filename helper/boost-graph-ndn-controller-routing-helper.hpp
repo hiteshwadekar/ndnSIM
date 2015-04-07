@@ -32,6 +32,13 @@ public:
 		  	  if((*j)->GetId() != 0)
 		  	  {
 		  		  ns3::Ptr<ns3::ndn::ControllerRouter> gr = (*j);
+		  		  std::cout << "Node Name -> " << (*j)->GetSourceNode() << std::endl;
+		  		  std::cout << "Link Size -> " << (*j)->GetIncidencies().size() << std::endl;
+		  		  std::cout << "Prefix Size -> " << (*j)->GetLocalPrefixes().size() << std::endl;
+		  		  for (const auto& prefix : (*j)->GetLocalPrefixes())
+		  		  {
+		  			  std::cout << "prefix -> " << prefix->toUri().c_str() << "\n";
+		  		  }
 		  		  m_vertices.push_back(gr);
 		  	  }
 	  }
@@ -247,10 +254,6 @@ get(const boost::EdgeWeights&, ns3::ndn::ControllerRouter::Incidency& edge)
   if (std::get<1>(edge) == 0)
     return property_traits<EdgeWeights>::reference(nullptr, 0, 0.0);
   else {
-    //return property_traits<EdgeWeights>::reference(std::get<1>(edge),
-    //                                               static_cast<uint16_t>(
-    //                                                 std::get<1>(edge)->getMetric()),
-    //                                               0.0);
     return property_traits<EdgeWeights>::reference(std::get<1>(edge), static_cast<uint32_t>(std::get<3>(edge)),0.0);
   }
 }
