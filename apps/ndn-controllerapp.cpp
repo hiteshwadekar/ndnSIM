@@ -214,12 +214,13 @@ ControllerApp::CalculateRoutes()
           // cout << " is unreachable" << endl;
         }
         else {
-          //cout << "\n Destination node name - > " << dist.first->GetSourceNode() << endl;
-          //cout << "\n Size of prefix list " <<	dist.first->GetLocalPrefixes().size() << endl;
+          cout << "\n Destination node name - > " << dist.first->GetSourceNode() << endl;
+          cout << "\n Size of prefix list " <<	dist.first->GetLocalPrefixes().size() << endl;
           for (const auto& prefix : dist.first->GetLocalPrefixes()) {
             cout << " prefix " << prefix->toUri().c_str() << " reachable via face " << std::get<0>(dist.second)->getId()
                  << " with distance " << std::get<1>(dist.second) << " with delay "
                  << std::get<2>(dist.second);
+
             //FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
                                 //std::get<1>(dist.second));
           }
