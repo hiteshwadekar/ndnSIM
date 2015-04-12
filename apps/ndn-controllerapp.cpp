@@ -233,13 +233,11 @@ ControllerApp::CalculateRoutes()
 
 Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
 {
-	cout << "\n Checking " << strNodeName << " Present or not " << endl;
 	Ptr<ControllerRouter> node = NULL;
 	for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
 	{
 		if ((*j)->GetSourceNode().compare(strNodeName)==0)
 		{
-			cout << "\n Found " << strNodeName << endl;
 			node=(*j);
 		}
 	}
@@ -265,7 +263,6 @@ std::string ControllerApp::getPrefix(Ptr<Node> NodeObj)
 	Ptr<AppPrefixHelper> appfxHelper = NodeObj->GetObject<AppPrefixHelper>();
 	if (appfxHelper != 0) {
 		std::map<TypeId, std::string> m_prefixmap = appfxHelper->GetMap();
-		std::cout << "Size of map is -> " << m_prefixmap.size()<<endl;
 		std::map<TypeId,std::string>::iterator itr;
 		for (itr=m_prefixmap.begin(); itr!=m_prefixmap.end(); ++itr)
 		{
@@ -274,12 +271,14 @@ std::string ControllerApp::getPrefix(Ptr<Node> NodeObj)
 			{
 				if(!attrValue.empty())
 				{
-					//attrValue.append(",");
+					attrValue.append(",");
 				}
-				//attrValue.append(itr->second);
+				attrValue.append(itr->second);
 			}
 		}
 	  }
+
+	/*
 	Ptr<ndn::L3Protocol> l3 = NodeObj->GetObject<ndn::L3Protocol>();
 	std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
 	ndn::nfd::Fib& fib = fw->getFib();
@@ -293,7 +292,7 @@ std::string ControllerApp::getPrefix(Ptr<Node> NodeObj)
 			}
 			attrValue.append(fibEntry.getPrefix().toUri().c_str());
 		}
-	}
+	}*/
 	return attrValue;
 }
 
@@ -305,7 +304,6 @@ std::string ControllerApp::GetLocalLinkInfo()
 	bool firstVisit = false;
 
 	Ptr<Node> localNode = GetNode ();
-	cout << "\n CustConsumerApp: Collecting Local Link Information of Node -> " << Names::FindName(localNode);
 
 	Ptr<L3Protocol> ndn = localNode->GetObject<L3Protocol> ();
 	NS_ASSERT_MSG (ndn != 0, "Ndn protocol hasn't been installed on a node, please install it first");
@@ -344,7 +342,6 @@ std::string ControllerApp::GetLocalLinkInfo()
 		      Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
 		      if (nd == otherSide) continue;
 		      Ptr<Node> otherNode = otherSide->GetNode ();
-		      std::cout << "Node prefix information -> " << getPrefix(localNode) <<std::endl;
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
@@ -401,9 +398,6 @@ void ControllerApp::AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouter
 
 void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields)
 {
-
-	cout << "\n Adding Link information for node -> " << node->GetSourceNode() << endl;
-
 	if (!fields.empty() and fields.size() >= 3)
 	{
 		for (size_t n = 0; n < fields.size(); n+=3)
@@ -412,7 +406,6 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 				if(otherNode==NULL)
 				{
 					otherNode = CreateObject<ControllerRouter>(fields[n]);
-					cout << "\n Node " << otherNode->GetSourceNode() << "has been added !."<< endl;
 					ns3::ndn::ControllerNodeList::Add(otherNode);
 				}
 
@@ -435,7 +428,6 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 
 void ControllerApp::AddPrefix(Ptr<ControllerRouter> node, std::vector<string> fields)
 {
-	cout << "\n Adding Prefix information for node -> " << node->GetSourceNode() << endl;
 	if (!fields.empty())
 	{
 		for (size_t n = 0; n < fields.size(); n+=1)
@@ -564,9 +556,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	if(node==NULL)
 	{
 		node = CreateObject<ControllerRouter>(strSourceNode);
-		//m_controller_node_container.Add(node);
 		size_t k = ns3::ndn::ControllerNodeList::Add(node);
-		cout << "\n Node " << node->GetSourceNode() << "has been added -> " << k << endl;
 	}
 
 	AddIncidency(node, strControllerData.GetLinkInfo());
@@ -575,7 +565,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
 	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
 	std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
-	sendInterestPacket(strInterestPrefix);
+	//sendInterestPacket(strInterestPrefix);
 
 }
 

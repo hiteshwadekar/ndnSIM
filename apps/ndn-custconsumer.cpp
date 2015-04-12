@@ -157,7 +157,6 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 
 	// call FIB control command from NFD to update the fib check the status.
 
-
 }
 
 
@@ -189,7 +188,6 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	Ptr<AppPrefixHelper> appfxHelper = NodeObj->GetObject<AppPrefixHelper>();
 	if (appfxHelper != 0) {
 		std::map<TypeId, std::string> m_prefixmap = appfxHelper->GetMap();
-		std::cout << "Size of map is -> " << m_prefixmap.size()<<endl;
 		std::map<TypeId,std::string>::iterator itr;
 		for (itr=m_prefixmap.begin(); itr!=m_prefixmap.end(); ++itr)
 		{
@@ -198,9 +196,9 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 			{
 				if(!attrValue.empty())
 				{
-					//attrValue.append(",");
+					attrValue.append(",");
 				}
-				//attrValue.append(itr->second);
+				attrValue.append(itr->second);
 			}
 		}
 	  }
@@ -224,6 +222,8 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	  //}
 	}
 	*/
+
+	/*
 	Ptr<ndn::L3Protocol> l3 = NodeObj->GetObject<ndn::L3Protocol>();
 	std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
 	ndn::nfd::Fib& fib = fw->getFib();
@@ -243,6 +243,7 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	    //std::cout << "    - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
 	  //}
 	}
+	*/
 	return attrValue;
 }
 
@@ -254,8 +255,7 @@ std::string CustConsumer::GetLocalLinkInfo()
 	bool firstVisit = false;
 
 	Ptr<Node> localNode = GetNode ();
-	cout << "\n CustConsumerApp: Collecting Local Link Information of Node -> " << Names::FindName(localNode);
-
+	//cout << "\n CustConsumerApp: Collecting Local Link Information of Node -> " << Names::FindName(localNode);
 	Ptr<L3Protocol> ndn = localNode->GetObject<L3Protocol> ();
 	NS_ASSERT_MSG (ndn != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 
@@ -296,7 +296,6 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
 		      if (nd == otherSide) continue;
 		      Ptr<Node> otherNode = otherSide->GetNode ();
-		      std::cout << "Node prefix information -> " << getPrefix(localNode) <<std::endl;
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
@@ -348,7 +347,7 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest) {
 	 dPacket->setSignature(signature);
 	 dPacket->wireEncode();
 
-	 std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face << std::endl;
+	 std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face->getId() << std::endl;
 	 m_transmittedDatas(dPacket, this, m_face);
 	 m_face->onReceiveData(*dPacket);
 	 std::cout << "\n";
