@@ -21,16 +21,23 @@ public:
   /**
    * @brief Graph edge
    */
-  //typedef std::tuple<Ptr<ControllerRouter>, size_t faceId, Ptr<ControllerRouter>> Incidency;
   typedef std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t> Incidency;
   /**
    * @brief List of graph edges
    */
   typedef std::list<Incidency> IncidencyList;
-  	  /**
+  /**
    * @brief List of locally exported prefixes
    */
   typedef std::list<shared_ptr<Name>> LocalPrefixList;
+  /**
+   * @brief Graph edge
+   */
+  typedef std::map<Ptr<ControllerRouter>,std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>>> PathInfo;
+  /**
+       * @brief List of graph edges
+       */
+  typedef std::list<PathInfo> PathInfoList;
   /**
    * \brief Interface ID
    *
@@ -58,10 +65,18 @@ public:
   /**
    * @brief Add edge to the node
    * @param face Face of the edge
-   * @param ndn GlobalRouter of another node
+   * @param ndn ControllerRouter of another node
    */
   void
   AddIncidency(shared_ptr<Face> faceId, Ptr<ControllerRouter> ndn, size_t faceMetric);
+  /**
+   * @brief Add calculated path to the node
+   * @param prefix name
+   * @param face Face of the edge
+   * @param calculated metrics of the node.
+   */
+  void
+  AddPaths(Ptr<ControllerRouter> ndn,std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>> lstPath);
   /**
    * @brief Get list of edges that are connected to this node
    */
@@ -93,7 +108,7 @@ private:
   std::string m_sourcenode;
   LocalPrefixList m_localPrefixes;
   IncidencyList m_incidencies;
-
+  PathInfo m_pathInfoList;
   static uint32_t m_idCounter;
 };
 

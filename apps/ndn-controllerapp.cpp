@@ -214,16 +214,18 @@ ControllerApp::CalculateRoutes()
           // cout << " is unreachable" << endl;
         }
         else {
+          std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>> pathList;
           cout << "\n Destination node name - > " << dist.first->GetSourceNode() << endl;
           cout << "\n Size of prefix list " <<	dist.first->GetLocalPrefixes().size() << endl;
           for (const auto& prefix : dist.first->GetLocalPrefixes()) {
             cout << " prefix " << prefix->toUri().c_str() << " reachable via face " << std::get<0>(dist.second)->getId()
                  << " with distance " << std::get<1>(dist.second) << " with delay "
                  << std::get<2>(dist.second);
-
+             pathList.push_back(std::make_tuple(prefix, std::get<0>(dist.second), std::get<1>(dist.second)));
             //FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
                                 //std::get<1>(dist.second));
           }
+          source->AddPaths(dist.first,pathList);
         }
       }
     }
@@ -565,7 +567,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
 	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
 	std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
-	//sendInterestPacket(strInterestPrefix);
+	sendInterestPacket(strInterestPrefix);
 
 }
 
