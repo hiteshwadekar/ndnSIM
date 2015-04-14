@@ -455,6 +455,17 @@ void ControllerApp::sendInterestPacket(std::string strPrefix){
 	std::cout << "\n";
 }
 
+std::string ControllerApp::getNodePathData(Ptr<ControllerRouter> dstNode)
+{
+	std::string strPath ="";
+
+
+
+
+	return strPath;
+}
+
+
 std::string ControllerApp::getTheCalculationPath(std::string strForNode){
 	// We need to send following information to node in order to travel packet to shortest distance.
 	// Node Id
@@ -462,15 +473,21 @@ std::string ControllerApp::getTheCalculationPath(std::string strForNode){
 	// Face ID
 	// Distance
 	// Delay
+
 	std::string strPath="";
-	//strPath = "Node Name -> " + strForNode + "," + "\t Prefix Name -> " + "/controller" + "," + "\t Face ID -> " + "256" + "," + "\t Face Metrics (Link weight) -> " + "3" + "," + "\t Face delay-> " + "0";
-	strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
+	Ptr<ControllerRouter> dstNode = IsNodePresent(strForNode);
+	if(dstNode!=NULL)
+	{
+		strPath = getNodePathData(dstNode);
+		//strPath = "Node Name -> " + strForNode + "," + "\t Prefix Name -> " + "/controller" + "," + "\t Face ID -> " + "256" + "," + "\t Face Metrics (Link weight) -> " + "3" + "," + "\t Face delay-> " + "0";
+		strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
+	}
 	return strPath;
 }
 
 
 
-void ControllerApp::sendDataPacket(std::shared_ptr<const Interest> interest){
+void ControllerApp::sendPathDataPacket(std::shared_ptr<const Interest> interest){
 
 	if (!m_active)
 		return;
@@ -523,11 +540,7 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	{
 		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
-		if (strInterestNodePrefix.compare("Node3") == 0)
-		{
-			CalculateRoutes();
-		}
-		sendDataPacket(interest);
+		//sendPathDataPacket(interest);
 	}
 	else{
 		strPrefix = "/";
@@ -535,6 +548,25 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	}
 
 }
+
+void ControllerApp::StartSendingPathToNode()
+{
+
+	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
+	//std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
+	//std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
+
+	for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
+	  {
+		Ptr<ControllerRouter> source = (*node);
+		if (source != NULL){
+			std::string strInterestPrefix = "/" + source->GetSourceNode() + "/controller" + "/res_route";
+			std::cout << "\n ControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
+			sendInterestPacket(strInterestPrefix);
+		}
+	  }
+}
+
 
 void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	App::OnData(contentObject); // tracing inside
@@ -564,11 +596,11 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	AddIncidency(node, strControllerData.GetLinkInfo());
 	AddPrefix(node, strControllerData.GetNodePrefixInfo());
 
-	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication ************************************************************"<<std::endl;
-	std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
-	std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
-	sendInterestPacket(strInterestPrefix);
-
+	if(strSourceNode.compare("Node3") == 0)
+	{
+		CalculateRoutes();
+		//StartSendingPathToNode();
+	}
 }
 
 void ControllerApp::OnNack(std::shared_ptr<const ndn::Interest> interest) {

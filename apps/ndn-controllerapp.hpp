@@ -81,7 +81,7 @@ public:
   std::string extractNodeName(std::string strPacketName, int n);
   std::string extractNodeRequestType(std::string strPrefixName);
   void sendInterestPacket(std::string strPrefix);
-  void sendDataPacket(shared_ptr<const Interest> interest);
+  void sendPathDataPacket(shared_ptr<const Interest> interest);
   void extractNodeLinkInfo(std::string strNodeLinkInfo);
   std::string getTheCalculationPath(std::string strForNode);
   void AddIncidency(Ptr<ControllerRouter> node, std::vector<string> fields);
@@ -92,6 +92,8 @@ public:
   std::string GetLocalLinkInfo();
   std::string getPrefix(Ptr<Node> NodeObj);
   void AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouterNode);
+  void StartSendingPathToNode();
+  std::string getNodePathData(Ptr<ControllerRouter> dstNode);
 
 protected:
   // inherited from Application base class.
