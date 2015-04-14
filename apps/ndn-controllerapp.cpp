@@ -472,14 +472,17 @@ std::string ControllerApp::getNodePathData(Ptr<ControllerRouter> dstNode)
 		int count = 0;
 		int size = iter->second.size();
 
-		std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>>::const_iterator it;
+		std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>>::const_iterator itr;
 
 		std::cout << "\n Size of list -> " << iter->second.size() << std::endl;
 
-		for(it=iter->second.begin();it!=iter->second.end();it++);
+		for(itr=iter->second.begin();itr!=iter->second.end();itr++);
 		{
 
 
+			std::cout << std::get<0>(*itr) << std::endl;
+			std::cout << std::get<1>(*itr) << std::endl;
+			std::cout << std::get<2>(*itr) << std::endl;
 			//std::cout << std::get<0>(it) << std::endl;
 
 			count++;
@@ -574,7 +577,7 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	{
 		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
-		//sendPathDataPacket(interest);
+		sendPathDataPacket(interest);
 	}
 	else{
 		strPrefix = "/";
@@ -593,7 +596,7 @@ void ControllerApp::StartSendingPathToNode()
 	for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
 	  {
 		Ptr<ControllerRouter> source = (*node);
-		if (source != NULL){
+		if (source != NULL && source->GetSourceNode().compare("Node0")!=0){
 			std::string strInterestPrefix = "/" + source->GetSourceNode() + "/controller" + "/res_route";
 			std::cout << "\n ControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
 			sendInterestPacket(strInterestPrefix);
@@ -633,7 +636,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	if(strSourceNode.compare("Node3") == 0)
 	{
 		CalculateRoutes();
-		//StartSendingPathToNode();
+		StartSendingPathToNode();
 	}
 }
 
