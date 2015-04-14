@@ -60,6 +60,8 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <typeinfo>
+
 namespace ll = boost::lambda;
 
 NS_LOG_COMPONENT_DEFINE("ndn.ControllerApp");
@@ -457,12 +459,44 @@ void ControllerApp::sendInterestPacket(std::string strPrefix){
 
 std::string ControllerApp::getNodePathData(Ptr<ControllerRouter> dstNode)
 {
-	std::string strPath ="";
+	NdnControllerString strControllerData = NdnControllerString("");
+	strControllerData.SetSourceNode(dstNode->GetSourceNode());
+	std::string strPath = "";
+
+	std::map<Ptr<ControllerRouter>,std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>>>::const_iterator iter;
+	for (iter = dstNode->GetPathInfo().begin();iter!=dstNode->GetPathInfo().end();iter++)
+	{
+		strPath.append("(");
+		strPath.append(iter->first->GetSourceNode());
+		strPath.append(":");
+		int count = 0;
+		int size = iter->second.size();
+
+		std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>>::const_iterator it;
+
+		std::cout << "\n Size of list -> " << iter->second.size() << std::endl;
+
+		for(it=iter->second.begin();it!=iter->second.end();it++);
+		{
 
 
+			//std::cout << std::get<0>(it) << std::endl;
 
-
-	return strPath;
+			count++;
+			//strPath.append(std::get<0>(it)->toUri().c_str());
+			//strPath.append(",");
+			//strPath.append(std::get<1>(it)->getId());
+			//strPath.append(",");
+			//strPath.append(std::get<2>(it));
+			//if(count != size)
+			//{
+				//strPath.append(",");
+			//}
+		}
+		strPath.append(")");
+	}
+	strControllerData.SetCalculatedPath(strPath);
+	return strControllerData.GetString();
 }
 
 

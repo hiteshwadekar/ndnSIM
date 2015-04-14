@@ -58,6 +58,12 @@ void ControllerRouter::AddPaths(Ptr<ControllerRouter> ndn, std::list<std::tuple<
 	m_pathInfoList[ndn]=lstPath;
 }
 
+
+const ControllerRouter::PathInfo&
+ControllerRouter::GetPathInfo() const {
+	return m_pathInfoList;
+}
+
 ControllerRouter::IncidencyList&
 ControllerRouter::GetIncidencies() {
 	return m_incidencies;

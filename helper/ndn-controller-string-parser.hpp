@@ -40,6 +40,7 @@ static const std::string SOURCE_NODE_NAME = "Source_Node_Name:";
 static const std::string LINK_INFORMATION = "Link_Information:{";
 static const std::string NODE_PREFIX = "Node_Prefix:{";
 static const std::string APP_PREFIX = "App_Prefix:{";
+static const std::string CALPATH_PREFIX = "Calculated_Path:{";
 
 
 using namespace std;
@@ -90,6 +91,9 @@ public:
 
   std::vector<std::string>
   extractLinkInformation(string key, string strPattern);
+
+  std::string
+  SetCalculatedPath(string strPath);
 
 private:
   std::string m_string;

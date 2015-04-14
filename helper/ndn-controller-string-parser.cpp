@@ -109,6 +109,16 @@ NdnControllerString::SetNodePrefixInfo(string strNodePrefix){
 	return m_string;
 }
 
+string
+NdnControllerString::SetCalculatedPath(string strPath){
+	if (!m_string.empty() and !strPath.empty())
+	{
+		m_string = m_string + CALPATH_PREFIX + strPath + "}" + ",";
+	}
+	return m_string;
+}
+
+
 string NdnControllerString::extractInformation(string key, string strPattern)
 {
   string s = key;

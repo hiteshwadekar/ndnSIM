@@ -97,6 +97,9 @@ public:
   void
     PrintInfo();
 
+  const PathInfo&
+  GetPathInfo() const;
+
   // ??
 protected:
   virtual void
