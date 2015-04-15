@@ -113,7 +113,7 @@ string
 NdnControllerString::SetCalculatedPath(string strPath){
 	if (!m_string.empty() and !strPath.empty())
 	{
-		m_string = m_string + CALPATH_PREFIX + strPath + "}" + ",";
+		m_string = m_string + CALPATH_PREFIX + strPath + "}";
 	}
 	return m_string;
 }

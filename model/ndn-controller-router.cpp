@@ -54,7 +54,7 @@ void ControllerRouter::AddIncidency(shared_ptr<Face> faceId,
 	m_status = true;
 }
 
-void ControllerRouter::AddPaths(Ptr<ControllerRouter> ndn, std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>> lstPath) {
+void ControllerRouter::AddPaths(Ptr<ControllerRouter> ndn, std::list<std::tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> lstPath) {
 	m_pathInfoList[ndn]=lstPath;
 }
 

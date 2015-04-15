@@ -41,6 +41,7 @@
 #include "ns3/channel-list.h"
 #include "ns3/object-factory.h"
 
+#include "boost/tuple/tuple.hpp"
 
 #include "ns3/ndnSIM/helper/ndn-stack-helper.hpp"
 #include "ns3/ndnSIM/helper/ndn-fib-helper.hpp"
@@ -175,6 +176,7 @@ ControllerApp::CalculateRoutes()
   BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
 
   boost::NdnControllerRouterGraph graph;
+  typedef std::list<tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> pathList;
   // typedef graph_traits < NdnControllerRouterGraph >::vertex_descriptor vertex_descriptor;
 
   // For now we doing Dijkstra for every node.  Can be replaced with Bellman-Ford or Floyd-Warshall.
@@ -216,18 +218,18 @@ ControllerApp::CalculateRoutes()
           // cout << " is unreachable" << endl;
         }
         else {
-          std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>> pathList;
+          pathList t1;
           cout << "\n Destination node name - > " << dist.first->GetSourceNode() << endl;
           cout << "\n Size of prefix list " <<	dist.first->GetLocalPrefixes().size() << endl;
-          for (const auto& prefix : dist.first->GetLocalPrefixes()) {
+          for (auto& prefix : dist.first->GetLocalPrefixes()) {
             cout << " prefix " << prefix->toUri().c_str() << " reachable via face " << std::get<0>(dist.second)->getId()
                  << " with distance " << std::get<1>(dist.second) << " with delay "
                  << std::get<2>(dist.second);
-             pathList.push_back(std::make_tuple(prefix, std::get<0>(dist.second), std::get<1>(dist.second)));
+            t1.push_back(std::make_tuple (prefix, std::get<0>(dist.second), std::get<1>(dist.second)));
             //FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
                                 //std::get<1>(dist.second));
           }
-          source->AddPaths(dist.first,pathList);
+          source->AddPaths(dist.first,t1);
         }
       }
     }
@@ -463,38 +465,29 @@ std::string ControllerApp::getNodePathData(Ptr<ControllerRouter> dstNode)
 	strControllerData.SetSourceNode(dstNode->GetSourceNode());
 	std::string strPath = "";
 
-	std::map<Ptr<ControllerRouter>,std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>>>::const_iterator iter;
+	std::map<Ptr<ControllerRouter>,std::list<std::tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>>>::const_iterator iter;
 	for (iter = dstNode->GetPathInfo().begin();iter!=dstNode->GetPathInfo().end();iter++)
 	{
 		strPath.append("(");
 		strPath.append(iter->first->GetSourceNode());
 		strPath.append(":");
+
 		int count = 0;
-		int size = iter->second.size();
+		int lstSize = iter->second.size();
+		std::list<std::tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> lstList = iter->second;
 
-		std::list<std::tuple<shared_ptr<Name>,shared_ptr<Face>,size_t>>::const_iterator itr;
-
-		std::cout << "\n Size of list -> " << iter->second.size() << std::endl;
-
-		for(itr=iter->second.begin();itr!=iter->second.end();itr++);
+		for (auto& iter: lstList)
 		{
-
-
-			std::cout << std::get<0>(*itr) << std::endl;
-			std::cout << std::get<1>(*itr) << std::endl;
-			std::cout << std::get<2>(*itr) << std::endl;
-			//std::cout << std::get<0>(it) << std::endl;
-
 			count++;
-			//strPath.append(std::get<0>(it)->toUri().c_str());
-			//strPath.append(",");
-			//strPath.append(std::get<1>(it)->getId());
-			//strPath.append(",");
-			//strPath.append(std::get<2>(it));
-			//if(count != size)
-			//{
-				//strPath.append(",");
-			//}
+			strPath.append(std::get<0>(iter)->toUri().c_str());
+			strPath.append(",");
+			strPath.append(std::to_string(std::get<1>(iter)->getId()));
+			strPath.append(",");
+			strPath.append(std::to_string(std::get<2>(iter)));
+			if(count != lstSize)
+			{
+				strPath.append(",");
+			}
 		}
 		strPath.append(")");
 	}
@@ -517,7 +510,7 @@ std::string ControllerApp::getTheCalculationPath(std::string strForNode){
 	{
 		strPath = getNodePathData(dstNode);
 		//strPath = "Node Name -> " + strForNode + "," + "\t Prefix Name -> " + "/controller" + "," + "\t Face ID -> " + "256" + "," + "\t Face Metrics (Link weight) -> " + "3" + "," + "\t Face delay-> " + "0";
-		strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
+		//strPath = strForNode + "," + "/controller" + "," + "256" + "," + "3" + "," + "0";
 	}
 	return strPath;
 }
@@ -596,7 +589,7 @@ void ControllerApp::StartSendingPathToNode()
 	for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
 	  {
 		Ptr<ControllerRouter> source = (*node);
-		if (source != NULL && source->GetSourceNode().compare("Node0")!=0){
+		if (source != NULL && source->GetSourceNode().compare("Node1")!=0){
 			std::string strInterestPrefix = "/" + source->GetSourceNode() + "/controller" + "/res_route";
 			std::cout << "\n ControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
 			sendInterestPacket(strInterestPrefix);
