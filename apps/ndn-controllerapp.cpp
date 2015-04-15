@@ -470,7 +470,7 @@ std::string ControllerApp::getNodePathData(Ptr<ControllerRouter> dstNode)
 	{
 		strPath.append("(");
 		strPath.append(iter->first->GetSourceNode());
-		strPath.append(":");
+		strPath.append(",");
 
 		int count = 0;
 		int lstSize = iter->second.size();

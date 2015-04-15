@@ -76,6 +76,20 @@ NdnControllerString::GetNodePrefixInfo(){
 	return fields;
 }
 
+std::vector<std::string>
+NdnControllerString::GetCalculatedPathInfo(){
+	string strCalPathInfo;
+	std::vector<std::string> fields;
+	if (!m_string.empty())
+	{
+		strCalPathInfo = extractInformation(CALPATH_PREFIX,"}");
+		fields=extractLinkInformation(strCalPathInfo,")(");
+	}
+	return fields;
+}
+
+
+
 string
 NdnControllerString::SetSourceNode(string strSourceNode){
 	if (m_string.empty() and !strSourceNode.empty())

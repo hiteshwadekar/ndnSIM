@@ -95,6 +95,11 @@ public:
   std::string
   SetCalculatedPath(string strPath);
 
+  std::vector<std::string>
+  GetCalculatedPathInfo();
+
+
+
 private:
   std::string m_string;
   static uint32_t m_linkinfoCounter;

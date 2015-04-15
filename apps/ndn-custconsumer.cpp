@@ -153,6 +153,26 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 	std::cout << "CustConsumer:: (updateNodeLinkInfo): Updating FIB with the provided information "<<std::endl;
 	cout << "Packet Data ->  "<< strLinkInfo <<endl;
 
+	NdnControllerString strControllerData = NdnControllerString(strLinkInfo);
+
+	std::vector<std::string> fields;
+	fields = strControllerData.GetCalculatedPathInfo();
+
+	for (size_t n = 0; n < fields.size(); n+=1)
+	{
+		if(!fields[n].empty())
+		{
+			std::cout << "\n Data Path -> " << fields[n] <<std::endl;
+			std::vector<std::string> prefixMetrics;
+				boost::algorithm::split(prefixMetrics, fields[n],
+						boost::algorithm::is_any_of(","));
+			for (size_t k = 0; k < prefixMetrics.size(); k+=1)
+			{
+				std::cout << "\t\t\t \n Splitted Data -> [" << k << "] " << prefixMetrics[k] <<std::endl;
+			}
+		}
+	}
+
 	std::cout << "\n ******* ****************************** Stopping Controller to Consumer Communication ************************************************************"<<std::endl;
 
 	// call FIB control command from NFD to update the fib check the status.
