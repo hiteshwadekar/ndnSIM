@@ -24,7 +24,7 @@
 
 //#include "ndn-app.hpp"
 
-
+#include "model/ndn-net-device-face.hpp"
 #include "ndn-app.hpp"
 //#include "ns3/ndnSIM/model/ndn-common.hpp"
 
@@ -115,6 +115,7 @@ protected:
   std::string extractNodeRequestType(std::string strPrefixName);
   void getOSPFfromNodeName(std::string FromNodeName, std::string ToNodeName);
   std::string getPrefix(Ptr<Node> Node);
+  bool IsFIBMetricsUpdatable(std::string strPrefixName, std::shared_ptr<NetDeviceFace> faceId, size_t faceMetrics);
 };
 
 } // namespace ndn

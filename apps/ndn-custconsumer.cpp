@@ -147,6 +147,35 @@ std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
 	return fields[3];
 }
 
+
+bool CustConsumer::IsFIBMetricsUpdatable(std::string strPrefixName,std::shared_ptr<NetDeviceFace> faceId,size_t faceMetrics)
+{
+	bool IsRequireUpdate=false;
+	Ptr<ndn::L3Protocol> l3 = GetNode()->GetObject<ndn::L3Protocol>();
+	std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
+	ndn::nfd::Fib& fib = fw->getFib();
+	for (const auto& fibEntry : fib) {
+		std::string strTempString = fibEntry.getPrefix().toUri().c_str();
+		std::cout << "  CustConsumer Prefix Name -> " << fibEntry.getPrefix() << std::endl;
+		if(strTempString.compare(strPrefixName)== 0)
+		{
+			for (const auto& nh : fibEntry.getNextHops())
+			{
+				std::cout << " - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+			}
+		}
+	  //std::cout << "  -" << fibEntry.getPrefix() << std::endl;
+	  //std::cout << "Next hop: " << std::endl;
+	  //for (const auto& nh : fibEntry.getNextHops()) {
+		//std::cout << "    - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+	  //}
+	}
+	return IsRequireUpdate;
+}
+
+
+
+
 void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 	// Update the FIB and face metrics with calculated distance by controller.
 	std::cout<<"\n";
@@ -166,9 +195,15 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 			std::vector<std::string> prefixMetrics;
 				boost::algorithm::split(prefixMetrics, fields[n],
 						boost::algorithm::is_any_of(","));
-			for (size_t k = 0; k < prefixMetrics.size(); k+=1)
+			for (size_t k = 0; k < prefixMetrics.size()-1; k+=3)
 			{
 				std::cout << "\t\t\t \n Splitted Data -> [" << k << "] " << prefixMetrics[k] <<std::endl;
+				std::cout << "\t\t\t \n Splitted Data -> [" << k+1 << "] " << prefixMetrics[k+1] <<std::endl;
+				std::cout << "\t\t\t \n Splitted Data -> [" << k+2 << "] " << prefixMetrics[k+2] <<std::endl;
+				std::cout << "\t\t\t \n Splitted Data -> [" << k+3 << "] " << prefixMetrics[k+3] <<std::endl;
+
+				std::shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (GetNode()->GetObject<ndn::L3Protocol>()->getFaceById(atoi(prefixMetrics[k+2].c_str())));
+				IsFIBMetricsUpdatable(prefixMetrics[k+1],face,atoi(prefixMetrics[k+3].c_str()));
 			}
 		}
 	}
