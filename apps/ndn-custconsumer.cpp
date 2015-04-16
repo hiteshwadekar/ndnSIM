@@ -156,14 +156,14 @@ bool CustConsumer::IsFIBMetricsUpdatable(std::string strPrefixName,std::shared_p
 	ndn::nfd::Fib& fib = fw->getFib();
 	for (const auto& fibEntry : fib) {
 		std::string strTempString = fibEntry.getPrefix().toUri().c_str();
-		std::cout << "  CustConsumer Prefix Name -> " << fibEntry.getPrefix() << std::endl;
-		if(strTempString.compare(strPrefixName)== 0)
-		{
+		//std::cout << "  CustConsumer Prefix Name -> " << fibEntry.getPrefix() << std::endl;
+		//if(strTempString.compare(strPrefixName)== 0)
+		//{
 			for (const auto& nh : fibEntry.getNextHops())
 			{
-				std::cout << " - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+				std::cout << "  CustConsumer Prefix Name -> " << strTempString << " - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << "," << nh.getFace()->getMetric() << std::endl;
 			}
-		}
+		//}
 	  //std::cout << "  -" << fibEntry.getPrefix() << std::endl;
 	  //std::cout << "Next hop: " << std::endl;
 	  //for (const auto& nh : fibEntry.getNextHops()) {
@@ -201,9 +201,18 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 				std::cout << "\t\t\t \n Splitted Data -> [" << k+1 << "] " << prefixMetrics[k+1] <<std::endl;
 				std::cout << "\t\t\t \n Splitted Data -> [" << k+2 << "] " << prefixMetrics[k+2] <<std::endl;
 				std::cout << "\t\t\t \n Splitted Data -> [" << k+3 << "] " << prefixMetrics[k+3] <<std::endl;
-
 				std::shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (GetNode()->GetObject<ndn::L3Protocol>()->getFaceById(atoi(prefixMetrics[k+2].c_str())));
+				std::cout << "\t\t\t \n FaeMetrics ->  " << face->getMetric() <<std::endl;
+
+				std::cout << "\t\t\t \n Before Updating the FIB -> " << std::endl;
 				IsFIBMetricsUpdatable(prefixMetrics[k+1],face,atoi(prefixMetrics[k+3].c_str()));
+
+				shared_ptr<Name> namePrefix = make_shared<Name>(prefixMetrics[k+1]);
+				FibHelper::AddRoute(GetNode(),*namePrefix,face,face->getMetric());
+
+				std::cout << "\t\t\t \n After Updating the FIB -> " << std::endl;
+				IsFIBMetricsUpdatable(prefixMetrics[k+1],face,atoi(prefixMetrics[k+3].c_str()));
+
 			}
 		}
 	}
@@ -440,6 +449,7 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 	{
 		strPrefix = "/";
 		SendInterestPacket(strPrefix);
+
 	}
 
 }
