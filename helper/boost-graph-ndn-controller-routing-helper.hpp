@@ -32,18 +32,19 @@ public:
 		  	  if((*j)->GetId() != 0)
 		  	  {
 		  		  ns3::Ptr<ns3::ndn::ControllerRouter> gr = (*j);
+		  		  //(*j)->AddMultiPathIncidencies((*j)->GetIncidencies());
+		  		  /*
 		  		  std::cout << "Node Name -> " << (*j)->GetSourceNode() << std::endl;
 		  		  std::cout << "Link Size -> " << (*j)->GetIncidencies().size() << std::endl;
 		  		  std::cout << "Prefix Size -> " << (*j)->GetLocalPrefixes().size() << std::endl;
 		  		  for (const auto& prefix : (*j)->GetLocalPrefixes())
 		  		  {
 		  			  std::cout << "prefix -> " << prefix->toUri().c_str() << "\n";
-		  		  }
+		  		  }*/
 		  		  m_vertices.push_back(gr);
 		  	  }
 	  }
   }
-
   const std::list<Vertice>&
   GetVertices() const
   {
@@ -72,7 +73,8 @@ struct graph_traits<NdnControllerRouterGraph> {
   typedef size_t vertices_size_type;
 
   // AdjacencyGraph concept
-  typedef ns3::ndn::ControllerRouter::IncidencyList::iterator out_edge_iterator;
+  //typedef ns3::ndn::ControllerRouter::IncidencyList::iterator out_edge_iterator;
+  typedef ns3::ndn::ControllerRouter::MultiPathIncidencyList::iterator out_edge_iterator;
   typedef size_t degree_size_type;
 
   // typedef size_t edges_size_type;

@@ -23,9 +23,13 @@ public:
    */
   typedef std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t> Incidency;
   /**
-   * @brief List of graph edges
+   * @brief List of total graph edges
    */
   typedef std::list<Incidency> IncidencyList;
+  /**
+  * @brief List of graph multipath active edges
+    */
+   typedef std::list<Incidency> MultiPathIncidencyList;
   /**
    * @brief List of locally exported prefixes
    */
@@ -69,6 +73,23 @@ public:
    */
   void
   AddIncidency(shared_ptr<Face> faceId, Ptr<ControllerRouter> ndn, size_t faceMetric);
+
+  /**
+   * @brief Add edge to the node
+   * @param face Face of the edge
+   * @param ndn ControllerRouter of another node
+   */
+  void
+  AddMultiPathIncidency(shared_ptr<Face>,Ptr<ControllerRouter>,size_t);
+  /**
+   * @brief Add edge to the node
+   * @param face Face of the edge
+   * @param ndn ControllerRouter of another node
+   */
+  void
+  AddMultiPathIncidencies(std::list<Incidency>&);
+
+
   /**
    * @brief Add calculated path to the node
    * @param prefix name
@@ -82,6 +103,16 @@ public:
    */
   IncidencyList&
   GetIncidencies();
+  /**
+   * @brief Get list of edges that are connected to this node
+  */
+  MultiPathIncidencyList&
+  GetMultiPathIncidencies();
+  /**
+   *
+   */
+  void
+  ResetMultiPathIncidencies();
   /**
    * @brief Get list of locally exported prefixes
    */
@@ -100,6 +131,8 @@ public:
   const PathInfo&
   GetPathInfo() const;
 
+  void LinkInitalization(Ptr<ControllerRouter>,shared_ptr<Face>,Ptr<ControllerRouter>);
+
   // ??
 protected:
   virtual void
@@ -111,6 +144,7 @@ private:
   std::string m_sourcenode;
   LocalPrefixList m_localPrefixes;
   IncidencyList m_incidencies;
+  MultiPathIncidencyList m_multiPath_incidencies;
   PathInfo m_pathInfoList;
   static uint32_t m_idCounter;
 };

@@ -43,6 +43,7 @@
 
 #include "boost/tuple/tuple.hpp"
 
+
 #include "ns3/ndnSIM/helper/ndn-stack-helper.hpp"
 #include "ns3/ndnSIM/helper/ndn-fib-helper.hpp"
 
@@ -163,6 +164,32 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 
 }
 
+void ControllerApp::LinkInitalization(Ptr<ControllerRouter> source, shared_ptr<Face> faceId, Ptr<ControllerRouter> dest)
+{
+	 for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
+		  {
+			  	  if((*j)->GetId() != 0)
+			  	  {
+			  		  	  if ((*j)!= source)
+			  		  	  {
+			  		  		(*j)->ResetMultiPathIncidencies();
+			  		  		cout << "\n LinkInitalization -> Scanning Node -> "<< (*j)->GetSourceNode()<<endl;
+			  		  		std::list<ndn::ControllerRouter::Incidency> lstForLinkDown = (*j)->GetIncidencies();
+			  		  		std::list<ndn::ControllerRouter::Incidency>::iterator checkItemDown;
+			  		  		for (checkItemDown=lstForLinkDown.begin();checkItemDown!=lstForLinkDown.end();checkItemDown++)
+			  		  		 {
+			  		  			if (std::get<0>(*checkItemDown)==dest || (std::get<1>(*checkItemDown)!=faceId && std::get<2>(*checkItemDown)!=source))
+			  		  			{
+			  		  				cout << "\n LinkInitalization -> Adding value -> "<< std::get<1>(*checkItemDown)->getId()<<endl;
+			  		  				cout << "\n LinkInitalization -> Adding value -> "<< std::get<2>(*checkItemDown)->GetSourceNode() <<endl;
+			  		  				cout << "\n LinkInitalization -> Adding value -> "<< std::get<3>(*checkItemDown) <<endl;
+			  		  				(*j)->AddMultiPathIncidency(std::get<1>(*checkItemDown),std::get<2>(*checkItemDown),std::get<3>(*checkItemDown));
+			  		  			}
+			  		  		 }
+			  		  	  }
+			  	  }
+		  }
+}
 
 void
 ControllerApp::CalculateRoutes()
@@ -172,11 +199,7 @@ ControllerApp::CalculateRoutes()
    * See http://www.boost.org/doc/libs/1_49_0/libs/graph/doc/table_of_contents.html for more details
    */
 
-  BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnControllerRouterGraph>));
-  BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
-
-  boost::NdnControllerRouterGraph graph;
-  typedef std::list<tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> pathList;
+    typedef std::list<tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> pathList;
   // typedef graph_traits < NdnControllerRouterGraph >::vertex_descriptor vertex_descriptor;
 
   // For now we doing Dijkstra for every node.  Can be replaced with Bellman-Ford or Floyd-Warshall.
@@ -184,17 +207,38 @@ ControllerApp::CalculateRoutes()
   // the graph, which
   // is not obviously how implement in an efficient manner
 
+
   for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
   {
     Ptr<ControllerRouter> source = (*node);
+
     if (source == NULL) {
       NS_LOG_DEBUG("No node present in controller container");
       continue;
     }
 
-    boost::DistancesMap distances;
+    std::cout << "\n *************************************************************************" <<std::endl;
+    std::cout << "\n MultiPath calculation for Source Node Name -> " << source->GetSourceNode() <<std::endl;
 
-    dijkstra_shortest_paths(graph, source,
+    std::list<ndn::ControllerRouter::Incidency> lstAllIncidencies = source->GetIncidencies();
+    std::list<ndn::ControllerRouter::Incidency>::iterator listitem;
+
+    for (listitem=lstAllIncidencies.begin();listitem!=lstAllIncidencies.end();listitem++)
+    {
+    	std::cout << "\n Calulating Paths from Face of the source node ->  " << std::get<1>(*listitem)->getId()<< std::endl;
+
+    	source->ResetMultiPathIncidencies();
+    	source->AddMultiPathIncidency(std::get<1>(*listitem),std::get<2>(*listitem),std::get<3>(*listitem));
+
+    	LinkInitalization(source,std::get<1>(*listitem),std::get<2>(*listitem));
+
+        BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnControllerRouterGraph>));
+        BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
+
+        boost::NdnControllerRouterGraph graph;
+
+    	boost::DistancesMap distances;
+    	dijkstra_shortest_paths(graph, source,
                             // predecessor_map (boost::ref(predecessors))
                             // .
                             distance_map(boost::ref(distances))
@@ -203,36 +247,42 @@ ControllerApp::CalculateRoutes()
                               .distance_compare(boost::WeightCompare())
                               .distance_combine(boost::WeightCombine()));
 
-    // NS_LOG_DEBUG (predecessors.size () << ", " << distances.size ());
+    	// NS_LOG_DEBUG (predecessors.size () << ", " << distances.size ());
 
-    //Ptr<L3Protocol> L3protocol = (*node)->GetObject<L3Protocol>();
-    //shared_ptr<nfd::Forwarder> forwarder = L3protocol->getForwarder();
+    	//Ptr<L3Protocol> L3protocol = (*node)->GetObject<L3Protocol>();
+    	//shared_ptr<nfd::Forwarder> forwarder = L3protocol->getForwarder();
 
-    std::cout << "\n Reachability from Node: " << source->GetSourceNode()<< std::endl;
-    for (const auto& dist : distances) {
-      if (dist.first == source)
-        continue;
-      else {
-        // cout << "  Node " << dist.first->GetObject<Node> ()->GetId ();
-        if (std::get<0>(dist.second) == 0) {
-          // cout << " is unreachable" << endl;
-        }
-        else {
-          pathList t1;
-          cout << "\n Destination node name - > " << dist.first->GetSourceNode() << endl;
-          cout << "\n Size of prefix list " <<	dist.first->GetLocalPrefixes().size() << endl;
-          for (auto& prefix : dist.first->GetLocalPrefixes()) {
-            cout << " prefix " << prefix->toUri().c_str() << " reachable via face " << std::get<0>(dist.second)->getId()
-                 << " with distance " << std::get<1>(dist.second) << " with delay "
-                 << std::get<2>(dist.second);
-            t1.push_back(std::make_tuple (prefix, std::get<0>(dist.second), std::get<1>(dist.second)));
-            //FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
-                                //std::get<1>(dist.second));
-          }
-          source->AddPaths(dist.first,t1);
-        }
-      }
+    	std::cout << "\n Reachability from Node: " << source->GetSourceNode() << std::endl;
+    	for (const auto& dist : distances) {
+    		if (dist.first == source)
+    			continue;
+    		else {
+    			// cout << "  Node " << dist.first->GetObject<Node> ()->GetId ();
+    			if (std::get<0>(dist.second) == 0) {
+    				// cout << " is unreachable" << endl;
+    			}
+    			else {
+    				pathList t1;
+    				cout << "\n Destination node name - > " << dist.first->GetSourceNode() << endl;
+    				cout << "\n Size of prefix list " <<	dist.first->GetLocalPrefixes().size() << endl;
+    				for (auto& prefix : dist.first->GetLocalPrefixes()) {
+    					cout << "prefix " << prefix->toUri().c_str() << " reachable via face " << std::get<0>(dist.second)->getId()
+                		 << " with distance " << std::get<1>(dist.second) << " with delay "
+                		 << std::get<2>(dist.second);
+    					t1.push_back(std::make_tuple (prefix, std::get<0>(dist.second), std::get<1>(dist.second)));
+    					//FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
+                                	//std::get<1>(dist.second));
+    				}
+    				source->AddPaths(dist.first,t1);
+    			}
+    		}
+    	}
+    	std::cout << "\n Done Calulating Paths from Face of the source node ->  " << std::get<1>(*listitem)->getId()<< std::endl;
     }
+
+    source->ResetMultiPathIncidencies();
+    std::cout << "\n *************************************************************************" <<std::endl;
+    std::cout << "\n End MultiPath calculation for Source Node Name -> " << source->GetSourceNode() <<std::endl;
   }
 }
 

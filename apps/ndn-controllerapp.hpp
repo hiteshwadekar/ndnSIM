@@ -94,6 +94,7 @@ public:
   void AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouterNode);
   void StartSendingPathToNode();
   std::string getNodePathData(Ptr<ControllerRouter> dstNode);
+  void LinkInitalization(Ptr<ControllerRouter>,shared_ptr<Face>,Ptr<ControllerRouter>);
 
 protected:
   // inherited from Application base class.

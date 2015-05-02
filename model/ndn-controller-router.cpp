@@ -54,10 +54,23 @@ void ControllerRouter::AddIncidency(shared_ptr<Face> faceId,
 	m_status = true;
 }
 
+void ControllerRouter::AddMultiPathIncidency(shared_ptr<Face> faceId,
+		Ptr<ControllerRouter> gr, size_t faceMetrics) {
+	m_multiPath_incidencies.push_back(std::make_tuple(this, faceId, gr, faceMetrics));
+}
+
+void ControllerRouter::AddMultiPathIncidencies(std::list<Incidency>& lstIncidencies) {
+	m_multiPath_incidencies=lstIncidencies;
+}
+
+void ControllerRouter::
+ ResetMultiPathIncidencies(){
+	m_multiPath_incidencies.clear();
+}
+
 void ControllerRouter::AddPaths(Ptr<ControllerRouter> ndn, std::list<std::tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> lstPath) {
 	m_pathInfoList[ndn]=lstPath;
 }
-
 
 const ControllerRouter::PathInfo&
 ControllerRouter::GetPathInfo() const {
@@ -67,6 +80,11 @@ ControllerRouter::GetPathInfo() const {
 ControllerRouter::IncidencyList&
 ControllerRouter::GetIncidencies() {
 	return m_incidencies;
+}
+
+ControllerRouter::MultiPathIncidencyList&
+ControllerRouter::GetMultiPathIncidencies() {
+	return m_multiPath_incidencies;
 }
 
 const ControllerRouter::LocalPrefixList&
