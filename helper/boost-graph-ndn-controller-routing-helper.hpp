@@ -113,13 +113,13 @@ inline std::pair<graph_traits<NdnControllerRouterGraph>::out_edge_iterator,
                  graph_traits<NdnControllerRouterGraph>::out_edge_iterator>
 out_edges(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
 {
-  return std::make_pair(u->GetIncidencies().begin(), u->GetIncidencies().end());
+  return std::make_pair(u->GetMultiPathIncidencies().begin(), u->GetMultiPathIncidencies().end());
 }
 
 inline graph_traits<NdnControllerRouterGraph>::degree_size_type
 out_degree(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
 {
-	return u->GetIncidencies().size();
+	return u->GetMultiPathIncidencies().size();
 }
 
 //////////////////////////////////////////////////////////////

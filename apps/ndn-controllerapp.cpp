@@ -166,19 +166,20 @@ void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
 
 void ControllerApp::LinkInitalization(Ptr<ControllerRouter> source, shared_ptr<Face> faceId, Ptr<ControllerRouter> dest)
 {
-	 for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
+	cout << "\n LinkInitalization -------> Start -> "<<endl;
+	for (ns3::ndn::ControllerNodeList::Iterator j = ns3::ndn::ControllerNodeList::Begin (); j != ns3::ndn::ControllerNodeList::End (); j++)
 		  {
 			  	  if((*j)->GetId() != 0)
 			  	  {
 			  		  	  if ((*j)!= source)
 			  		  	  {
-			  		  		(*j)->ResetMultiPathIncidencies();
 			  		  		cout << "\n LinkInitalization -> Scanning Node -> "<< (*j)->GetSourceNode()<<endl;
+			  		  		(*j)->ResetMultiPathIncidencies();
 			  		  		std::list<ndn::ControllerRouter::Incidency> lstForLinkDown = (*j)->GetIncidencies();
 			  		  		std::list<ndn::ControllerRouter::Incidency>::iterator checkItemDown;
 			  		  		for (checkItemDown=lstForLinkDown.begin();checkItemDown!=lstForLinkDown.end();checkItemDown++)
 			  		  		 {
-			  		  			if (std::get<0>(*checkItemDown)==dest || (std::get<1>(*checkItemDown)!=faceId && std::get<2>(*checkItemDown)!=source))
+			  		  			if (std::get<0>(*checkItemDown)==dest ||  std::get<2>(*checkItemDown)!=source)
 			  		  			{
 			  		  				cout << "\n LinkInitalization -> Adding value -> "<< std::get<1>(*checkItemDown)->getId()<<endl;
 			  		  				cout << "\n LinkInitalization -> Adding value -> "<< std::get<2>(*checkItemDown)->GetSourceNode() <<endl;
@@ -189,6 +190,7 @@ void ControllerApp::LinkInitalization(Ptr<ControllerRouter> source, shared_ptr<F
 			  		  	  }
 			  	  }
 		  }
+	cout << "\n LinkInitalization -------> Stop -> "<<endl;
 }
 
 void
@@ -206,7 +208,6 @@ ControllerApp::CalculateRoutes()
   // Other algorithms should be faster, but they need additional EdgeListGraph concept provided by
   // the graph, which
   // is not obviously how implement in an efficient manner
-
 
   for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
   {
@@ -229,15 +230,14 @@ ControllerApp::CalculateRoutes()
 
     	source->ResetMultiPathIncidencies();
     	source->AddMultiPathIncidency(std::get<1>(*listitem),std::get<2>(*listitem),std::get<3>(*listitem));
-
     	LinkInitalization(source,std::get<1>(*listitem),std::get<2>(*listitem));
 
         BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnControllerRouterGraph>));
         BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
 
         boost::NdnControllerRouterGraph graph;
-
     	boost::DistancesMap distances;
+
     	dijkstra_shortest_paths(graph, source,
                             // predecessor_map (boost::ref(predecessors))
                             // .
