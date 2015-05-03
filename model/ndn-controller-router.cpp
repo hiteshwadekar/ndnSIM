@@ -69,7 +69,15 @@ void ControllerRouter::
 }
 
 void ControllerRouter::AddPaths(Ptr<ControllerRouter> ndn, std::list<std::tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> lstPath) {
-	m_pathInfoList[ndn]=lstPath;
+
+	if ( m_pathInfoList.find(ndn) == m_pathInfoList.end() )
+	{
+		m_pathInfoList[ndn]=lstPath;
+	}
+	else
+	{
+		m_pathInfoList[ndn].splice(m_pathInfoList[ndn].end(),lstPath);
+	}
 }
 
 const ControllerRouter::PathInfo&
