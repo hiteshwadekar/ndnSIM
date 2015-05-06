@@ -98,9 +98,11 @@ TypeId CustConsumer::GetTypeId(void) {
 	return tid;
 }
 
-CustConsumer::CustConsumer() {
-	// NS_LOG_FUNCTION_NOARGS ();
+CustConsumer::CustConsumer(){
+	//NS_LOG_FUNCTION_NOARGS ();
+	//m_seqMax = std::numeric_limits<uint32_t>::max();
 }
+
 
 // inherited from Application base class.
 void CustConsumer::StartApplication() {
@@ -141,10 +143,19 @@ std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, strPrefixName,
 			boost::algorithm::is_any_of("/"));
+
 	//for (size_t n = 0; n < fields.size(); n++)
 	//	std::cout << fields[n] << "\"\n";
 	//cout << endl;
-	return fields[3];
+
+	if (fields.size()>=3)
+	{
+		return fields[3];
+	}
+	else
+	{
+		return fields[0];
+	}
 }
 
 
@@ -385,7 +396,7 @@ std::string CustConsumer::GetLocalLinkInfo()
 }
 
 
-void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest) {
+void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest, bool toController) {
 	if (!m_active)
 		return;
 	NS_LOG_FUNCTION_NOARGS ();
@@ -396,10 +407,19 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest) {
 	auto dPacket = make_shared<Data>();
 	dPacket->setName(dataName);
 	dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
-	std::string strTemplateNode = GetLocalLinkInfo();
+
+	std::string strTemplateNode="";
+	if(toController)
+	{
+		strTemplateNode = GetLocalLinkInfo();
+	}
+	else
+	{
+		strTemplateNode = "Hello from -> ";
+		strTemplateNode.append(Names::FindName(Ptr<Node>(GetNode ())));
+	}
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
 	//ndn::StackHelper::getKeyChain().sign(*dPacket);
-
 	 Signature signature;
 	 SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
 	 if (m_keyLocator.size() > 0) {
@@ -437,7 +457,7 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 
 	if (strRequestType.compare("req_route") == 0)
 	{
-		SendDataPacket(interest);
+		SendDataPacket(interest, true);
 	}
 	else if(strRequestType.compare("res_route") == 0)
 	{
@@ -447,9 +467,9 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 	}
 	else
 	{
-		strPrefix = "/";
-		SendInterestPacket(strPrefix);
-
+		//strPrefix = "/";
+		//SendInterestPacket(strPrefix);
+		SendDataPacket(interest, false);
 	}
 
 }
@@ -475,10 +495,26 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		updateNodeLinkInfo(msg);
 		std::cout << "\n" << endl;
 		std::cout<< "####################################### Stop Three Way Communication with Controller ###############################################################"<< std::endl;
+
+
+		std::string strNode="";
+		std::cout<< "####################################### Testing updated paths by sending interest packets to each other ###############################################################"<< std::endl;
+		for (ns3::NodeList::Iterator node = ns3::NodeList::Begin(); node != ns3::NodeList::End();
+		         node++) {
+			strNode = Names::FindName(Ptr<Node>(*node));
+			if(strNode.compare("Node1")!=0 && strNode.compare(strNodeName)!=0)
+			{
+				strNode = "/" + strNode;
+				SendInterestPacket(strNode);
+			}
+		}
 	}
 	else
 	{
-
+		// We got the data packet for updating the routes.
+		std::string msg1(reinterpret_cast<const char*>(contentObject->getContent().value()),
+							contentObject->getContent().value_size());
+		std::cout << "\n pRINTING DATA FROM OTHE NODE -> " << msg1 << endl;
 	}
 	std::cout << "\n";
 }

@@ -101,22 +101,28 @@ protected:
   UniformVariable m_rand; ///< @brief nonce generator
   uint32_t m_signature;
 
+  bool m_firstTime;
+  RandomVariable* m_random;
+  std::string m_randomType;
+
+
+
   Name m_keyLocator;
   double m_frequency; // Frequency of interest packets (in hertz)
-  Time               m_offTime;             ///< \brief Time interval between packets
-  Name     m_interestName;        ///< \brief NDN Name of the Interest (use Name)
-  Time               m_interestLifeTime;    ///< \brief LifeTime for interest packet
+  Time m_offTime;             ///< \brief Time interval between packets
+  Name m_interestName;        ///< \brief NDN Name of the Interest (use Name)
+  Time m_interestLifeTime;    ///< \brief LifeTime for interest packet
 
   void SendInterestPacket(std::string strPrefixToController);
   void updateNodeLinkInfo(std::string strLinkInfo);
-  void SendDataPacket(std::shared_ptr<const Interest> interest);
+  void SendDataPacket(std::shared_ptr<const Interest> interest, bool toController);
   std::string GetLocalLinkInfo();
   std::string extractNodeName(std::string strPacketName);
   std::string extractNodeRequestType(std::string strPrefixName);
   void getOSPFfromNodeName(std::string FromNodeName, std::string ToNodeName);
   std::string getPrefix(Ptr<Node> Node);
   bool IsFIBMetricsUpdatable(std::string strPrefixName, std::shared_ptr<NetDeviceFace> faceId, size_t faceMetrics);
-};
+ };
 
 } // namespace ndn
 } // namespace ns3
