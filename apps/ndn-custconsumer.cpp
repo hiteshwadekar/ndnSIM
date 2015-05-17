@@ -219,7 +219,8 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 				IsFIBMetricsUpdatable(prefixMetrics[k+1],face,atoi(prefixMetrics[k+3].c_str()));
 
 				shared_ptr<Name> namePrefix = make_shared<Name>(prefixMetrics[k+1]);
-				FibHelper::AddRoute(GetNode(),*namePrefix,face,face->getMetric());
+				//FibHelper::AddRoute(GetNode(),*namePrefix,face,face->getMetric());
+				FibHelper::AddRoute(GetNode(),*namePrefix,face,atoi(prefixMetrics[k+3].c_str()));
 
 				std::cout << "\t\t\t \n After Updating the FIB -> " << std::endl;
 				IsFIBMetricsUpdatable(prefixMetrics[k+1],face,atoi(prefixMetrics[k+3].c_str()));
