@@ -55,6 +55,8 @@
 #include "helper/boost-graph-ndn-controller-routing-helper.hpp"
 #include "helper/controller-node-list.hpp"
 
+#include "model/ndn-yanGraphAlgorithm.hpp"
+
 #include "helper/ndn-app-prefix-helper.hpp"
 
 #include <boost/ref.hpp>
@@ -287,6 +289,58 @@ ControllerApp::CalculateRoutes()
 }
 
 
+void
+ControllerApp::CalculateKPathYanAlgorithm(int kpath){
+
+	for (ns3::ndn::ControllerNodeList::Iterator src = ns3::ndn::ControllerNodeList::Begin (); src != ns3::ndn::ControllerNodeList::End (); src++)
+	  {
+		for (ns3::ndn::ControllerNodeList::Iterator dst = ns3::ndn::ControllerNodeList::Begin (); dst != ns3::ndn::ControllerNodeList::End (); dst++)
+			  {
+					if((*src)!=(*dst))
+					{
+						YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(*src),
+						my_graph.get_vertex(*dst));
+						int i=1;
+						if(kpath>0)
+						{
+							vector<BasePath*> result_list;
+							clock_t begin = clock();
+
+							my_graph.printEdgeNo();
+							my_graph.printVertexNo();
+
+							cout << "\nCalculating K shortest path Start time ->  "<< (double)begin/CLOCKS_PER_SEC;
+							yenAlg.get_shortest_paths(my_graph.get_vertex(*src),my_graph.get_vertex(*dst),kpath,result_list);
+							clock_t end = clock();
+							cout << "\nCalculating K shortest path End time ->  "<< (double)end/CLOCKS_PER_SEC;
+							cout <<"\n";
+
+							for(vector<BasePath*>::const_iterator pos=result_list.begin();
+									pos!=result_list.end(); ++pos)
+							{
+								cout <<"Path no " << i << endl;
+								(*pos)->PrintOut(cout);
+								i++;
+							}
+							double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+							cout << "\nIt took Yan's k path " << elapsed_secs << "(seconds)" <<endl;
+
+						}
+						else
+						{
+							while(yenAlg.has_next())
+							{
+								++i;
+								yenAlg.next()->PrintOut(cout);
+							}
+						}
+					}
+			 }
+	  }
+}
+
+
+
 Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
 {
 	Ptr<ControllerRouter> node = NULL;
@@ -446,6 +500,8 @@ void ControllerApp::AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouter
 				NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 				shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
 				ControllerRouterNode->AddIncidency(face, otherNode, atoi(fields[n+2].c_str()));
+				my_graph.add_incidency(ControllerRouterNode,otherNode,atof(fields[n+2].c_str()));
+
 			}
 	}
 	AddPrefix(ControllerRouterNode, strControllerData.GetNodePrefixInfo());
@@ -478,6 +534,7 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 
 				shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
 				node->AddIncidency(face, otherNode, atoi(fields[n+2].c_str()));
+				my_graph.add_incidency(node,otherNode,atof(fields[n+2].c_str()));
 			}
 	}
 }
@@ -679,6 +736,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	if(strSourceNode.compare("Node3") == 0)
 	{
 		CalculateRoutes();
+		CalculateKPathYanAlgorithm(3);
 		StartSendingPathToNode();
 	}
 }

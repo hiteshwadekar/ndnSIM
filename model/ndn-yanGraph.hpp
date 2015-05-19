@@ -3,13 +3,15 @@
 
 #pragma once
 #include <iostream>
-
+#include "model/ndn-controller-router.hpp"
 
 namespace ns3 {
 namespace ndn {
 
 using namespace std;
 
+
+/*
 template<class T>
 class WeightGreater
 {
@@ -43,6 +45,44 @@ public:
 	}
 };
 
+*/
+
+template<class T>
+class WeightGreater
+{
+public:
+	// Determine priority.
+	bool operator()(const T& a, const T& b) const
+	{
+		//return a.Weight() > b.Weight();
+		return a->Weight() > b->Weight();
+	}
+
+	bool operator()(const T* a, const T* b) const
+	{
+		return a->Weight() > b->Weight();
+	}
+
+};
+
+
+template<class T>
+class WeightLess
+{
+public:
+	// Determine priority.
+	bool operator()(const T& a, const T& b) const
+	{
+		//return a.Weight() < b.Weight();
+		return a->Weight() > b->Weight();
+	}
+
+	bool operator()(const T* a, const T* b) const
+	{
+		return a->Weight() < b->Weight();
+	}
+
+};
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -52,11 +92,23 @@ template<class T>
 class DeleteFunc
 {
 public:
+	void operator()(const T& it) const
+	{
+		delete it;
+	}
+
+	void operator()(const T*& it) const
+	{
+		delete it;
+	}
+
 	void operator()(const T* it) const
 	{
 		delete it;
 	}
 };
+
+#if 0
 
 /**************************************************************************
 *  BaseVertex
@@ -87,6 +139,8 @@ public:
 	}
 };
 
+#endif
+
 /**************************************************************************
 *  BasePath
 *  <TODO: insert class description here>
@@ -102,10 +156,10 @@ protected:
 
 	int m_nLength;
 	double m_dWeight;
-	std::vector<BaseVertex*> m_vtVertexList;
+	std::vector<Ptr<ControllerRouter>> m_vtVertexList;
 
 public:
-	BasePath(const std::vector<BaseVertex*>& vertex_list, double weight)
+	BasePath(const std::vector<Ptr<ControllerRouter>>& vertex_list, double weight)
 		:m_dWeight(weight)
 	{
 		m_vtVertexList.assign(vertex_list.begin(), vertex_list.end());
@@ -118,15 +172,15 @@ public:
 
 	int length() { return m_nLength; }
 
-	BaseVertex* GetVertex(int i)
+	Ptr<ControllerRouter> GetVertex(int i)
 	{
 		return m_vtVertexList.at(i);
 	}
 
-	bool SubPath(std::vector<BaseVertex*>& sub_path, BaseVertex* ending_vertex_pt)
+	bool SubPath(std::vector<Ptr<ControllerRouter>>& sub_path, Ptr<ControllerRouter> ending_vertex_pt)
 	{
 
-		for (std::vector<BaseVertex*>::const_iterator pos = m_vtVertexList.begin();
+		for (std::vector<Ptr<ControllerRouter>>::const_iterator pos = m_vtVertexList.begin();
 			pos != m_vtVertexList.end(); ++pos)
 		{
 			if (*pos != ending_vertex_pt)
@@ -147,7 +201,7 @@ public:
 	{
 		//out_stream << "Cost: " << m_dWeight << " Length: " << m_vtVertexList.size() << std::endl;
 		std::cout << "Cost: " << m_dWeight << " Length: " << m_vtVertexList.size() << std::endl;
-		for(std::vector<BaseVertex*>::const_iterator pos=m_vtVertexList.begin(); pos!=m_vtVertexList.end();++pos)
+		for(std::vector<Ptr<ControllerRouter>>::const_iterator pos=m_vtVertexList.begin(); pos!=m_vtVertexList.end();++pos)
 		{
 			(*pos)->PrintOut(out_stream);
 			//out_stream << "->";
@@ -162,14 +216,14 @@ class Path : public BasePath
 {
 public:
 
-	Path(const std::vector<BaseVertex*>& vertex_list, double weight):BasePath(vertex_list,weight){}
+	Path(const std::vector<Ptr<ControllerRouter>>& vertex_list, double weight):BasePath(vertex_list,weight){}
 
 	// display the content
 	void PrintOut(std::ostream& out_stream) const
 	{
 		//out_stream << "Cost: " << m_dWeight << " Length: " << m_vtVertexList.size() << std::endl;
 		std::cout << "Cost: " << m_dWeight << " Length: " << m_vtVertexList.size() << std::endl;
-		for(std::vector<BaseVertex*>::const_iterator pos=m_vtVertexList.begin(); pos!=m_vtVertexList.end();++pos)
+		for(std::vector<Ptr<ControllerRouter>>::const_iterator pos=m_vtVertexList.begin(); pos!=m_vtVertexList.end();++pos)
 		{
 			//out_stream << (*pos)->getID() << " ";
 			std::cout << (*pos)->getID() << " ";
@@ -185,20 +239,20 @@ public: // members
 
 	const static double DISCONNECT;
 
-	typedef set<BaseVertex*>::iterator VertexPtSetIterator;
-	typedef map<BaseVertex*, set<BaseVertex*>*>::iterator BaseVertexPt2SetMapIterator;
+	typedef set<Ptr<ControllerRouter>>::iterator VertexPtSetIterator;
+	typedef map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*>::iterator BaseVertexPt2SetMapIterator;
 
 protected: // members
 
 	// Basic information
-	map<BaseVertex*, set<BaseVertex*>*> m_mpFanoutVertices;
-	map<BaseVertex*, set<BaseVertex*>*> m_mpFaninVertices;
+	map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*> m_mpFanoutVertices;
+	map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*> m_mpFaninVertices;
 	map<int, double> m_mpEdgeCodeWeight;
-	vector<BaseVertex*> m_vtVertices;
+	vector<Ptr<ControllerRouter>> m_vtVertices;
 	int m_nEdgeNum;
 	int m_nVertexNum;
 
-	map<int, BaseVertex*> m_mpVertexIndex;
+	map<int, Ptr<ControllerRouter>> m_mpVertexIndex;
 
 	// Members for graph modification
 	set<int> m_stRemovedVertexIds;
@@ -207,22 +261,28 @@ protected: // members
 public:
 
 	// Constructors and Destructor
+	Graph();
 	Graph(const string& file_name);
 	Graph(const Graph& rGraph);
 	~Graph(void);
 
 	void clear();
 
-	BaseVertex* get_vertex(int node_id);
+	Ptr<ControllerRouter> get_vertex(Ptr<ControllerRouter>  node_id);
 
-	int get_edge_code(const BaseVertex* start_vertex_pt, const BaseVertex* end_vertex_pt) const;
-	set<BaseVertex*>* get_vertex_set_pt(BaseVertex* vertex_, map<BaseVertex*, set<BaseVertex*>*>& vertex_container_index);
+	int get_edge_code(const Ptr<ControllerRouter> start_vertex_pt, const Ptr<ControllerRouter> end_vertex_pt) const;
+	set<Ptr<ControllerRouter>>* get_vertex_set_pt(Ptr<ControllerRouter> vertex_, map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*>& vertex_container_index);
 
-	double get_original_edge_weight(const BaseVertex* source, const BaseVertex* sink);
+	double get_original_edge_weight(const Ptr<ControllerRouter> source, const Ptr<ControllerRouter> sink);
 
-	double get_edge_weight(const BaseVertex* source, const BaseVertex* sink);
-	void get_adjacent_vertices(BaseVertex* vertex, set<BaseVertex*>& vertex_set);
-	void get_precedent_vertices(BaseVertex* vertex, set<BaseVertex*>& vertex_set);
+	double get_edge_weight(const Ptr<ControllerRouter> source, const Ptr<ControllerRouter> sink);
+	void get_adjacent_vertices(Ptr<ControllerRouter> vertex, set<Ptr<ControllerRouter>>& vertex_set);
+	void get_precedent_vertices(Ptr<ControllerRouter> vertex, set<Ptr<ControllerRouter>>& vertex_set);
+	void add_incidency(Ptr<ControllerRouter> source, Ptr<ControllerRouter> sink, double edge_weight);
+	void printEdgeNo();
+	void printVertexNo();
+
+
 
 	/// Methods for changing graph
 	void remove_edge(const pair<int,int> edge)

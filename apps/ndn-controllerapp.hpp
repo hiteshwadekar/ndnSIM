@@ -39,6 +39,7 @@
 #include "helper/ndn-controller-string-parser.hpp"
 #include "helper/ndn-controller-node-container.hpp"
 #include "model/ndn-controller-router.hpp"
+#include "model/ndn-yanGraph.hpp"
 
 
 #include <boost/multi_index_container.hpp>
@@ -89,6 +90,7 @@ public:
   Ptr<ControllerRouter> IsNodePresent(std::string strNodeName);
   bool IsNodeActive(Ptr<ControllerRouter> node);
   void CalculateRoutes();
+  void CalculateKPathYanAlgorithm(int kpath);
   std::string GetLocalLinkInfo();
   std::string getPrefix(Ptr<Node> NodeObj);
   void AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouterNode);
@@ -120,6 +122,7 @@ protected:
   Name     m_interestName;        ///< \brief NDN Name of the Interest (use Name)
   Time               m_interestLifeTime;    ///< \brief LifeTime for interest packet
   ControllerNodeContainer m_controller_node_container;
+  Graph my_graph;
 
 };
 

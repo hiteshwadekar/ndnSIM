@@ -14,18 +14,20 @@ bool ControllerRouter::m_status = false;
 
 NS_OBJECT_ENSURE_REGISTERED(ControllerRouter);
 
-#if 0
+
 ControllerRouter::ControllerRouter()
 {
 	m_id = m_idCounter;
+	m_nID = m_idCounter;
 	m_idCounter++;
 }
-#endif
+
 
 ControllerRouter::ControllerRouter(std::string& strSourceNode) {
 	m_sourcenode = strSourceNode;
 	m_status = false;
 	m_id = m_idCounter;
+	m_nID = m_idCounter;
 	m_idCounter++;
 }
 
@@ -39,6 +41,7 @@ TypeId ControllerRouter::GetTypeId() {
 uint32_t ControllerRouter::GetId() const {
 	return m_id;
 }
+
 
 void ControllerRouter::NotifyNewAggregate() {
 	Object::NotifyNewAggregate();

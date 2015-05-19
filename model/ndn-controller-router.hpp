@@ -126,12 +126,25 @@ public:
   GetStatus();
 
   void
-    PrintInfo();
+  PrintInfo();
 
   const PathInfo&
   GetPathInfo() const;
 
   void LinkInitalization(Ptr<ControllerRouter>,shared_ptr<Face>,Ptr<ControllerRouter>);
+
+  // Information from BaseVertex
+  int getID() const { return m_nID; }
+  void setID(int ID_) { m_nID = ID_; }
+
+  double Weight() const { return m_dWeight; }
+  void Weight(double val) { m_dWeight = val; }
+
+  void PrintOut(std::ostream& out_stream)
+  {
+  	//out_stream << m_nID;
+  	std::cout << m_sourcenode;
+  }
 
   // ??
 protected:
@@ -147,6 +160,10 @@ private:
   MultiPathIncidencyList m_multiPath_incidencies;
   PathInfo m_pathInfoList;
   static uint32_t m_idCounter;
+
+  //For Yan's K path alorithm
+  int m_nID;
+  double m_dWeight;
 };
 
 inline bool

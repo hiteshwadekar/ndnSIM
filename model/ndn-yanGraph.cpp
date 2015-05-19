@@ -26,7 +26,12 @@ const double Graph::DISCONNECT = (numeric_limits<double>::max)();
 
 Graph::Graph( const string& file_name )
 {
-	_import_from_file(file_name);
+	//_import_from_file(file_name);
+}
+
+Graph::Graph()
+{
+
 }
 
 Graph::Graph( const Graph& graph )
@@ -46,6 +51,8 @@ Graph::~Graph(void)
 	clear();
 }
 
+
+#if 0
 ///////////////////////////////////////////////////////////////////////////////
 ///  public  _import_from_file
 ///  Construct the graph by importing the edges from the input file.
@@ -101,8 +108,8 @@ void Graph::_import_from_file( const string& input_file_name )
 		ifs >> edge_weight;
 
 		///3.2.1 construct the vertices
-		BaseVertex* start_vertex_pt = get_vertex(start_vertex);
-		BaseVertex* end_vertex_pt = get_vertex(end_vertex);
+		Ptr<ControllerRouter> start_vertex_pt = get_vertex(start_vertex);
+		Ptr<ControllerRouter> end_vertex_pt = get_vertex(end_vertex);
 
 		///3.2.2 add the edge weight
 		//// note that the duplicate edge would overwrite the one occurring before.
@@ -128,20 +135,49 @@ void Graph::_import_from_file( const string& input_file_name )
 
 	ifs.close();
 }
+#endif
 
-BaseVertex* Graph::get_vertex( int node_id )
+
+void Graph::add_incidency(Ptr<ControllerRouter> start_vertex, Ptr<ControllerRouter> end_vertex, double edge_weight)
+{
+	if (start_vertex!= NULL && end_vertex!=NULL)
+	{
+
+		///3.2.1 construct the vertices
+		Ptr<ControllerRouter> start_vertex_pt = get_vertex(start_vertex);
+		Ptr<ControllerRouter> end_vertex_pt = get_vertex(end_vertex);
+
+		///3.2.2 add the edge weight
+		//// note that the duplicate edge would overwrite the one occurring before.
+		m_mpEdgeCodeWeight[get_edge_code(start_vertex_pt, end_vertex_pt)] = edge_weight;
+
+		///3.2.3 update the fan-in or fan-out variables
+		//// Fan-in
+		get_vertex_set_pt(end_vertex_pt, m_mpFaninVertices)->insert(start_vertex_pt);
+
+		//// Fan-out
+		get_vertex_set_pt(start_vertex_pt, m_mpFanoutVertices)->insert(end_vertex_pt);
+
+		m_nVertexNum = m_vtVertices.size();
+		m_nEdgeNum = m_mpEdgeCodeWeight.size();
+	}
+
+}
+
+/*
+Ptr<ControllerRouter> Graph::get_vertex( int node_id )
 {
 	if (m_stRemovedVertexIds.find(node_id) != m_stRemovedVertexIds.end())
 	{
 		return NULL;
 	}else
 	{
-		BaseVertex* vertex_pt = NULL;
-		const map<int, BaseVertex*>::iterator pos = m_mpVertexIndex.find(node_id);
+		Ptr<ControllerRouter> vertex_pt = NULL;
+		const map<int, Ptr<ControllerRouter>>::iterator pos = m_mpVertexIndex.find(node_id);
 		if (pos == m_mpVertexIndex.end())
 		{
 			int vertex_id = m_vtVertices.size();
-			vertex_pt = new BaseVertex();
+			vertex_pt = new ControllerRouter();
 			vertex_pt->setID(node_id);
 			m_mpVertexIndex[node_id] = vertex_pt;
 
@@ -154,20 +190,42 @@ BaseVertex* Graph::get_vertex( int node_id )
 		return vertex_pt;
 	}
 }
+*/
+
+Ptr<ControllerRouter> Graph::get_vertex(Ptr<ControllerRouter> vertex_pt)
+{
+	if(vertex_pt!=NULL)
+	{
+		if (m_stRemovedVertexIds.find(vertex_pt->getID()) != m_stRemovedVertexIds.end())
+		{
+			return NULL;
+		}else
+		{
+			const map<int, Ptr<ControllerRouter>>::iterator pos = m_mpVertexIndex.find(vertex_pt->getID());
+			if (pos == m_mpVertexIndex.end())
+			{
+				int vertex_id = m_vtVertices.size();
+				m_mpVertexIndex[vertex_pt->getID()] = vertex_pt;
+				m_vtVertices.push_back(vertex_pt);
+			}
+		}
+	}
+	return vertex_pt;
+}
 
 void Graph::clear()
 {
 	m_nEdgeNum = 0;
 	m_nVertexNum = 0;
 
-	for(map<BaseVertex*, set<BaseVertex*>*>::const_iterator pos=m_mpFaninVertices.begin();
+	for(map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*>::const_iterator pos=m_mpFaninVertices.begin();
 		pos!=m_mpFaninVertices.end(); ++pos)
 	{
 		delete pos->second;
 	}
 	m_mpFaninVertices.clear();
 
-	for(map<BaseVertex*, set<BaseVertex*>*>::const_iterator pos=m_mpFanoutVertices.begin();
+	for(map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*>::const_iterator pos=m_mpFanoutVertices.begin();
 		pos!=m_mpFanoutVertices.end(); ++pos)
 	{
 		delete pos->second;
@@ -178,7 +236,17 @@ void Graph::clear()
 	m_mpEdgeCodeWeight.clear();
 
 	//clear the list of vertices objects
-	for_each(m_vtVertices.begin(), m_vtVertices.end(), DeleteFunc<BaseVertex>());
+	//for_each(m_vtVertices.begin(), m_vtVertices.end(), DeleteFunc<Ptr<ControllerRouter>>());
+
+	/*
+	for(vector<Ptr<ControllerRouter>>::iterator pos =m_vtVertices.begin();pos!=m_vtVertices.end();pos++)
+	{
+		//(*pos)->PrintInfo();
+
+		delete *(*pos);
+	}*/
+
+
 	m_vtVertices.clear();
 	m_mpVertexIndex.clear();
 
@@ -186,7 +254,7 @@ void Graph::clear()
 	m_stRemovedEdge.clear();
 }
 
-int Graph::get_edge_code( const BaseVertex* start_vertex_pt, const BaseVertex* end_vertex_pt ) const
+int Graph::get_edge_code( const Ptr<ControllerRouter> start_vertex_pt, const Ptr<ControllerRouter> end_vertex_pt ) const
 {
 	/// Note that the computation below works only if
 	/// the result is smaller than the maximum of an integer!
@@ -194,13 +262,13 @@ int Graph::get_edge_code( const BaseVertex* start_vertex_pt, const BaseVertex* e
 }
 
 
-set<BaseVertex*>* Graph::get_vertex_set_pt( BaseVertex* vertex_, map<BaseVertex*, set<BaseVertex*>*>& vertex_container_index )
+set<Ptr<ControllerRouter>>* Graph::get_vertex_set_pt( Ptr<ControllerRouter> vertex_, map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*>& vertex_container_index )
 {
 	BaseVertexPt2SetMapIterator pos = vertex_container_index.find(vertex_);
 
 	if(pos == vertex_container_index.end())
 	{
-		set<BaseVertex*>* vertex_set = new set<BaseVertex*>();
+		set<Ptr<ControllerRouter>>* vertex_set = new set<Ptr<ControllerRouter>>();
 		pair<BaseVertexPt2SetMapIterator,bool> ins_pos =
 			vertex_container_index.insert(make_pair(vertex_, vertex_set));
 
@@ -211,7 +279,7 @@ set<BaseVertex*>* Graph::get_vertex_set_pt( BaseVertex* vertex_, map<BaseVertex*
 }
 
 
-double Graph::get_edge_weight( const BaseVertex* source, const BaseVertex* sink )
+double Graph::get_edge_weight( const Ptr<ControllerRouter> source, const Ptr<ControllerRouter> sink )
 {
 	int source_id = source->getID();
 	int sink_id = sink->getID();
@@ -228,14 +296,14 @@ double Graph::get_edge_weight( const BaseVertex* source, const BaseVertex* sink 
 }
 
 
-void Graph::get_adjacent_vertices( BaseVertex* vertex, set<BaseVertex*>& vertex_set )
+void Graph::get_adjacent_vertices( Ptr<ControllerRouter> vertex, set<Ptr<ControllerRouter>>& vertex_set )
 {
 	int starting_vt_id = vertex->getID();
 
 	if (m_stRemovedVertexIds.find(starting_vt_id) == m_stRemovedVertexIds.end())
 	{
-		set<BaseVertex*>* vertex_pt_set = get_vertex_set_pt(vertex, m_mpFanoutVertices);
-		for(set<BaseVertex*>::const_iterator pos=(*vertex_pt_set).begin();
+		set<Ptr<ControllerRouter>>* vertex_pt_set = get_vertex_set_pt(vertex, m_mpFanoutVertices);
+		for(set<Ptr<ControllerRouter>>::const_iterator pos=(*vertex_pt_set).begin();
 			pos != (*vertex_pt_set).end(); ++pos)
 		{
 			int ending_vt_id = (*pos)->getID();
@@ -250,13 +318,13 @@ void Graph::get_adjacent_vertices( BaseVertex* vertex, set<BaseVertex*>& vertex_
 	}
 }
 
-void Graph::get_precedent_vertices( BaseVertex* vertex, set<BaseVertex*>& vertex_set )
+void Graph::get_precedent_vertices( Ptr<ControllerRouter> vertex, set<Ptr<ControllerRouter>>& vertex_set )
 {
 	if (m_stRemovedVertexIds.find(vertex->getID()) == m_stRemovedVertexIds.end())
 	{
 		int ending_vt_id = vertex->getID();
-		set<BaseVertex*>* pre_vertex_set = get_vertex_set_pt(vertex, m_mpFaninVertices);
-		for(set<BaseVertex*>::const_iterator pos=(*pre_vertex_set).begin();
+		set<Ptr<ControllerRouter>>* pre_vertex_set = get_vertex_set_pt(vertex, m_mpFaninVertices);
+		for(set<Ptr<ControllerRouter>>::const_iterator pos=(*pre_vertex_set).begin();
 			pos != (*pre_vertex_set).end(); ++pos)
 		{
 			int starting_vt_id = (*pos)->getID();
@@ -271,7 +339,7 @@ void Graph::get_precedent_vertices( BaseVertex* vertex, set<BaseVertex*>& vertex
 	}
 }
 
-double Graph::get_original_edge_weight( const BaseVertex* source, const BaseVertex* sink )
+double Graph::get_original_edge_weight( const Ptr<ControllerRouter> source, const Ptr<ControllerRouter> sink )
 {
 	map<int, double>::const_iterator pos =
 		m_mpEdgeCodeWeight.find(get_edge_code(source, sink));
@@ -284,5 +352,15 @@ double Graph::get_original_edge_weight( const BaseVertex* source, const BaseVert
 		return DISCONNECT;
 	}
 }
+
+void Graph::printEdgeNo(){
+	cout <<"\n Total number of edges in the graph is -> " <<m_nEdgeNum<<endl;
+}
+
+void Graph::printVertexNo(){
+	cout <<"\n Total number of Vertex in the graph is -> " <<m_nVertexNum<<endl;
+}
+
+
 }
 }
