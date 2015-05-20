@@ -292,8 +292,10 @@ ControllerApp::CalculateRoutes()
 void
 ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 
+	cout <<"\n Calculating Yan'k path algorithm ---" <<endl;
 	for (ns3::ndn::ControllerNodeList::Iterator src = ns3::ndn::ControllerNodeList::Begin (); src != ns3::ndn::ControllerNodeList::End (); src++)
 	  {
+		cout <<"\n Source node Name -> " << (*src)->GetSourceNode() << endl;
 		for (ns3::ndn::ControllerNodeList::Iterator dst = ns3::ndn::ControllerNodeList::Begin (); dst != ns3::ndn::ControllerNodeList::End (); dst++)
 			  {
 					if((*src)!=(*dst))
@@ -306,15 +308,15 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 							vector<BasePath*> result_list;
 							clock_t begin = clock();
 
-							my_graph.printEdgeNo();
-							my_graph.printVertexNo();
+							//my_graph.printEdgeNo();
+							//my_graph.printVertexNo();
 
-							cout << "\nCalculating K shortest path Start time ->  "<< (double)begin/CLOCKS_PER_SEC;
+							//cout << "\nCalculating K shortest path Start time ->  "<< (double)begin/CLOCKS_PER_SEC;
 							yenAlg.get_shortest_paths(my_graph.get_vertex(*src),my_graph.get_vertex(*dst),kpath,result_list);
 							clock_t end = clock();
-							cout << "\nCalculating K shortest path End time ->  "<< (double)end/CLOCKS_PER_SEC;
+							//cout << "\nCalculating K shortest path End time ->  "<< (double)end/CLOCKS_PER_SEC;
 							cout <<"\n";
-
+							cout << "\nDestination Node Name ->  "<<(*dst)->GetSourceNode();
 							for(vector<BasePath*>::const_iterator pos=result_list.begin();
 									pos!=result_list.end(); ++pos)
 							{
@@ -323,7 +325,7 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 								i++;
 							}
 							double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-							cout << "\nIt took Yan's k path " << elapsed_secs << "(seconds)" <<endl;
+							//cout << "\nIt took Yan's k path " << elapsed_secs << "(seconds)" <<endl;
 
 						}
 						else
@@ -338,8 +340,6 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 			 }
 	  }
 }
-
-
 
 Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
 {
