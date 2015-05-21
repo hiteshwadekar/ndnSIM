@@ -293,6 +293,7 @@ void
 ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 
 	cout <<"\n Calculating Yan'k path algorithm ---" <<endl;
+	my_graph.printVertexInfo();
 	for (ns3::ndn::ControllerNodeList::Iterator src = ns3::ndn::ControllerNodeList::Begin (); src != ns3::ndn::ControllerNodeList::End (); src++)
 	  {
 		cout <<"\n Source node Name -> " << (*src)->GetSourceNode() << endl;
@@ -300,6 +301,8 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 			  {
 					if((*src)!=(*dst))
 					{
+
+						cout << "\n ----------- Start K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
 						YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(*src),
 						my_graph.get_vertex(*dst));
 						int i=1;
@@ -316,7 +319,6 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 							clock_t end = clock();
 							//cout << "\nCalculating K shortest path End time ->  "<< (double)end/CLOCKS_PER_SEC;
 							cout <<"\n";
-							cout << "\nDestination Node Name ->  "<<(*dst)->GetSourceNode();
 							for(vector<BasePath*>::const_iterator pos=result_list.begin();
 									pos!=result_list.end(); ++pos)
 							{
@@ -326,7 +328,7 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 							}
 							double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 							//cout << "\nIt took Yan's k path " << elapsed_secs << "(seconds)" <<endl;
-
+							cout << "\n ----------- Stop K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
 						}
 						else
 						{

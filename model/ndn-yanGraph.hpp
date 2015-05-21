@@ -281,7 +281,7 @@ public:
 	void add_incidency(Ptr<ControllerRouter> source, Ptr<ControllerRouter> sink, double edge_weight);
 	void printEdgeNo();
 	void printVertexNo();
-
+	void printVertexInfo();
 
 
 	/// Methods for changing graph

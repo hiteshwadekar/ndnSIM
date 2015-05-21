@@ -140,6 +140,7 @@ void Graph::_import_from_file( const string& input_file_name )
 
 void Graph::add_incidency(Ptr<ControllerRouter> start_vertex, Ptr<ControllerRouter> end_vertex, double edge_weight)
 {
+	cout <<"\n Add_incidency called "<<endl;
 	if (start_vertex!= NULL && end_vertex!=NULL)
 	{
 
@@ -149,6 +150,7 @@ void Graph::add_incidency(Ptr<ControllerRouter> start_vertex, Ptr<ControllerRout
 
 		///3.2.2 add the edge weight
 		//// note that the duplicate edge would overwrite the one occurring before.
+		cout<<"\n Adding edges in the map -> " << start_vertex_pt->GetSourceNode() << "--" << start_vertex_pt->getID() << "-----" << end_vertex_pt->GetSourceNode() <<"--" <<end_vertex_pt->getID() << "---" <<m_nVertexNum <<"---"<<edge_weight<<endl;
 		m_mpEdgeCodeWeight[get_edge_code(start_vertex_pt, end_vertex_pt)] = edge_weight;
 
 		///3.2.3 update the fan-in or fan-out variables
@@ -160,6 +162,54 @@ void Graph::add_incidency(Ptr<ControllerRouter> start_vertex, Ptr<ControllerRout
 
 		m_nVertexNum = m_vtVertices.size();
 		m_nEdgeNum = m_mpEdgeCodeWeight.size();
+	}
+
+}
+
+void Graph::printVertexInfo()
+{
+	cout << "\n Total Vertices in the Graph -> " << m_nVertexNum;
+	cout << "\n Total Edges in the Graph -> " << m_nEdgeNum;
+
+	cout << "\n Displaying Vertex info "<<endl;
+	for(std::vector<Ptr<ControllerRouter>>::const_iterator pos=m_vtVertices.begin(); pos!=m_vtVertices.end();++pos)
+	{
+		std::cout << (*pos)->GetSourceNode() << " ";
+	}
+
+	cout << "\n Size of Fan in " << m_mpFaninVertices.size()<<endl;
+	cout << "\n Size of Fan out " << m_mpFanoutVertices.size()<<endl;
+
+	cout << "\n Displaying fan in Vertex info "<<endl;
+	set<Ptr<ControllerRouter>>::iterator iter;
+	for(map<Ptr<ControllerRouter>, set<Ptr<ControllerRouter>>*>::const_iterator pos=m_mpFaninVertices.begin();
+		pos!=m_mpFaninVertices.end(); ++pos)
+	{
+
+		cout <<"\n Source node is ->  "<< pos->first->GetSourceNode()<< " and all its incoming edges are -> ";
+		for(iter=pos->second->begin();iter!=pos->second->end();++iter)
+		{
+		    cout<<(*iter)->GetSourceNode()<<endl;
+		}
+	}
+
+	cout << "\n Displaying fan out Vertex info ";
+	for(map<Ptr<ControllerRouter>,set<Ptr<ControllerRouter>>*>::const_iterator pos=m_mpFanoutVertices.begin();
+			pos!=m_mpFanoutVertices.end(); ++pos)
+	{
+			cout <<"\n Source node is ->  "<< pos->first->GetSourceNode()<< " and all its outgoing edges are -`> ";
+			for(iter=pos->second->begin();iter!=pos->second->end();++iter)
+			{
+				cout<<(*iter)->GetSourceNode()<<endl;
+			}
+	}
+
+	map<int, double>::const_iterator itt;
+	cout << "\n Printing edges map's for Graph" <<endl;
+	for(itt=m_mpEdgeCodeWeight.begin();itt!=m_mpEdgeCodeWeight.end();++itt)
+	{
+		cout <<"\n Node id is ->  "<< itt->first << endl;
+		cout <<"\n Node weight is ->  "<< itt->second << endl;
 	}
 
 }
@@ -258,7 +308,8 @@ int Graph::get_edge_code( const Ptr<ControllerRouter> start_vertex_pt, const Ptr
 {
 	/// Note that the computation below works only if
 	/// the result is smaller than the maximum of an integer!
-	return start_vertex_pt->getID()*m_nVertexNum+end_vertex_pt->getID();
+	//return start_vertex_pt->getID()*m_nVertexNum+end_vertex_pt->getID();
+	return start_vertex_pt->getID()*4+end_vertex_pt->getID();
 }
 
 
