@@ -261,6 +261,9 @@ protected: // members
 public:
 
 	// Constructors and Destructor
+
+	Graph(int vert_Number);
+
 	Graph();
 	Graph(const string& file_name);
 	Graph(const Graph& rGraph);
@@ -282,6 +285,7 @@ public:
 	void printEdgeNo();
 	void printVertexNo();
 	void printVertexInfo();
+	void setVertexNo(int vertexNo);
 
 
 	/// Methods for changing graph

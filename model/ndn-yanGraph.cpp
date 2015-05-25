@@ -24,6 +24,11 @@ namespace ndn {
 const double Graph::DISCONNECT = (numeric_limits<double>::max)();
 
 
+Graph::Graph(int ver_no)
+{
+	m_nVertexNum=ver_no;
+}
+
 Graph::Graph( const string& file_name )
 {
 	//_import_from_file(file_name);
@@ -308,8 +313,8 @@ int Graph::get_edge_code( const Ptr<ControllerRouter> start_vertex_pt, const Ptr
 {
 	/// Note that the computation below works only if
 	/// the result is smaller than the maximum of an integer!
-	//return start_vertex_pt->getID()*m_nVertexNum+end_vertex_pt->getID();
-	return start_vertex_pt->getID()*4+end_vertex_pt->getID();
+	return start_vertex_pt->getID()*m_nVertexNum+end_vertex_pt->getID();
+	//return start_vertex_pt->getID()*4+end_vertex_pt->getID();
 }
 
 
@@ -402,6 +407,11 @@ double Graph::get_original_edge_weight( const Ptr<ControllerRouter> source, cons
 	{
 		return DISCONNECT;
 	}
+}
+
+void Graph::setVertexNo(int vertexNo)
+{
+	m_nVertexNum=vertexNo;
 }
 
 void Graph::printEdgeNo(){

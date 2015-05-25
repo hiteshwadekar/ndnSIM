@@ -290,57 +290,81 @@ ControllerApp::CalculateRoutes()
 
 
 void
+ControllerApp::initCalculationKPath(){
+	int ver_no = ControllerNodeList::GetNNodes();
+	if(ver_no > 2)
+	{
+		my_graph.setVertexNo(ver_no);
+		for(ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
+		 {
+			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>> adjancyList = (*node)->GetIncidencies();
+			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
+			for (iter = adjancyList.begin();iter!=adjancyList.end();iter++){
+				Ptr<ControllerRouter> dstNode = std::get<2>(*iter);
+				int cost = std::get<3>(*iter);
+				my_graph.add_incidency((*node),dstNode,cost);
+			}
+		 }
+	}
+}
+
+void
 ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 
 	cout <<"\n Calculating Yan'k path algorithm ---" <<endl;
 	my_graph.printVertexInfo();
-	for (ns3::ndn::ControllerNodeList::Iterator src = ns3::ndn::ControllerNodeList::Begin (); src != ns3::ndn::ControllerNodeList::End (); src++)
-	  {
-		cout <<"\n Source node Name -> " << (*src)->GetSourceNode() << endl;
-		for (ns3::ndn::ControllerNodeList::Iterator dst = ns3::ndn::ControllerNodeList::Begin (); dst != ns3::ndn::ControllerNodeList::End (); dst++)
-			  {
-					if((*src)!=(*dst))
-					{
+	cout <<"\n Total nodes in the grpah are -> "<< ControllerNodeList::GetNNodes() << endl;
 
-						cout << "\n ----------- Start K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
-						YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(*src),
-						my_graph.get_vertex(*dst));
-						int i=1;
-						if(kpath>0)
+	if(ControllerNodeList::GetNNodes()>2)
+	{
+		  for (ns3::ndn::ControllerNodeList::Iterator src = ns3::ndn::ControllerNodeList::Begin (); src != ns3::ndn::ControllerNodeList::End (); src++)
+		  {
+			cout <<"\n Source node Name -> " << (*src)->GetSourceNode() << endl;
+			for (ns3::ndn::ControllerNodeList::Iterator dst = ns3::ndn::ControllerNodeList::Begin (); dst != ns3::ndn::ControllerNodeList::End (); dst++)
+				  {
+						if((*src)!=(*dst))
 						{
-							vector<BasePath*> result_list;
-							clock_t begin = clock();
 
-							//my_graph.printEdgeNo();
-							//my_graph.printVertexNo();
+							cout << "\n ----------- Start K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
 
-							//cout << "\nCalculating K shortest path Start time ->  "<< (double)begin/CLOCKS_PER_SEC;
-							yenAlg.get_shortest_paths(my_graph.get_vertex(*src),my_graph.get_vertex(*dst),kpath,result_list);
-							clock_t end = clock();
-							//cout << "\nCalculating K shortest path End time ->  "<< (double)end/CLOCKS_PER_SEC;
-							cout <<"\n";
-							for(vector<BasePath*>::const_iterator pos=result_list.begin();
-									pos!=result_list.end(); ++pos)
+							YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(*src), my_graph.get_vertex(*dst));
+							int i=1;
+							if(kpath>0)
 							{
-								cout <<"Path no " << i << endl;
-								(*pos)->PrintOut(cout);
-								i++;
+								vector<BasePath*> result_list;
+								clock_t begin = clock();
+
+								//my_graph.printEdgeNo();
+								//my_graph.printVertexNo();
+
+								//cout << "\nCalculating K shortest path Start time ->  "<< (double)begin/CLOCKS_PER_SEC;
+								yenAlg.get_shortest_paths(my_graph.get_vertex(*src),my_graph.get_vertex(*dst),kpath,result_list);
+								clock_t end = clock();
+								//cout << "\nCalculating K shortest path End time ->  "<< (double)end/CLOCKS_PER_SEC;
+								cout <<"\n";
+								for(vector<BasePath*>::const_iterator pos=result_list.begin();
+										pos!=result_list.end(); ++pos)
+								{
+									cout <<"Path no " << i << endl;
+									(*pos)->PrintOut(cout);
+									i++;
+								}
+								double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+								//cout << "\nIt took Yan's k path " << elapsed_secs << "(seconds)" <<endl;
+								cout << "\n ----------- Stop K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
 							}
-							double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-							//cout << "\nIt took Yan's k path " << elapsed_secs << "(seconds)" <<endl;
-							cout << "\n ----------- Stop K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
-						}
-						else
-						{
-							while(yenAlg.has_next())
+							else
 							{
-								++i;
-								yenAlg.next()->PrintOut(cout);
+								while(yenAlg.has_next())
+								{
+									++i;
+									yenAlg.next()->PrintOut(cout);
+								}
 							}
 						}
-					}
-			 }
-	  }
+				 }
+		  }
+	}
 }
 
 Ptr<ControllerRouter> ControllerApp::IsNodePresent(std::string strNodeName)
@@ -502,7 +526,7 @@ void ControllerApp::AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouter
 				NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 				shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
 				ControllerRouterNode->AddIncidency(face, otherNode, atoi(fields[n+2].c_str()));
-				my_graph.add_incidency(ControllerRouterNode,otherNode,atof(fields[n+2].c_str()));
+				//my_graph.add_incidency(ControllerRouterNode,otherNode,atof(fields[n+2].c_str()));
 
 			}
 	}
@@ -536,7 +560,7 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 
 				shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
 				node->AddIncidency(face, otherNode, atoi(fields[n+2].c_str()));
-				my_graph.add_incidency(node,otherNode,atof(fields[n+2].c_str()));
+				//my_graph.add_incidency(node,otherNode,atof(fields[n+2].c_str()));
 			}
 	}
 }
@@ -738,6 +762,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	if(strSourceNode.compare("Node3") == 0)
 	{
 		CalculateRoutes();
+		initCalculationKPath();
 		CalculateKPathYanAlgorithm(3);
 		StartSendingPathToNode();
 	}

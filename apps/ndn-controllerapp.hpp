@@ -97,6 +97,7 @@ public:
   void StartSendingPathToNode();
   std::string getNodePathData(Ptr<ControllerRouter> dstNode);
   void LinkInitalization(Ptr<ControllerRouter>,shared_ptr<Face>,Ptr<ControllerRouter>);
+  void initCalculationKPath();
 
 protected:
   // inherited from Application base class.
@@ -123,7 +124,6 @@ protected:
   Time               m_interestLifeTime;    ///< \brief LifeTime for interest packet
   ControllerNodeContainer m_controller_node_container;
   Graph my_graph;
-
 };
 
 } // namespace ndn
