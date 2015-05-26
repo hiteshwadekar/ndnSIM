@@ -165,7 +165,7 @@ void Graph::add_incidency(Ptr<ControllerRouter> start_vertex, Ptr<ControllerRout
 		//// Fan-out
 		get_vertex_set_pt(start_vertex_pt, m_mpFanoutVertices)->insert(end_vertex_pt);
 
-		m_nVertexNum = m_vtVertices.size();
+		//m_nVertexNum = m_vtVertices.size();
 		m_nEdgeNum = m_mpEdgeCodeWeight.size();
 	}
 

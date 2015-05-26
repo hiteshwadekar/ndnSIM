@@ -761,7 +761,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 
 	if(strSourceNode.compare("Node3") == 0)
 	{
-		CalculateRoutes();
+		//CalculateRoutes();
 		initCalculationKPath();
 		CalculateKPathYanAlgorithm(3);
 		StartSendingPathToNode();
