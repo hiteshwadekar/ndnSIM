@@ -210,6 +210,17 @@ public:
 		//out_stream << std::endl <<  "*********************************************" << std::endl;
 		std::cout << std::endl <<  "*********************************************" << std::endl;
 	}
+
+
+	Ptr<ControllerRouter> getNextNode()
+	{
+		if(m_vtVertexList.size()>=2)
+		{
+			return m_vtVertexList[1];
+		}
+		return NULL;
+	}
+
 };
 
 class Path : public BasePath

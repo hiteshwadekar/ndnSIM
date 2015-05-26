@@ -295,28 +295,50 @@ ControllerApp::initCalculationKPath(){
 	if(ver_no > 2)
 	{
 		my_graph.setVertexNo(ver_no);
+		std::cout <<"\n Initalizing Yan's k path"<<std::endl;
 		for(ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
 		 {
+			std::cout <<"\n Source node is -> "<<(*node)->GetSourceNode()<<std::endl;
 			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>> adjancyList = (*node)->GetIncidencies();
 			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
 			for (iter = adjancyList.begin();iter!=adjancyList.end();iter++){
 				Ptr<ControllerRouter> dstNode = std::get<2>(*iter);
+				std::cout <<"\n Destination node is -> "<<dstNode->GetSourceNode()<<std::endl;
+				std::cout <<"\n Face is -> "<<std::get<1>(*iter)->getId()<<std::endl;
 				int cost = std::get<3>(*iter);
+				std::cout <<"\n Cost is -> "<<cost<<std::endl;
 				my_graph.add_incidency((*node),dstNode,cost);
 			}
 		 }
 	}
 }
 
+
+std::shared_ptr<nfd::Face> ControllerApp::GetFaceId(Ptr<ControllerRouter> srcNode, Ptr<ControllerRouter> dstNode)
+{
+		if(srcNode!=NULL && dstNode!=NULL)
+		{
+			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>> adjancyList = srcNode->GetIncidencies();
+			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
+			for (iter = adjancyList.begin();iter!=adjancyList.end();iter++){
+				if(dstNode == std::get<2>(*iter))
+				{
+					return std::get<1>(*iter);
+				}
+			}
+		}
+		return NULL;
+}
+
 void
 ControllerApp::CalculateKPathYanAlgorithm(int kpath){
-
 	cout <<"\n Calculating Yan'k path algorithm ---" <<endl;
 	my_graph.printVertexInfo();
 	cout <<"\n Total nodes in the grpah are -> "<< ControllerNodeList::GetNNodes() << endl;
 
 	if(ControllerNodeList::GetNNodes()>2)
 	{
+		  typedef std::list<tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> pathList;
 		  for (ns3::ndn::ControllerNodeList::Iterator src = ns3::ndn::ControllerNodeList::Begin (); src != ns3::ndn::ControllerNodeList::End (); src++)
 		  {
 			cout <<"\n Source node Name -> " << (*src)->GetSourceNode() << endl;
@@ -326,18 +348,14 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 						{
 
 							cout << "\n ----------- Start K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
-
 							YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(*src), my_graph.get_vertex(*dst));
 							int i=1;
 							if(kpath>0)
 							{
 								vector<BasePath*> result_list;
 								clock_t begin = clock();
-
-								//my_graph.printEdgeNo();
-								//my_graph.printVertexNo();
-
 								//cout << "\nCalculating K shortest path Start time ->  "<< (double)begin/CLOCKS_PER_SEC;
+								pathList t1;
 								yenAlg.get_shortest_paths(my_graph.get_vertex(*src),my_graph.get_vertex(*dst),kpath,result_list);
 								clock_t end = clock();
 								//cout << "\nCalculating K shortest path End time ->  "<< (double)end/CLOCKS_PER_SEC;
@@ -347,8 +365,24 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 								{
 									cout <<"Path no " << i << endl;
 									(*pos)->PrintOut(cout);
+
+									Ptr<ControllerRouter> nextNode = (*pos)->getNextNode();
+									if(nextNode!=NULL)
+									{
+										std::shared_ptr<nfd::Face> faceId = GetFaceId((*src),nextNode);
+										if(faceId!=NULL)
+										{
+											for (auto& prefix : (*dst)->GetLocalPrefixes())
+											{
+												cout << "prefix " << prefix->toUri().c_str() << " reachable via face " << faceId->getId()
+													 << " with distance " << (*pos)->Weight();
+											    t1.push_back(std::make_tuple (prefix,faceId,static_cast<size_t>((*pos)->Weight())));
+											}
+										}
+									}
 									i++;
 								}
+								(*src)->AddPaths((*dst),t1);
 								double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 								//cout << "\nIt took Yan's k path " << elapsed_secs << "(seconds)" <<endl;
 								cout << "\n ----------- Stop K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
@@ -762,9 +796,9 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	if(strSourceNode.compare("Node3") == 0)
 	{
 		//CalculateRoutes();
-		initCalculationKPath();
-		CalculateKPathYanAlgorithm(3);
-		StartSendingPathToNode();
+		initCalculationKPath(); // Initializing Yan's K path data structures.
+		CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+		StartSendingPathToNode(); // Start seding packets to individual nodes.
 	}
 }
 
