@@ -551,7 +551,7 @@ void ControllerApp::AddControllerNodeInfo(Ptr<ControllerRouter> ControllerRouter
 				Ptr<ControllerRouter> otherNode = IsNodePresent(fields[n]);
 				if(otherNode == NULL)
 				{
-					Ptr<ControllerRouter> otherNode = CreateObject<ControllerRouter>(fields[n]);
+					otherNode = CreateObject<ControllerRouter>(fields[n]);
 					ns3::ndn::ControllerNodeList::Add(otherNode);
 				}
 				Ptr<Node> node1 = Names::Find<Node> (ControllerRouterNode->GetSourceNode());
@@ -580,8 +580,8 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 					otherNode = CreateObject<ControllerRouter>(fields[n]);
 					ns3::ndn::ControllerNodeList::Add(otherNode);
 				}
-
-				if ((otherNode->GetSourceNode().compare("Node1") == 0) and !otherNode->GetStatus())
+				//if ((otherNode->GetSourceNode().compare("Node3") == 0) and !otherNode->GetStatus())
+				if ((otherNode->GetSourceNode().compare(Names::FindName(GetNode ()).c_str()) == 0) and !otherNode->GetStatus())
 				{
 					AddControllerNodeInfo(otherNode);
 				}
@@ -793,11 +793,11 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	AddIncidency(node, strControllerData.GetLinkInfo());
 	AddPrefix(node, strControllerData.GetNodePrefixInfo());
 
-	if(strSourceNode.compare("Node3") == 0)
+	if(strSourceNode.compare("Node6") == 0)
 	{
-		//CalculateRoutes();
-		initCalculationKPath(); // Initializing Yan's K path data structures.
-		CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+		CalculateRoutes();
+		//initCalculationKPath(); // Initializing Yan's K path data structures.
+		//CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 		StartSendingPathToNode(); // Start seding packets to individual nodes.
 	}
 }
