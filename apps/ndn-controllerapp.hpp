@@ -41,7 +41,6 @@
 #include "model/ndn-controller-router.hpp"
 #include "model/ndn-yanGraph.hpp"
 
-
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/tag.hpp>
 #include <boost/multi_index/ordered_index.hpp>

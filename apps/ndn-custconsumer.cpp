@@ -115,7 +115,11 @@ void CustConsumer::StartApplication() {
 
 	//fibEntry->UpdateStatus(m_face, fib::FaceMetric::NDN_FIB_GREEN);
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
+	std::cout<< "####################################### Collecting Link Information ###############################################################"<< std::endl;
 
+
+
+	std::cout << "\n";
 	std::cout<< "####################################### Start Three Way Communication with Controller (Requesting routes)###############################################################"<< std::endl;
 	std::cout << "\n";
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
@@ -375,6 +379,9 @@ std::string CustConsumer::GetLocalLinkInfo()
 		      NS_ASSERT (otherNode != 0);
 		      Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
 		      NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
+
+		      cout <<"\n Face Status " << face->getFaceStatus() <<endl;
+
 		      if(!firstVisit)
 		      {
 		    	  firstVisit=true;
