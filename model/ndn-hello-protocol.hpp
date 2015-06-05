@@ -2,22 +2,27 @@
 #define NDN_HELLO_PROTOCOL_HPP
 
 #include <boost/cstdint.hpp>
-
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/ndnSIM-module.h"
 #include "ns3/ndnSIM/model/ndn-common.hpp"
 #include "ndn-conf-parameter.hpp"
+#include "ndn-adjacency-list.hpp"
+#include "model/ndn-net-device-face.hpp"
+#include "ndn-adjacency.hpp"
 
 namespace ns3 {
 namespace ndn {
 
+#if 0
+
 class HelloProtocol
 {
 public:
-  HelloProtocol(Simulator::Scheduler& scheduler)
-    : m_scheduler(scheduler)
-    , m_adjLsaBuildInterval(static_cast<uint32_t>(ADJ_LSA_BUILD_INTERVAL_DEFAULT))
+  HelloProtocol(AdjacencyList adList, shared_ptr<Face> face)
+    : m_adList(adList)
+    , m_face(face)
+    , m_adjControllerBuildInterval(static_cast<uint32_t>(m_conf.getAdjLsaBuildInterval()))
   {
   }
 
@@ -36,13 +41,13 @@ public:
   void
   setAdjLsaBuildInterval(uint32_t interval)
   {
-    m_adjLsaBuildInterval = ndn::time::seconds(interval);
+    m_adjControllerBuildInterval = ndn::time::seconds(interval);
   }
 
   const ndn::time::seconds&
   getAdjLsaBuildInterval() const
   {
-    return m_adjLsaBuildInterval;
+    return m_adjControllerBuildInterval;
   }
 
 private:
@@ -71,13 +76,16 @@ private:
   registerPrefixes(const Name& adjName, const std::string& faceUri,
                    double linkCost, const ndn::time::milliseconds& timeout);
 private:
-  Simulator::Scheduler& m_scheduler;
+  //Scheduler m_scheduler;
   static const std::string INFO_COMPONENT;
-  static const std::string NLSR_COMPONENT;
-  ndn::time::seconds m_adjLsaBuildInterval;
+  static const std::string HELLO_COMPONENT;
+  //time::seconds m_adjControllerBuildInterval;
+  time::seconds m_adjControllerBuildInterval;
   ConfParameter m_conf;
+  shared_ptr<Face> m_face;
+  AdjacencyList m_adList;
 };
-
+#endif
 } //namespace ndn
 } //namespace ns3
 #endif // NDN_HELLO_PROTOCOL_HPP

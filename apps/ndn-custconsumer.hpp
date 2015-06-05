@@ -49,6 +49,8 @@
 #include <boost/multi_index/tag.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
+#include "model/ndn-adjacency-list.hpp"
+#include "model/ndn-adjacency.hpp"
 
 using namespace std;
 
@@ -105,7 +107,7 @@ protected:
   RandomVariable* m_random;
   std::string m_randomType;
 
-
+  AdjacencyList m_adList;
 
   Name m_keyLocator;
   double m_frequency; // Frequency of interest packets (in hertz)
@@ -122,6 +124,7 @@ protected:
   void getOSPFfromNodeName(std::string FromNodeName, std::string ToNodeName);
   std::string getPrefix(Ptr<Node> Node);
   bool IsFIBMetricsUpdatable(std::string strPrefixName, std::shared_ptr<NetDeviceFace> faceId, size_t faceMetrics);
+  void initialize();
  };
 
 } // namespace ndn

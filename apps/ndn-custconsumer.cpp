@@ -115,15 +115,13 @@ void CustConsumer::StartApplication() {
 
 	//fibEntry->UpdateStatus(m_face, fib::FaceMetric::NDN_FIB_GREEN);
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
+
 	std::cout<< "####################################### Collecting Link Information ###############################################################"<< std::endl;
-
-
-
 	std::cout << "\n";
+
 	std::cout<< "####################################### Start Three Way Communication with Controller (Requesting routes)###############################################################"<< std::endl;
 	std::cout << "\n";
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
-
 	std::cout<< "CustConsumerApp: Sending an Interest Packets -> "<< "/controller/" + strNodeName + "/req_route" << std::endl;
 	std::string strPrefixToController = "/controller/" + strNodeName + "/req_route";
 	SendInterestPacket(strPrefixToController);
@@ -142,6 +140,12 @@ void CustConsumer::StopApplication() {
 	App::StopApplication();
 }
 
+void CustConsumer::initialize(){
+
+	// Get all neighbor information
+	GetLocalLinkInfo();
+
+}
 
 std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
 	std::vector<std::string> fields;
@@ -373,7 +377,9 @@ std::string CustConsumer::GetLocalLinkInfo()
 		{
 		  for (uint32_t deviceId = 0; deviceId < ch->GetNDevices (); deviceId ++)
 		    {
-		      Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
+			  Adjacent objAdjacent;
+
+			  Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
 		      if (nd == otherSide) continue;
 		      Ptr<Node> otherNode = otherSide->GetNode ();
 		      NS_ASSERT (otherNode != 0);
@@ -392,6 +398,13 @@ std::string CustConsumer::GetLocalLinkInfo()
 		    	  strStateTemplate << ",";
 		    	  strStateTemplate <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric();
 		      }
+		      objAdjacent.setConnectedNode(otherNode);
+		      objAdjacent.setName(Names::FindName(otherNode));
+		      objAdjacent.setFaceId(face->getId());
+		      //objAdjacent.setConnectingFaceUri(face->getRemoteUri().c_str());
+		      objAdjacent.setLinkCost(face->getMetric());
+		      objAdjacent.setStatus(Adjacent::STATUS_ACTIVE);
+		      m_adList.insert(objAdjacent);
 		    }
 		}
 	 }

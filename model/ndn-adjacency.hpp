@@ -11,7 +11,6 @@
 #include "ns3/ptr.h"
 #include "ndn-conf-parameter.hpp"
 
-
 namespace ns3 {
 namespace ndn {
 

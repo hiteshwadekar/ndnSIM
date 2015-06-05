@@ -117,11 +117,17 @@ void ControllerApp::StartApplication() {
 	App::StartApplication();
 	NS_LOG_DEBUG("NodeID: " << GetNode ()->GetId ());
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
+
 }
 
 void ControllerApp::StopApplication() {
 	NS_LOG_FUNCTION_NOARGS ();
 	App::StopApplication();
+}
+
+void ControllerApp::Initialize()
+{
+
 }
 
 std::string ControllerApp::extractNodeName(std::string strPacketName, int n) {

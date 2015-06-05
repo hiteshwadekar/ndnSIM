@@ -97,6 +97,7 @@ public:
   std::string getNodePathData(Ptr<ControllerRouter> dstNode);
   void LinkInitalization(Ptr<ControllerRouter>,shared_ptr<Face>,Ptr<ControllerRouter>);
   void initCalculationKPath();
+  void Initialize();
   std::shared_ptr<nfd::Face> GetFaceId(Ptr<ControllerRouter> srcNode, Ptr<ControllerRouter> dstNode);
 
 protected:
