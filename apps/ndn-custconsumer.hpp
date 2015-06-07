@@ -131,7 +131,7 @@ protected:
   void initialize();
   AdjacencyList CollectLinks();
   void scheduleHelloPacketEvent(uint32_t seconds);
-  void sendScheduledHelloInterest();
+  void sendScheduledHelloInterest(uint32_t seconds);
  };
 
 } // namespace ndn

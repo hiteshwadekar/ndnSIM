@@ -150,14 +150,11 @@ void CustConsumer::initialize()
 void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
 {
 	cout <<"\n Called scheduleHelloPacketEvent function ------- " <<endl;
-	//Simulator::Schedule(Seconds(seconds), &CustConsumer::sendScheduledHelloInterest,seconds,this);
-	Simulator::Schedule(Seconds(100.0), &CustConsumer::sendScheduledHelloInterest, this);
-	//m_scheduler.scheduleEvent(ndn::time::seconds(seconds),
-	  //                          ndn::bind(&HelloProtocol::sendScheduledInterest, this, seconds));
+	scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::sendScheduledHelloInterest, this, seconds));
 }
 
 
-void CustConsumer::sendScheduledHelloInterest()
+void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 {
 	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
 }
