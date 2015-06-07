@@ -11,6 +11,10 @@
 #include "model/ndn-net-device-face.hpp"
 #include "ndn-adjacency.hpp"
 
+#include <ndn-cxx/management/nfd-face-event-notification.hpp>
+#include <ndn-cxx/management/nfd-face-monitor.hpp>
+
+
 namespace ns3 {
 namespace ndn {
 
@@ -82,10 +86,11 @@ private:
   //time::seconds m_adjControllerBuildInterval;
   time::seconds m_adjControllerBuildInterval;
   ConfParameter m_conf;
-  shared_ptr<Face> m_face;
+  shared_ptr<ndn::Face> m_face;
   AdjacencyList m_adList;
 };
 #endif
+
 } //namespace ndn
 } //namespace ns3
 #endif // NDN_HELLO_PROTOCOL_HPP

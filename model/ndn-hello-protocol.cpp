@@ -1,9 +1,12 @@
 #include "ndn-hello-protocol.hpp"
+#include <ndn-cxx/face.hpp>
+#include <ndn-cxx/util/scheduler.hpp>
 
 namespace ns3 {
 namespace ndn {
 
 #if 0
+
 const std::string HelloProtocol::INFO_COMPONENT = "INFO";
 const std::string HelloProtocol::HELLO_COMPONENT = "HELLO";
 
@@ -14,8 +17,10 @@ HelloProtocol::expressInterest(const Name& interestName, uint32_t seconds)
   Interest i(interestName);
   i.setInterestLifetime(ndn::time::seconds(seconds));
   i.setMustBeFresh(true);
-  m_face->expressInterest(i,ndn::bind(&HelloProtocol::onContent,this,_1, _2),ndn::bind(&HelloProtocol::processInterestTimedOut,
+  m_face.expressInterest(i,ndn::bind(&HelloProtocol::onContent,this,_1, _2),ndn::bind(&HelloProtocol::processInterestTimedOut,
                                                  this, _1));
+
+
 }
 
 void
@@ -43,6 +48,7 @@ HelloProtocol::sendScheduledInterest(uint32_t seconds)
 void
 HelloProtocol::scheduleInterest(uint32_t seconds)
 {
+	Simulator::Schedule(Seconds(seconds), ndn::bind(&HelloProtocol::sendScheduledInterest, this, seconds));
   //m_scheduler.scheduleEvent(ndn::time::seconds(seconds),
   //                          ndn::bind(&HelloProtocol::sendScheduledInterest, this, seconds));
 }
@@ -274,6 +280,8 @@ HelloProtocol::onRegistrationFailure(uint32_t code, const std::string& error,
   }
   */
 }
+
 #endif
+
 } //namespace ndn
 } // namespace ns3

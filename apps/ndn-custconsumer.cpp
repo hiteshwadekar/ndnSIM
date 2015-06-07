@@ -117,8 +117,8 @@ void CustConsumer::StartApplication() {
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
 
 	std::cout<< "####################################### Collecting Link Information ###############################################################"<< std::endl;
+	initialize();
 	std::cout << "\n";
-
 	std::cout<< "####################################### Start Three Way Communication with Controller (Requesting routes)###############################################################"<< std::endl;
 	std::cout << "\n";
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
@@ -140,12 +140,28 @@ void CustConsumer::StopApplication() {
 	App::StopApplication();
 }
 
-void CustConsumer::initialize(){
-
+void CustConsumer::initialize()
+{
 	// Get all neighbor information
-	GetLocalLinkInfo();
-
+	m_adList = CollectLinks();
+	scheduleHelloPacketEvent(100);
 }
+
+void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
+{
+	cout <<"\n Called scheduleHelloPacketEvent function ------- " <<endl;
+	//Simulator::Schedule(Seconds(seconds), &CustConsumer::sendScheduledHelloInterest,seconds,this);
+	Simulator::Schedule(Seconds(100.0), &CustConsumer::sendScheduledHelloInterest, this);
+	//m_scheduler.scheduleEvent(ndn::time::seconds(seconds),
+	  //                          ndn::bind(&HelloProtocol::sendScheduledInterest, this, seconds));
+}
+
+
+void CustConsumer::sendScheduledHelloInterest()
+{
+	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
+}
+
 
 std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
 	std::vector<std::string> fields;
@@ -263,8 +279,6 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 }
 
 
-
-
 std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 {
 	std::string attrValue="";
@@ -329,6 +343,69 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	}
 	*/
 	return attrValue;
+}
+
+
+AdjacencyList CustConsumer::CollectLinks()
+{
+	AdjacencyList objAList;
+	Ptr<Node> localNode = GetNode ();
+	Ptr<L3Protocol> ndn = localNode->GetObject<L3Protocol> ();
+	NS_ASSERT_MSG (ndn != 0, "Ndn protocol hasn't been installed on a node, please install it first");
+	for (auto& faceId : ndn->getForwarder()->getFaceTable())
+	    {
+	      shared_ptr<NetDeviceFace> face = std::dynamic_pointer_cast<NetDeviceFace>(faceId);
+	      if (face == 0)
+	      {
+	    	  NS_LOG_DEBUG ("Skipping non-netdevice face");
+	    	  continue;
+	      }
+	      Ptr<NetDevice> nd = face->GetNetDevice ();
+	      if (nd == 0)
+	      {
+	    	  NS_LOG_DEBUG ("Not a NetDevice associated with NetDeviceFace");
+	    	  continue;
+	      }
+	      Ptr<Channel> ch = nd->GetChannel ();
+	      if (ch == 0)
+	      {
+	    	  NS_LOG_DEBUG ("Channel is not associated with NetDevice");
+	    	  continue;
+	      }
+	      if (ch->GetNDevices () == 2) // e.g., point-to-point channel
+	      {
+	    	  for (uint32_t deviceId = 0; deviceId < ch->GetNDevices (); deviceId ++)
+	    	  {
+	    		  Adjacent objAdjacent;
+	    		  Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
+	    		  if (nd == otherSide)
+	    			  continue;
+	    		  Ptr<Node> otherNode = otherSide->GetNode ();
+	    		  NS_ASSERT (otherNode != 0);
+	    		  Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
+	    		  NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
+	    		  objAdjacent.setConnectedNode(otherNode);
+	    		  objAdjacent.setName(Names::FindName(otherNode));
+	    		  objAdjacent.setFaceId(face->getId());
+	    		  //objAdjacent.setConnectingFaceUri(face->getRemoteUri().c_str());
+	    		  objAdjacent.setLinkCost(face->getMetric());
+	    		  if(face->isUp())
+	    		  {
+	    			  objAdjacent.setStatus(Adjacent::STATUS_ACTIVE);
+	    		  }
+	    		  else if(!face->isUp())
+	    		  {
+	    			  objAdjacent.setStatus(Adjacent::STATUS_INACTIVE);
+	    		  }
+	    		  else
+	    		  {
+	    			  objAdjacent.setStatus(Adjacent::STATUS_UNKNOWN);
+	    		  }
+	    		  objAList.insert(objAdjacent);
+		    }
+		}
+	 }
+	return objAList;
 }
 
 
@@ -398,13 +475,6 @@ std::string CustConsumer::GetLocalLinkInfo()
 		    	  strStateTemplate << ",";
 		    	  strStateTemplate <<  Names::FindName(otherNode)  << "," << face->getId() << "," << face->getMetric();
 		      }
-		      objAdjacent.setConnectedNode(otherNode);
-		      objAdjacent.setName(Names::FindName(otherNode));
-		      objAdjacent.setFaceId(face->getId());
-		      //objAdjacent.setConnectingFaceUri(face->getRemoteUri().c_str());
-		      objAdjacent.setLinkCost(face->getMetric());
-		      objAdjacent.setStatus(Adjacent::STATUS_ACTIVE);
-		      m_adList.insert(objAdjacent);
 		    }
 		}
 	 }
