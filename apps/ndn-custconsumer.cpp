@@ -68,6 +68,8 @@ namespace ns3 {
 namespace ndn {
 
 NS_OBJECT_ENSURE_REGISTERED(CustConsumer);
+const std::string CustConsumer::INFO_COMPONENT = "INFO";
+const std::string CustConsumer::HELLO_COMPONENT = "HELLO";
 
 TypeId CustConsumer::GetTypeId(void) {
 	static TypeId tid =
@@ -154,9 +156,62 @@ void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
 }
 
 
+void
+CustConsumer::OnTimeout(uint32_t sequenceNumber)
+{
+
+
+
+}
+
+
+void
+CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
+{
+	cout<< "\n Expressing Hello Interest :" << interestName << endl;
+  	//Interest i(interestName);
+  	//i.setInterestLifetime(ndn::time::seconds(seconds));
+  	//i.setMustBeFresh(true);
+
+  	shared_ptr<Interest> interestConto = make_shared<Interest>();
+  	//nameWithSequence->append(m_postfix);
+  	UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
+  	interestConto->setNonce(m_rand.GetValue());
+  	interestConto->setName(interestName);
+  	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
+  	interestConto->setInterestLifetime(interestLifeTime);
+  	m_transmittedInterests(interestConto, this, m_face);
+  	m_face->onReceiveInterest(*interestConto);
+  	std::cout << "\n";
+  //m_face.expressInterest(i,ndn::bind(&HelloProtocol::onContent,this,_1, _2),ndn::bind(&HelloProtocol::processInterestTimedOut,
+   //                                           this, _1));
+
+}
+
 void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 {
 	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
+
+	AdjacencyList adList = CollectLinks();
+	std::list<Adjacent> adjList = CollectLinks().getAdjList();
+
+	for (std::list<Adjacent>::iterator it = adjList.begin(); it != adjList.end();
+	       ++it) {
+	    if((*it).getFaceId() != 0) {
+	      /* interest name: /<neighbor>/HELLO/INFO/ */
+	      Name interestName = (*it).getName() ;
+	      interestName.append(Names::FindName(GetNode()));
+	      interestName.append(HELLO_COMPONENT);
+	      interestName.append(INFO_COMPONENT);
+	      expressInterest(interestName,m_conf.getInterestResendTime());
+	    }
+	    /*
+	    else {
+	      registerPrefixes((*it).getName(), (*it).getConnectingFaceUri(),
+	                       (*it).getLinkCost(), ndn::time::milliseconds::max());
+	    }*/
+	  }
+	scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
 }
 
 

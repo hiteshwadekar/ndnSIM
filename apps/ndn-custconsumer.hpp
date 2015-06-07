@@ -51,6 +51,7 @@
 #include <boost/multi_index/member.hpp>
 #include "model/ndn-adjacency-list.hpp"
 #include "model/ndn-adjacency.hpp"
+#include "model/ndn-conf-parameter.hpp"
 #include "core/scheduler.hpp"
 
 using namespace std;
@@ -86,6 +87,9 @@ public:
   virtual void
   OnData (std::shared_ptr<const Data> contentObject);
 
+  virtual void
+  OnTimeout(uint32_t sequenceNumber);
+
 protected:
   // inherited from Application base class.
   virtual void
@@ -108,7 +112,7 @@ protected:
   RandomVariable* m_random;
   std::string m_randomType;
 
-  AdjacencyList m_adList;
+
 
   Name m_keyLocator;
   double m_frequency; // Frequency of interest packets (in hertz)
@@ -127,11 +131,17 @@ protected:
   bool IsFIBMetricsUpdatable(std::string strPrefixName, std::shared_ptr<NetDeviceFace> faceId, size_t faceMetrics);
 
   // Hello packets implementation
-
+  static const std::string INFO_COMPONENT;
+  static const std::string HELLO_COMPONENT;
+  AdjacencyList m_adList;
+  time::seconds m_adjControllerBuildInterval;
+  ConfParameter m_conf;
   void initialize();
   AdjacencyList CollectLinks();
   void scheduleHelloPacketEvent(uint32_t seconds);
   void sendScheduledHelloInterest(uint32_t seconds);
+  void expressInterest(const Name& interestName, uint32_t seconds);
+
  };
 
 } // namespace ndn
