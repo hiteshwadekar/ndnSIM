@@ -99,6 +99,30 @@ public:
     m_interestTimedOutNo = iton;
   }
 
+  uint32_t
+  getInterestSentNo() const
+  {
+    return m_interestSentCounter;
+  }
+
+  void
+  setInterestSentNo(uint32_t iton)
+  {
+	  m_interestSentCounter = iton;
+  }
+
+  uint32_t
+  getDataRcvNo() const
+  {
+    return m_DataRcvCounter;
+  }
+
+  void
+  setDataRcvNo(uint32_t iton)
+  {
+	  m_DataRcvCounter = iton;
+  }
+
   void
   setFaceId(uint64_t faceId)
   {
@@ -152,6 +176,8 @@ private:
   double m_linkCost;
   Status m_status;
   uint32_t m_interestTimedOutNo;
+  uint32_t m_interestSentCounter;
+  uint32_t m_DataRcvCounter;
   uint64_t m_faceId;
   ConfParameter m_conf;
 

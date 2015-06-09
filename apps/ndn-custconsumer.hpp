@@ -125,7 +125,7 @@ protected:
   void SendDataPacket(std::shared_ptr<const Interest> interest, bool toController);
   std::string GetLocalLinkInfo();
   std::string extractNodeName(std::string strPacketName);
-  std::string extractNodeRequestType(std::string strPrefixName);
+  std::string extractNodeRequestType(std::string strPrefixName, int index);
   void getOSPFfromNodeName(std::string FromNodeName, std::string ToNodeName);
   std::string getPrefix(Ptr<Node> Node);
   bool IsFIBMetricsUpdatable(std::string strPrefixName, std::shared_ptr<NetDeviceFace> faceId, size_t faceMetrics);
@@ -141,6 +141,7 @@ protected:
   void scheduleHelloPacketEvent(uint32_t seconds);
   void sendScheduledHelloInterest(uint32_t seconds);
   void expressInterest(const Name& interestName, uint32_t seconds);
+  void SendHelloDataPacket(shared_ptr<const Interest> interest);
 
  };
 

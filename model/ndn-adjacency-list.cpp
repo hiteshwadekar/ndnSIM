@@ -142,6 +142,69 @@ AdjacencyList::getTimedOutInterestCount(const Name& neighbor)
   return (*it).getInterestTimedOutNo();
 }
 
+
+void
+AdjacencyList::incrementInterestSendCount(const Name& neighbor)
+{
+  std::list<Adjacent>::iterator it = find(neighbor);
+  if (it == m_adjList.end()) {
+    return ;
+  }
+  (*it).setInterestSentNo((*it).getInterestSentNo() + 1);
+}
+
+void
+AdjacencyList::setInterestSendCount(const Name& neighbor,
+                                        uint32_t count)
+{
+  std::list<Adjacent>::iterator it = find(neighbor);
+  if (it != m_adjList.end()) {
+    (*it).setInterestSentNo(count);
+  }
+}
+
+int32_t
+AdjacencyList::getInterestSendCount(const Name& neighbor)
+{
+  std::list<Adjacent>::iterator it = find(neighbor);
+  if (it == m_adjList.end()) {
+    return -1;
+  }
+  return (*it).getInterestSentNo();
+}
+
+
+void
+AdjacencyList::incrementDataRcvCount(const Name& neighbor)
+{
+  std::list<Adjacent>::iterator it = find(neighbor);
+  if (it == m_adjList.end()) {
+    return ;
+  }
+  cout <<"\n Called incrementDataRcvCount"<<endl;
+  (*it).setDataRcvNo((*it).getDataRcvNo() + 1);
+}
+
+void
+AdjacencyList::setDataRcvCount(const Name& neighbor,
+                                        uint32_t count)
+{
+  std::list<Adjacent>::iterator it = find(neighbor);
+  if (it != m_adjList.end()) {
+    (*it).setDataRcvNo(count);
+  }
+}
+
+int32_t
+AdjacencyList::getDataRcvCount(const Name& neighbor)
+{
+  std::list<Adjacent>::iterator it = find(neighbor);
+  if (it == m_adjList.end()) {
+    return -1;
+  }
+  return (*it).getDataRcvNo();
+}
+
 Adjacent::Status
 AdjacencyList::getStatusOfNeighbor(const Name& neighbor)
 {

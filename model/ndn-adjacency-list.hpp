@@ -47,6 +47,24 @@ public:
   setTimedOutInterestCount(const Name& neighbor, uint32_t count);
 
   void
+  incrementInterestSendCount(const Name& neighbor);
+
+  void
+  setInterestSendCount(const Name& neighbor,
+                                          uint32_t count);
+  int32_t
+  getInterestSendCount(const Name& neighbor);
+
+  void
+  setDataRcvCount(const Name& neighbor, uint32_t count);
+
+  void
+  incrementDataRcvCount(const Name& neighbor);
+
+  int32_t
+  getDataRcvCount(const Name& neighbor);
+
+  void
   addAdjacents(AdjacencyList& adl);
 
   bool

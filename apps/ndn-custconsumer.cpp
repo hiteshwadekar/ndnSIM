@@ -159,9 +159,7 @@ void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
 void
 CustConsumer::OnTimeout(uint32_t sequenceNumber)
 {
-
-
-
+	cout << "\n OnTimeout Called " << endl;
 }
 
 
@@ -174,8 +172,7 @@ CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
   	//i.setMustBeFresh(true);
 
   	shared_ptr<Interest> interestConto = make_shared<Interest>();
-  	//nameWithSequence->append(m_postfix);
-  	UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
+    UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
   	interestConto->setNonce(m_rand.GetValue());
   	interestConto->setName(interestName);
   	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
@@ -192,8 +189,11 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 {
 	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
 
-	AdjacencyList adList = CollectLinks();
-	std::list<Adjacent> adjList = CollectLinks().getAdjList();
+	cout << "\n Printing list value before sending Hello packets " <<endl;
+	m_adList.writeLog();
+
+	//AdjacencyList adList = CollectLinks();
+	std::list<Adjacent> adjList = m_adList.getAdjList();
 
 	for (std::list<Adjacent>::iterator it = adjList.begin(); it != adjList.end();
 	       ++it) {
@@ -203,6 +203,7 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	      interestName.append(Names::FindName(GetNode()));
 	      interestName.append(HELLO_COMPONENT);
 	      interestName.append(INFO_COMPONENT);
+	      m_adList.incrementInterestSendCount((*it).getName());
 	      expressInterest(interestName,m_conf.getInterestResendTime());
 	    }
 	    /*
@@ -211,11 +212,15 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	                       (*it).getLinkCost(), ndn::time::milliseconds::max());
 	    }*/
 	  }
+
+	cout << "\n Printing list value after sending Hello packets " <<endl;
+	m_adList.writeLog();
+
 	scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
 }
 
 
-std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
+std::string CustConsumer::extractNodeRequestType(std::string strPrefixName, int index) {
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, strPrefixName,
 			boost::algorithm::is_any_of("/"));
@@ -223,6 +228,17 @@ std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
 	//for (size_t n = 0; n < fields.size(); n++)
 	//	std::cout << fields[n] << "\"\n";
 	//cout << endl;
+
+	if(index <= fields.size())
+	{
+		return fields[index];
+	}
+	else
+	{
+		return fields[0];
+	}
+
+	/*
 
 	if (fields.size()>=3)
 	{
@@ -232,6 +248,7 @@ std::string CustConsumer::extractNodeRequestType(std::string strPrefixName) {
 	{
 		return fields[0];
 	}
+	*/
 }
 
 
@@ -453,6 +470,8 @@ AdjacencyList CustConsumer::CollectLinks()
 	    		  {
 	    			  objAdjacent.setStatus(Adjacent::STATUS_UNKNOWN);
 	    		  }
+	    		  objAdjacent.setInterestSentNo(0);
+	    		  objAdjacent.setDataRcvNo(0);
 	    		  objAList.insert(objAdjacent);
 		    }
 		}
@@ -563,22 +582,77 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest, bool toCo
 	}
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
 	//ndn::StackHelper::getKeyChain().sign(*dPacket);
-	 Signature signature;
-	 SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
-	 if (m_keyLocator.size() > 0) {
+	Signature signature;
+	SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+	if (m_keyLocator.size() > 0){
 		signatureInfo.setKeyLocator(m_keyLocator);
-	 }
-	 signature.setInfo(signatureInfo);
-	 signature.setValue(Block(&m_signature, sizeof(m_signature)));
+	}
+	signature.setInfo(signatureInfo);
+	signature.setValue(Block(&m_signature, sizeof(m_signature)));
 
-	 dPacket->setSignature(signature);
-	 dPacket->wireEncode();
+	dPacket->setSignature(signature);
+	dPacket->wireEncode();
 
-	 std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face->getId() << std::endl;
-	 m_transmittedDatas(dPacket, this, m_face);
-	 m_face->onReceiveData(*dPacket);
-	 std::cout << "\n";
+	std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face->getId() << std::endl;
+	m_transmittedDatas(dPacket, this, m_face);
+	m_face->onReceiveData(*dPacket);
+	std::cout << "\n";
 
+}
+
+
+void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
+
+	  /* interest name: /<neighbor>/NLSR/INFO/<router> */
+	  Name interestName = interest->getName();
+	  //Name neighbor = interestName.getPrefix(-2);
+	  Name neighbor = interestName.get(-3).toUri();
+	  cout<<"Neighbor: " << neighbor << endl;
+
+	  //m_adList.writeLog();
+	  if (m_adList.isNeighbor(neighbor))
+	  {
+		  std::cout << "\n CustConsumerApp: Sending Hello data packet- > " << interest->getName() << " is sending from face -> " << m_face->getId() << std::endl;
+		  Name dataName(interest->getName());
+		  auto dPacket = make_shared<Data>();
+		  dPacket->setName(dataName);
+		  dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+		  dPacket->setContent(reinterpret_cast<const uint8_t*>(INFO_COMPONENT.c_str()),
+						INFO_COMPONENT.size());
+		  Signature signature;
+		  SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+		  if (m_keyLocator.size() > 0){
+		  	signatureInfo.setKeyLocator(m_keyLocator);
+		  }
+
+		  signature.setInfo(signatureInfo);
+		  signature.setValue(Block(&m_signature, sizeof(m_signature)));
+		  dPacket->setSignature(signature);
+		  dPacket->wireEncode();
+
+		  m_transmittedDatas(dPacket, this, m_face);
+		  m_face->onReceiveData(*dPacket);
+
+
+
+		  Adjacent *adjacent = m_adList.findAdjacent(neighbor);
+		  if (adjacent->getStatus() == Adjacent::STATUS_INACTIVE)
+		  {
+			  if(adjacent->getFaceId() != 0)
+			  {
+				  Name interestName(neighbor) ;
+				  interestName.append(Names::FindName(GetNode()));
+				  interestName.append(HELLO_COMPONENT);
+				  interestName.append(INFO_COMPONENT);
+				  expressInterest(interestName,m_conf.getInterestResendTime());
+			  }
+			  /*
+			  else {
+				  registerPrefixes(adjacent->getName(), adjacent->getConnectingFaceUri(),
+							 	 adjacent->getLinkCost(), ndn::time::milliseconds::max());
+			  }*/
+		  }
+	  }
 }
 
 string CustConsumer::extractNodeName(std::string strPacketName) {
@@ -593,8 +667,12 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 	if (!m_active)
 		return;
 	NS_LOG_FUNCTION(this << interest);
+
 	std::cout << "\n CustConsumerApp: Received Interest Packet -> " << interest->getName() << std::endl;
-	std::string strRequestType = extractNodeRequestType(interest->getName().toUri());
+	std::string strRequestType = extractNodeRequestType(interest->getName().toUri(),3);
+
+	cout <<"\n Request interest type is -> " << strRequestType << endl;
+
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
 	std::string strPrefix = "";
 
@@ -607,6 +685,12 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 		strPrefix = "/controller/" + strNodeName + "/res_route";
 		std::cout << "\n CustConsumerApp: Sending interest packet ack to controller -> " << strPrefix << std::endl;
 		SendInterestPacket(strPrefix);
+	}
+	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
+	{
+		//strPrefix = "/";
+		//SendInterestPacket(strPrefix);
+		SendHelloDataPacket(interest);
 	}
 	else
 	{
@@ -623,7 +707,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 	std::cout << "\n CustConsumerApp: Received Data packet -> "
 			<< contentObject->getName() << std::endl;
 
-	std::string strRequestType = extractNodeRequestType(contentObject->getName().toUri());
+	std::string strRequestType = extractNodeRequestType(contentObject->getName().toUri(),3);
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
 	std::string strPrefix = "";
 	if (strRequestType.compare("req_route") == 0)
@@ -652,12 +736,41 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 			}
 		}
 	}
+	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
+	{
+		// We got the data packet for updating the routes.
+		std::string msg1(reinterpret_cast<const char*>(contentObject->getContent().value()),
+							contentObject->getContent().value_size());
+		std::cout << "\n Printing Data information -> " << msg1 << endl;
+
+		//std::string strNeighbor = extractNodeRequestType(contentObject->getName().toUri(),1);
+		//std::cout << "\n Printing strNeighbor information -> " << strNeighbor << endl;
+		Name dataName = contentObject->getName();
+		Name neighbor = dataName.getPrefix(-3);
+		std::cout << "\n Printing Neighbor information -> " << neighbor << endl;
+		Adjacent::Status oldStatus = m_adList.getStatusOfNeighbor(neighbor);
+		m_adList.setStatusOfNeighbor(neighbor, Adjacent::STATUS_ACTIVE);
+		m_adList.incrementDataRcvCount(neighbor);
+		Adjacent::Status newStatus = m_adList.getStatusOfNeighbor(neighbor);
+		if ((oldStatus - newStatus) != 0) {
+			//Initiate Controller updating call
+			cout << "\n Status has been changed for Neighbor " << neighbor << endl;
+		}
+		else
+		{
+			cout << "\n Status didn't change for Neighbor " << neighbor << endl;
+			cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_adList.getDataRcvCount(neighbor) << endl;
+		}
+
+		//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;
+	}
 	else
 	{
 		// We got the data packet for updating the routes.
 		std::string msg1(reinterpret_cast<const char*>(contentObject->getContent().value()),
 							contentObject->getContent().value_size());
 		std::cout << "\n pRINTING DATA FROM OTHE NODE -> " << msg1 << endl;
+
 	}
 	std::cout << "\n";
 }

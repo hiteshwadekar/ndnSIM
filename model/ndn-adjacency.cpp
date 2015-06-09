@@ -51,20 +51,28 @@ Adjacent::Adjacent(Ptr<Node> connectedNode, const Name& an, const std::string& c
 bool
 Adjacent::operator==(const Adjacent& adjacent) const
 {
-  return (m_name == adjacent.getName()) &&
-         (m_connectingFaceUri == adjacent.getConnectingFaceUri()) &&
+
+  /*return (m_name == adjacent.getName()) &&
          (std::abs(m_linkCost - adjacent.getLinkCost()) <
-          std::numeric_limits<double>::epsilon()) ;
+          std::numeric_limits<double>::epsilon()) && (m_faceId == adjacent.getFaceId()) && (m_status == adjacent.getStatus());*/
+  return (m_name == adjacent.getName()) && (m_status == adjacent.getStatus()) && (m_connectingFaceUri == adjacent.getConnectingFaceUri()) &&
+          (std::abs(m_linkCost - adjacent.getLinkCost()) <
+           std::numeric_limits<double>::epsilon());
+
 }
 
 void
 Adjacent::writeLog()
 {
-	cout<<"Adjacent : " << m_name<<endl;
+	cout<<"Adjacent : " << m_name <<endl;
+	cout<<"FaceId: " << m_faceId <<endl;
 	cout<<"Connecting FaceUri: " << m_connectingFaceUri<<endl;
-	cout<<"Link Cost: " << m_linkCost<<endl;
-	cout<<"Status: " << m_status<<endl;
+	cout<<"Link Cost: " << m_linkCost <<endl;
+	cout<<"Status: " << m_status <<endl;
 	cout<<"Interest Timed out: " << m_interestTimedOutNo<<endl;
+	cout<<"No of interest send: " << m_interestSentCounter<<endl;
+	cout<<"No of data received: " << m_DataRcvCounter<<endl;
+
 }
 
 }//namespace ndn
