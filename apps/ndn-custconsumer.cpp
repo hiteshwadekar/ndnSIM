@@ -112,17 +112,15 @@ void CustConsumer::StartApplication() {
 	App::StartApplication();
 	NS_LOG_DEBUG("NodeID: " << GetNode ()->GetId ());
 
-	//Ptr<Fib> fib = GetNode()->GetObject<Fib>();
-	//Ptr<fib::Entry> fibEntry = fib->Add(m_prefix, m_face, 0);
-
-	//fibEntry->UpdateStatus(m_face, fib::FaceMetric::NDN_FIB_GREEN);
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
 
 	std::cout<< "####################################### Collecting Link Information ###############################################################"<< std::endl;
 	initialize();
+
 	std::cout << "\n";
 	std::cout<< "####################################### Start Three Way Communication with Controller (Requesting routes)###############################################################"<< std::endl;
 	std::cout << "\n";
+
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
 	std::cout<< "CustConsumerApp: Sending an Interest Packets -> "<< "/controller/" + strNodeName + "/req_route" << std::endl;
 	std::string strPrefixToController = "/controller/" + strNodeName + "/req_route";
@@ -138,15 +136,14 @@ void CustConsumer::StartApplication() {
 void CustConsumer::StopApplication() {
 	NS_LOG_FUNCTION_NOARGS ();
 	//NS_ASSERT(GetNode()->GetObject<Fib>() != 0);
-
 	App::StopApplication();
 }
 
 void CustConsumer::initialize()
 {
 	// Get all neighbor information
-	m_adList = CollectLinks();
-	scheduleHelloPacketEvent(100);
+	m_gb_adList = CollectLinks();
+	scheduleHelloPacketEvent(30);
 }
 
 void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
@@ -175,8 +172,9 @@ CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
     UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
   	interestConto->setNonce(m_rand.GetValue());
   	interestConto->setName(interestName);
-  	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
+  	time::milliseconds interestLifeTime(time::seconds(m_conf.getInterestResendTime()));
   	interestConto->setInterestLifetime(interestLifeTime);
+  	interestConto->setMustBeFresh(true);
   	m_transmittedInterests(interestConto, this, m_face);
   	m_face->onReceiveInterest(*interestConto);
   	std::cout << "\n";
@@ -190,11 +188,9 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
 
 	cout << "\n Printing list value before sending Hello packets " <<endl;
-	m_adList.writeLog();
-
-	//AdjacencyList adList = CollectLinks();
-	std::list<Adjacent> adjList = m_adList.getAdjList();
-
+	m_lc_adList = CollectLinks();
+	m_lc_adList.writeLog();
+	std::list<Adjacent> adjList = m_lc_adList.getAdjList();
 	for (std::list<Adjacent>::iterator it = adjList.begin(); it != adjList.end();
 	       ++it) {
 	    if((*it).getFaceId() != 0) {
@@ -203,7 +199,7 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	      interestName.append(Names::FindName(GetNode()));
 	      interestName.append(HELLO_COMPONENT);
 	      interestName.append(INFO_COMPONENT);
-	      m_adList.incrementInterestSendCount((*it).getName());
+	      m_lc_adList.incrementInterestSendCount((*it).getName());
 	      expressInterest(interestName,m_conf.getInterestResendTime());
 	    }
 	    /*
@@ -212,9 +208,8 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	                       (*it).getLinkCost(), ndn::time::milliseconds::max());
 	    }*/
 	  }
-
 	cout << "\n Printing list value after sending Hello packets " <<endl;
-	m_adList.writeLog();
+	m_lc_adList.writeLog();
 
 	scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
 }
@@ -610,7 +605,7 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 	  cout<<"Neighbor: " << neighbor << endl;
 
 	  //m_adList.writeLog();
-	  if (m_adList.isNeighbor(neighbor))
+	  if (m_lc_adList.isNeighbor(neighbor))
 	  {
 		  std::cout << "\n CustConsumerApp: Sending Hello data packet- > " << interest->getName() << " is sending from face -> " << m_face->getId() << std::endl;
 		  Name dataName(interest->getName());
@@ -635,7 +630,7 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 
 
 
-		  Adjacent *adjacent = m_adList.findAdjacent(neighbor);
+		  Adjacent *adjacent = m_lc_adList.findAdjacent(neighbor);
 		  if (adjacent->getStatus() == Adjacent::STATUS_INACTIVE)
 		  {
 			  if(adjacent->getFaceId() != 0)
@@ -644,6 +639,7 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 				  interestName.append(Names::FindName(GetNode()));
 				  interestName.append(HELLO_COMPONENT);
 				  interestName.append(INFO_COMPONENT);
+				  m_lc_adList.incrementInterestSendCount(neighbor);
 				  expressInterest(interestName,m_conf.getInterestResendTime());
 			  }
 			  /*
@@ -748,10 +744,10 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		Name dataName = contentObject->getName();
 		Name neighbor = dataName.getPrefix(-3);
 		std::cout << "\n Printing Neighbor information -> " << neighbor << endl;
-		Adjacent::Status oldStatus = m_adList.getStatusOfNeighbor(neighbor);
-		m_adList.setStatusOfNeighbor(neighbor, Adjacent::STATUS_ACTIVE);
-		m_adList.incrementDataRcvCount(neighbor);
-		Adjacent::Status newStatus = m_adList.getStatusOfNeighbor(neighbor);
+		Adjacent::Status oldStatus = m_lc_adList.getStatusOfNeighbor(neighbor);
+		m_lc_adList.setStatusOfNeighbor(neighbor, Adjacent::STATUS_ACTIVE);
+		m_lc_adList.incrementDataRcvCount(neighbor);
+		Adjacent::Status newStatus = m_lc_adList.getStatusOfNeighbor(neighbor);
 		if ((oldStatus - newStatus) != 0) {
 			//Initiate Controller updating call
 			cout << "\n Status has been changed for Neighbor " << neighbor << endl;
@@ -759,7 +755,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		else
 		{
 			cout << "\n Status didn't change for Neighbor " << neighbor << endl;
-			cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_adList.getDataRcvCount(neighbor) << endl;
+			cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_lc_adList.getDataRcvCount(neighbor) << endl;
 		}
 
 		//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;

@@ -133,7 +133,9 @@ protected:
   // Hello packets implementation
   static const std::string INFO_COMPONENT;
   static const std::string HELLO_COMPONENT;
-  AdjacencyList m_adList;
+
+  AdjacencyList m_gb_adList;
+  AdjacencyList m_lc_adList;
   time::seconds m_adjControllerBuildInterval;
   ConfParameter m_conf;
   void initialize();
