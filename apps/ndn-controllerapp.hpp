@@ -27,6 +27,8 @@
 #include "ndn-app.hpp"
 //#include "ns3/ndnSIM/model/ndn-common.hpp"
 
+
+
 #include "ns3/ptr.h"
 #include "ns3/random-variable.h"
 #include "ns3/nstime.h"
@@ -36,10 +38,18 @@
 #include <set>
 #include <map>
 
+
+
 #include "helper/ndn-controller-string-parser.hpp"
 #include "helper/ndn-controller-node-container.hpp"
 #include "model/ndn-controller-router.hpp"
 #include "model/ndn-yanGraph.hpp"
+
+#include "model/ndn-adjacency-list.hpp"
+#include "model/ndn-adjacency.hpp"
+#include "model/ndn-conf-parameter.hpp"
+#include "core/scheduler.hpp"
+
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/tag.hpp>
@@ -78,8 +88,12 @@ public:
   virtual void
   OnData (shared_ptr<const Data> contentObject);
 
+  virtual void
+  OnTimeout(uint32_t sequenceNumber);
+
   std::string extractNodeName(std::string strPacketName, int n);
-  std::string extractNodeRequestType(std::string strPrefixName);
+  //std::string extractNodeRequestType(std::string strPrefixName);
+  std::string extractNodeRequestType(std::string strPrefixName, int index);
   void sendInterestPacket(std::string strPrefix);
   void sendPathDataPacket(shared_ptr<const Interest> interest);
   void extractNodeLinkInfo(std::string strNodeLinkInfo);
@@ -99,6 +113,9 @@ public:
   void initCalculationKPath();
   void Initialize();
   std::shared_ptr<nfd::Face> GetFaceId(Ptr<ControllerRouter> srcNode, Ptr<ControllerRouter> dstNode);
+
+
+
 
 protected:
   // inherited from Application base class.
@@ -125,6 +142,29 @@ protected:
   Time               m_interestLifeTime;    ///< \brief LifeTime for interest packet
   ControllerNodeContainer m_controller_node_container;
   Graph my_graph;
+
+
+
+  // Hello packets implementation
+  static const std::string INFO_COMPONENT;
+  static const std::string HELLO_COMPONENT;
+
+  static int counter;
+
+  AdjacencyList m_gb_adList;
+  AdjacencyList m_lc_adList;
+
+  time::seconds m_adjControllerBuildInterval;
+  ConfParameter m_conf;
+
+  void initialize();
+  AdjacencyList CollectLinks();
+  void scheduleHelloPacketEvent(uint32_t seconds);
+  void sendScheduledHelloInterest(uint32_t seconds);
+  void expressInterest(const Name& interestName, uint32_t seconds);
+  void SendHelloDataPacket(shared_ptr<const Interest> interest);
+
+
 };
 
 } // namespace ndn

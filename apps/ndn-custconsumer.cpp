@@ -70,6 +70,7 @@ namespace ndn {
 NS_OBJECT_ENSURE_REGISTERED(CustConsumer);
 const std::string CustConsumer::INFO_COMPONENT = "INFO";
 const std::string CustConsumer::HELLO_COMPONENT = "HELLO";
+int CustConsumer::counter = 0;
 
 TypeId CustConsumer::GetTypeId(void) {
 	static TypeId tid =
@@ -115,9 +116,8 @@ void CustConsumer::StartApplication() {
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
 
 	std::cout<< "####################################### Collecting Link Information ###############################################################"<< std::endl;
-	initialize();
-
 	std::cout << "\n";
+	initialize();
 	std::cout<< "####################################### Start Three Way Communication with Controller (Requesting routes)###############################################################"<< std::endl;
 	std::cout << "\n";
 
@@ -130,7 +130,9 @@ void CustConsumer::StartApplication() {
 	// // make face green, so it will be used primarily
 	// StaticCast<fib::FibImpl> (fib)->modify (fibEntry,
 	//                                        ll::bind (&fib::Entry::UpdateStatus,
-	//                                                  ll::_1, m_face, fib::FaceMetric::NDN_FIB_GREEN));
+	//                                                ll::_1, m_face, fib::FaceMetric::NDN_FIB_GREEN));
+
+
 }
 
 void CustConsumer::StopApplication() {
@@ -143,7 +145,7 @@ void CustConsumer::initialize()
 {
 	// Get all neighbor information
 	m_gb_adList = CollectLinks();
-	scheduleHelloPacketEvent(30);
+	scheduleHelloPacketEvent(100);
 }
 
 void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
@@ -172,9 +174,9 @@ CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
     UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
   	interestConto->setNonce(m_rand.GetValue());
   	interestConto->setName(interestName);
-  	time::milliseconds interestLifeTime(time::seconds(m_conf.getInterestResendTime()));
+  	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
   	interestConto->setInterestLifetime(interestLifeTime);
-  	interestConto->setMustBeFresh(true);
+  	//interestConto->setMustBeFresh(true);
   	m_transmittedInterests(interestConto, this, m_face);
   	m_face->onReceiveInterest(*interestConto);
   	std::cout << "\n";
@@ -185,12 +187,14 @@ CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
 
 void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 {
-	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
 
+	counter++;
+	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
+	cout << "\n Source node for Hello packets->  " << Names::FindName(GetNode())<<endl;
 	cout << "\n Printing list value before sending Hello packets " <<endl;
-	m_lc_adList = CollectLinks();
-	m_lc_adList.writeLog();
-	std::list<Adjacent> adjList = m_lc_adList.getAdjList();
+	//m_gb_adList = CollectLinks();
+	m_gb_adList.writeLog();
+	std::list<Adjacent> adjList = m_gb_adList.getAdjList();
 	for (std::list<Adjacent>::iterator it = adjList.begin(); it != adjList.end();
 	       ++it) {
 	    if((*it).getFaceId() != 0) {
@@ -199,7 +203,7 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	      interestName.append(Names::FindName(GetNode()));
 	      interestName.append(HELLO_COMPONENT);
 	      interestName.append(INFO_COMPONENT);
-	      m_lc_adList.incrementInterestSendCount((*it).getName());
+	      m_gb_adList.incrementInterestSendCount((*it).getName());
 	      expressInterest(interestName,m_conf.getInterestResendTime());
 	    }
 	    /*
@@ -208,9 +212,9 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	                       (*it).getLinkCost(), ndn::time::milliseconds::max());
 	    }*/
 	  }
+	cout <<"\n Numeber of times this function called ->  " << counter << endl;
 	cout << "\n Printing list value after sending Hello packets " <<endl;
-	m_lc_adList.writeLog();
-
+	m_gb_adList.writeLog();
 	scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
 }
 
@@ -605,7 +609,7 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 	  cout<<"Neighbor: " << neighbor << endl;
 
 	  //m_adList.writeLog();
-	  if (m_lc_adList.isNeighbor(neighbor))
+	  if (m_gb_adList.isNeighbor(neighbor))
 	  {
 		  std::cout << "\n CustConsumerApp: Sending Hello data packet- > " << interest->getName() << " is sending from face -> " << m_face->getId() << std::endl;
 		  Name dataName(interest->getName());
@@ -630,7 +634,7 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 
 
 
-		  Adjacent *adjacent = m_lc_adList.findAdjacent(neighbor);
+		  Adjacent *adjacent = m_gb_adList.findAdjacent(neighbor);
 		  if (adjacent->getStatus() == Adjacent::STATUS_INACTIVE)
 		  {
 			  if(adjacent->getFaceId() != 0)
@@ -639,7 +643,7 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 				  interestName.append(Names::FindName(GetNode()));
 				  interestName.append(HELLO_COMPONENT);
 				  interestName.append(INFO_COMPONENT);
-				  m_lc_adList.incrementInterestSendCount(neighbor);
+				  m_gb_adList.incrementInterestSendCount(neighbor);
 				  expressInterest(interestName,m_conf.getInterestResendTime());
 			  }
 			  /*
@@ -744,18 +748,19 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		Name dataName = contentObject->getName();
 		Name neighbor = dataName.getPrefix(-3);
 		std::cout << "\n Printing Neighbor information -> " << neighbor << endl;
-		Adjacent::Status oldStatus = m_lc_adList.getStatusOfNeighbor(neighbor);
-		m_lc_adList.setStatusOfNeighbor(neighbor, Adjacent::STATUS_ACTIVE);
-		m_lc_adList.incrementDataRcvCount(neighbor);
-		Adjacent::Status newStatus = m_lc_adList.getStatusOfNeighbor(neighbor);
+		Adjacent::Status oldStatus = m_gb_adList.getStatusOfNeighbor(neighbor);
+		m_gb_adList.setStatusOfNeighbor(neighbor, Adjacent::STATUS_ACTIVE);
+		m_gb_adList.incrementDataRcvCount(neighbor);
+		Adjacent::Status newStatus = m_gb_adList.getStatusOfNeighbor(neighbor);
 		if ((oldStatus - newStatus) != 0) {
 			//Initiate Controller updating call
+			// Build the database as well as controller synch
 			cout << "\n Status has been changed for Neighbor " << neighbor << endl;
 		}
 		else
 		{
 			cout << "\n Status didn't change for Neighbor " << neighbor << endl;
-			cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_lc_adList.getDataRcvCount(neighbor) << endl;
+			cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_gb_adList.getDataRcvCount(neighbor) << endl;
 		}
 
 		//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;

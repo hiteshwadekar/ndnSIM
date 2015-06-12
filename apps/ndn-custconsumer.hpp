@@ -134,6 +134,8 @@ protected:
   static const std::string INFO_COMPONENT;
   static const std::string HELLO_COMPONENT;
 
+  static int counter;
+
   AdjacencyList m_gb_adList;
   AdjacencyList m_lc_adList;
   time::seconds m_adjControllerBuildInterval;

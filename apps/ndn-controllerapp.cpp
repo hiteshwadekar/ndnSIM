@@ -42,8 +42,6 @@
 #include "ns3/object-factory.h"
 
 #include "boost/tuple/tuple.hpp"
-
-
 #include "ns3/ndnSIM/helper/ndn-stack-helper.hpp"
 #include "ns3/ndnSIM/helper/ndn-fib-helper.hpp"
 
@@ -54,9 +52,7 @@
 
 #include "helper/boost-graph-ndn-controller-routing-helper.hpp"
 #include "helper/controller-node-list.hpp"
-
 #include "model/ndn-yanGraphAlgorithm.hpp"
-
 #include "helper/ndn-app-prefix-helper.hpp"
 
 #include <boost/ref.hpp>
@@ -77,6 +73,11 @@ namespace ns3 {
 namespace ndn {
 
 NS_OBJECT_ENSURE_REGISTERED(ControllerApp);
+
+const std::string ControllerApp::INFO_COMPONENT = "INFO";
+const std::string ControllerApp::HELLO_COMPONENT = "HELLO";
+
+int ControllerApp::counter = 0;
 
 TypeId ControllerApp::GetTypeId(void) {
 	static TypeId tid =
@@ -118,17 +119,160 @@ void ControllerApp::StartApplication() {
 	NS_LOG_DEBUG("NodeID: " << GetNode ()->GetId ());
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
 
+	std::cout<< "####################################### Controller Initialization ###############################################################"<< std::endl;
+	std::cout << "\n";
+	initialize();
+
 }
 
-void ControllerApp::StopApplication() {
+void
+ControllerApp::StopApplication() {
 	NS_LOG_FUNCTION_NOARGS ();
 	App::StopApplication();
 }
 
-void ControllerApp::Initialize()
+void
+ControllerApp::initialize()
 {
+	// Get all neighbor information
+	m_gb_adList = CollectLinks();
+	scheduleHelloPacketEvent(100);
+}
+
+void
+ControllerApp::scheduleHelloPacketEvent(uint32_t seconds)
+{
+	cout <<"\n Called scheduleHelloPacketEvent function ------- " <<endl;
+	scheduler::schedule(ndn::time::seconds(seconds),bind(&ControllerApp::sendScheduledHelloInterest, this, seconds));
+}
+
+void
+ControllerApp::OnTimeout(uint32_t sequenceNumber)
+{
+	cout << "\n OnTimeout Called " << endl;
+}
+
+void
+ControllerApp::expressInterest(const Name& interestName, uint32_t seconds)
+{
+	cout<< "\n Expressing Hello Interest :" << interestName << endl;
+  	//Interest i(interestName);
+  	//i.setInterestLifetime(ndn::time::seconds(seconds));
+  	//i.setMustBeFresh(true);
+
+  	shared_ptr<Interest> interestConto = make_shared<Interest>();
+    UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
+  	interestConto->setNonce(m_rand.GetValue());
+  	interestConto->setName(interestName);
+  	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
+  	interestConto->setInterestLifetime(interestLifeTime);
+  	//interestConto->setMustBeFresh(true);
+  	m_transmittedInterests(interestConto, this, m_face);
+  	m_face->onReceiveInterest(*interestConto);
+  	std::cout << "\n";
+  //m_face.expressInterest(i,ndn::bind(&HelloProtocol::onContent,this,_1, _2),ndn::bind(&HelloProtocol::processInterestTimedOut,
+   //                                           this, _1));
 
 }
+
+void ControllerApp::sendScheduledHelloInterest(uint32_t seconds)
+{
+
+	counter++;
+	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
+	cout << "\n Source node for Hello packets->  " << Names::FindName(GetNode())<<endl;
+	cout << "\n Printing list value before sending Hello packets " <<endl;
+	//m_gb_adList = CollectLinks();
+	m_gb_adList.writeLog();
+	std::list<Adjacent> adjList = m_gb_adList.getAdjList();
+	for (std::list<Adjacent>::iterator it = adjList.begin(); it != adjList.end();
+	       ++it) {
+	    if((*it).getFaceId() != 0) {
+	      /* interest name: /<neighbor>/HELLO/INFO/ */
+	      Name interestName = (*it).getName() ;
+	      interestName.append(Names::FindName(GetNode()));
+	      interestName.append(HELLO_COMPONENT);
+	      interestName.append(INFO_COMPONENT);
+	      m_gb_adList.incrementInterestSendCount((*it).getName());
+	      expressInterest(interestName,m_conf.getInterestResendTime());
+	    }
+	    /*
+	    else {
+	      registerPrefixes((*it).getName(), (*it).getConnectingFaceUri(),
+	                       (*it).getLinkCost(), ndn::time::milliseconds::max());
+	    }*/
+	  }
+	cout <<"\n Numeber of times this function called ->  " << counter << endl;
+	cout << "\n Printing list value after sending Hello packets " <<endl;
+	m_gb_adList.writeLog();
+	scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
+}
+
+
+AdjacencyList ControllerApp::CollectLinks()
+{
+	AdjacencyList objAList;
+	Ptr<Node> localNode = GetNode ();
+	Ptr<L3Protocol> ndn = localNode->GetObject<L3Protocol> ();
+	NS_ASSERT_MSG (ndn != 0, "Ndn protocol hasn't been installed on a node, please install it first");
+	for (auto& faceId : ndn->getForwarder()->getFaceTable())
+	    {
+	      shared_ptr<NetDeviceFace> face = std::dynamic_pointer_cast<NetDeviceFace>(faceId);
+	      if (face == 0)
+	      {
+	    	  NS_LOG_DEBUG ("Skipping non-netdevice face");
+	    	  continue;
+	      }
+	      Ptr<NetDevice> nd = face->GetNetDevice ();
+	      if (nd == 0)
+	      {
+	    	  NS_LOG_DEBUG ("Not a NetDevice associated with NetDeviceFace");
+	    	  continue;
+	      }
+	      Ptr<Channel> ch = nd->GetChannel ();
+	      if (ch == 0)
+	      {
+	    	  NS_LOG_DEBUG ("Channel is not associated with NetDevice");
+	    	  continue;
+	      }
+	      if (ch->GetNDevices () == 2) // e.g., point-to-point channel
+	      {
+	    	  for (uint32_t deviceId = 0; deviceId < ch->GetNDevices (); deviceId ++)
+	    	  {
+	    		  Adjacent objAdjacent;
+	    		  Ptr<NetDevice> otherSide = ch->GetDevice (deviceId);
+	    		  if (nd == otherSide)
+	    			  continue;
+	    		  Ptr<Node> otherNode = otherSide->GetNode ();
+	    		  NS_ASSERT (otherNode != 0);
+	    		  Ptr<L3Protocol> otherNdn = otherNode->GetObject<L3Protocol> ();
+	    		  NS_ASSERT_MSG (otherNdn != 0, "Ndn protocol hasn't been installed on the other node, please install it first");
+	    		  objAdjacent.setConnectedNode(otherNode);
+	    		  objAdjacent.setName(Names::FindName(otherNode));
+	    		  objAdjacent.setFaceId(face->getId());
+	    		  //objAdjacent.setConnectingFaceUri(face->getRemoteUri().c_str());
+	    		  objAdjacent.setLinkCost(face->getMetric());
+	    		  if(face->isUp())
+	    		  {
+	    			  objAdjacent.setStatus(Adjacent::STATUS_ACTIVE);
+	    		  }
+	    		  else if(!face->isUp())
+	    		  {
+	    			  objAdjacent.setStatus(Adjacent::STATUS_INACTIVE);
+	    		  }
+	    		  else
+	    		  {
+	    			  objAdjacent.setStatus(Adjacent::STATUS_UNKNOWN);
+	    		  }
+	    		  objAdjacent.setInterestSentNo(0);
+	    		  objAdjacent.setDataRcvNo(0);
+	    		  objAList.insert(objAdjacent);
+		    }
+		}
+	 }
+	return objAList;
+}
+
 
 std::string ControllerApp::extractNodeName(std::string strPacketName, int n) {
 
@@ -139,12 +283,47 @@ std::string ControllerApp::extractNodeName(std::string strPacketName, int n) {
 	return fields[n];
 }
 
+/*
 std::string ControllerApp::extractNodeRequestType(std::string strPrefixName) {
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, strPrefixName,
 			boost::algorithm::is_any_of("/"));
 	return fields[3];
 }
+*/
+
+std::string ControllerApp::extractNodeRequestType(std::string strPrefixName, int index) {
+	std::vector<std::string> fields;
+	boost::algorithm::split(fields, strPrefixName,
+			boost::algorithm::is_any_of("/"));
+
+	//for (size_t n = 0; n < fields.size(); n++)
+	//	std::cout << fields[n] << "\"\n";
+	//cout << endl;
+
+	if(index <= fields.size())
+	{
+		return fields[index];
+	}
+	else
+	{
+		return fields[0];
+	}
+
+	/*
+
+	if (fields.size()>=3)
+	{
+		return fields[3];
+	}
+	else
+	{
+		return fields[0];
+	}
+	*/
+}
+
+
 
 
 void ControllerApp::extractNodeLinkInfo(std::string strNodeLinkInfo) {
@@ -719,11 +898,66 @@ void ControllerApp::sendPathDataPacket(std::shared_ptr<const Interest> interest)
 	dPacket->setSignature(signature);
 	dPacket->wireEncode();
 
-	std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face << std::endl;
+	std::cout << "\n ControllerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face << std::endl;
 	m_transmittedDatas(dPacket, this, m_face);
 	m_face->onReceiveData(*dPacket);
 	std::cout << "\n";
 }
+
+
+void ControllerApp::SendHelloDataPacket(shared_ptr<const Interest> interest) {
+
+	  /* interest name: /<neighbor>/NLSR/INFO/<router> */
+	  Name interestName = interest->getName();
+	  //Name neighbor = interestName.getPrefix(-2);
+	  Name neighbor = interestName.get(-3).toUri();
+	  cout<<"Neighbor: " << neighbor << endl;
+
+	  //m_adList.writeLog();
+	  if (m_gb_adList.isNeighbor(neighbor))
+	  {
+		  std::cout << "\n ControllerApp: Sending Hello data packet- > " << interest->getName() << " is sending from face -> " << m_face->getId() << std::endl;
+		  Name dataName(interest->getName());
+		  auto dPacket = make_shared<Data>();
+		  dPacket->setName(dataName);
+		  dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+		  dPacket->setContent(reinterpret_cast<const uint8_t*>(INFO_COMPONENT.c_str()),
+						INFO_COMPONENT.size());
+		  Signature signature;
+		  SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+		  if (m_keyLocator.size() > 0){
+		  	signatureInfo.setKeyLocator(m_keyLocator);
+		  }
+
+		  signature.setInfo(signatureInfo);
+		  signature.setValue(Block(&m_signature, sizeof(m_signature)));
+		  dPacket->setSignature(signature);
+		  dPacket->wireEncode();
+
+		  m_transmittedDatas(dPacket, this, m_face);
+		  m_face->onReceiveData(*dPacket);
+
+		  Adjacent *adjacent = m_gb_adList.findAdjacent(neighbor);
+		  if (adjacent->getStatus() == Adjacent::STATUS_INACTIVE)
+		  {
+			  if(adjacent->getFaceId() != 0)
+			  {
+				  Name interestName(neighbor) ;
+				  interestName.append(Names::FindName(GetNode()));
+				  interestName.append(HELLO_COMPONENT);
+				  interestName.append(INFO_COMPONENT);
+				  m_gb_adList.incrementInterestSendCount(neighbor);
+				  expressInterest(interestName,m_conf.getInterestResendTime());
+			  }
+			  /*
+			  else {
+				  registerPrefixes(adjacent->getName(), adjacent->getConnectingFaceUri(),
+							 	 adjacent->getLinkCost(), ndn::time::milliseconds::max());
+			  }*/
+		  }
+	  }
+}
+
 
 
 void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
@@ -734,8 +968,8 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 		return;
 
 	std::string strPrefix;
-	std::string strRequestType = extractNodeRequestType(interest->getName().toUri());
-	std::string strInterestNodePrefix = extractNodeName(interest->getName().toUri(), 2);
+	std::string strRequestType = extractNodeRequestType(interest->getName().toUri(),3);
+	std::string strInterestNodePrefix = extractNodeName(interest->getName().toUri(),2);
 
 	if (strRequestType.compare("req_route") == 0)
 	{
@@ -748,6 +982,12 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
 		sendPathDataPacket(interest);
+	}
+	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
+	{
+			//strPrefix = "/";
+			//SendInterestPacket(strPrefix);
+			SendHelloDataPacket(interest);
 	}
 	else{
 		strPrefix = "/";
@@ -780,35 +1020,78 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	NS_LOG_FUNCTION(this << contentObject);
 	if (!m_active)
     	return;
+
 	NS_LOG_INFO ("\n Received content object: " << boost::cref(*contentObject));
 	std::cout << "\n CentralizedControllerApp: Received Data packet -> "
 			<< contentObject->getName() << std::endl;
 	std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 			contentObject->getContent().value_size());
 
-	NdnControllerString strControllerData = NdnControllerString(msg);
-	std::string strSourceNode =	strControllerData.GetSourceNode();
+	std::string strRequestType = extractNodeRequestType(contentObject->getName().toUri(),3);
 
-	cout << "\n Source Node -> " << strSourceNode << endl;
-	cout << "\n msg -> " << msg << endl;
-
-	Ptr<ControllerRouter> node = IsNodePresent(strSourceNode);
-
-	if(node==NULL)
+	if (strRequestType.compare("req_route") == 0)
 	{
-		node = CreateObject<ControllerRouter>(strSourceNode);
-		size_t k = ns3::ndn::ControllerNodeList::Add(node);
+
+		NdnControllerString strControllerData = NdnControllerString(msg);
+		std::string strSourceNode =	strControllerData.GetSourceNode();
+
+		cout << "\n Source Node -> " << strSourceNode << endl;
+		cout << "\n msg -> " << msg << endl;
+
+		Ptr<ControllerRouter> node = IsNodePresent(strSourceNode);
+
+		if(node==NULL)
+		{
+			node = CreateObject<ControllerRouter>(strSourceNode);
+			size_t k = ns3::ndn::ControllerNodeList::Add(node);
+		}
+
+		AddIncidency(node, strControllerData.GetLinkInfo());
+		AddPrefix(node, strControllerData.GetNodePrefixInfo());
+
+		//if(strSourceNode.compare("Node6") == 0)
+		if(strSourceNode.compare("Node3") == 0)
+		{
+			//CalculateRoutes();
+			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+			StartSendingPathToNode(); // Start seding packets to individual nodes.
+		}
+	}
+	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
+	{
+		// We got the data packet for updating the routes.
+				std::string msg1(reinterpret_cast<const char*>(contentObject->getContent().value()),
+									contentObject->getContent().value_size());
+				std::cout << "\n Printing Data information -> " << msg1 << endl;
+				//std::string strNeighbor = extractNodeRequestType(contentObject->getName().toUri(),1);
+				//std::cout << "\n Printing strNeighbor information -> " << strNeighbor << endl;
+				Name dataName = contentObject->getName();
+				Name neighbor = dataName.getPrefix(-3);
+				std::cout << "\n Printing Neighbor information -> " << neighbor << endl;
+				Adjacent::Status oldStatus = m_gb_adList.getStatusOfNeighbor(neighbor);
+				m_gb_adList.setStatusOfNeighbor(neighbor, Adjacent::STATUS_ACTIVE);
+				m_gb_adList.incrementDataRcvCount(neighbor);
+				Adjacent::Status newStatus = m_gb_adList.getStatusOfNeighbor(neighbor);
+				if ((oldStatus - newStatus) != 0) {
+					//Initiate Controller updating call
+					// Build the database as well as controller synch
+					cout << "\n Status has been changed for Neighbor " << neighbor << endl;
+				}
+				else
+				{
+					cout << "\n Status didn't change for Neighbor " << neighbor << endl;
+					cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_gb_adList.getDataRcvCount(neighbor) << endl;
+				}
+				//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;
+	}
+	else
+	{
+				// We got the data packet for updating the routes.
+				std::string msg1(reinterpret_cast<const char*>(contentObject->getContent().value()),
+									contentObject->getContent().value_size());
+				std::cout << "\n pRINTING DATA FROM OTHE NODE -> " << msg << endl;
 	}
 
-	AddIncidency(node, strControllerData.GetLinkInfo());
-	AddPrefix(node, strControllerData.GetNodePrefixInfo());
-
-	if(strSourceNode.compare("Node6") == 0)
-	{
-		//CalculateRoutes();
-		CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
-		StartSendingPathToNode(); // Start seding packets to individual nodes.
-	}
 }
 
 void ControllerApp::OnNack(std::shared_ptr<const ndn::Interest> interest) {
