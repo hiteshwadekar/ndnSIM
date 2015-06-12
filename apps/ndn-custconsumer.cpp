@@ -729,7 +729,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		for (ns3::NodeList::Iterator node = ns3::NodeList::Begin(); node != ns3::NodeList::End();
 		         node++) {
 			strNode = Names::FindName(Ptr<Node>(*node));
-			if(strNode.compare("Node1")!=0 && strNode.compare(strNodeName)!=0)
+			if(strNode.compare("controller")!=0 && strNode.compare(strNodeName)!=0)
 			{
 				strNode = "/" + strNode;
 				SendInterestPacket(strNode);

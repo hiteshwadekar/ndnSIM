@@ -971,6 +971,9 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	std::string strRequestType = extractNodeRequestType(interest->getName().toUri(),3);
 	std::string strInterestNodePrefix = extractNodeName(interest->getName().toUri(),2);
 
+
+	cout <<"\n Controller strRequestType -> " << strRequestType << endl;
+
 	if (strRequestType.compare("req_route") == 0)
 	{
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/req_route";
@@ -1006,7 +1009,7 @@ void ControllerApp::StartSendingPathToNode()
 	for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
 	  {
 		Ptr<ControllerRouter> source = (*node);
-		if (source != NULL && source->GetSourceNode().compare("Node1")!=0){
+		if (source != NULL && source->GetSourceNode().compare("controller")!=0){
 			std::string strInterestPrefix = "/" + source->GetSourceNode() + "/controller" + "/res_route";
 			std::cout << "\n ControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
 			sendInterestPacket(strInterestPrefix);

@@ -1,6 +1,6 @@
 # topo-centalized-controller-6-node.txt
 
-# This topology assuming that node3 is centralized controller and node name is starting from node1.
+# This topology assuming that controller is centralized controller and node name is starting from node1.
 # any empty lines and lines starting with '#' symbol is ignored
 # The file should contain exactly two sections: router and link, each starting with the corresponding keyword
 # router section defines topology nodes and their relative positions (e.g., to use in visualizer)
@@ -11,7 +11,7 @@ router
 # node  comment     yPos    xPos
 Node1   NA          1       1
 Node2   NA          1       2
-Node3   NA          2       1
+controller   NA          2       1
 Node4   NA          2       2
 Node5   NA          3       1
 Node6   NA          3       2
@@ -27,10 +27,10 @@ link
 # metric: routing metric
 # delay:  link delay
 # queue:  MaxPackets for transmission queue on the link (both directions)
-Node3       Node1       1Mbps       1       10ms    10
-Node3       Node4       1Mbps       10      10ms    10
-Node3       Node5       1Mbps       2       10ms    10
-Node3       Node6       1Mbps       1       10ms    10
+controller       Node1       1Mbps       1       10ms    10
+controller       Node4       1Mbps       10      10ms    10
+controller       Node5       1Mbps       2       10ms    10
+controller       Node6       1Mbps       1       10ms    10
 Node1       Node2       1Mbps       2       10ms    10
 Node2       Node4       1Mbps       5       10ms    10
 Node4       Node6       1Mbps       3       10ms    10

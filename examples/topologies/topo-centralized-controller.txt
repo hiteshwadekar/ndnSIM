@@ -18,7 +18,7 @@ router
 # each line in this section represents one router and should have the following data
 # node  comment     yPos    xPos
 Node0   NA          1       1
-Node1   NA          1       2
+controller   NA          1       2
 Node2   NA          2       1
 Node3   NA          2       2
 # Note that `node` can be any string. It is possible to access to the node by name using Names::Find, see examples.
@@ -32,7 +32,7 @@ link
 # metric: routing metric
 # delay:  link delay
 # queue:  MaxPackets for transmission queue on the link (both directions)
-Node0       Node1       1Mbps       1       10ms    10
+Node0       controller       1Mbps       1       10ms    10
 Node0       Node3       1Mbps       2       10ms    10
 Node0       Node2       1Mbps       1       10ms    10
 Node2       Node3       1Mbps       5       10ms    10
