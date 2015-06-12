@@ -50,7 +50,6 @@
 #include "model/ndn-conf-parameter.hpp"
 #include "core/scheduler.hpp"
 
-
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/tag.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -60,6 +59,7 @@ using namespace std;
 
 namespace ns3 {
 namespace ndn {
+
 /**
  * @ingroup ndn-apps
  * @brief A simple Interest-sink applia simple Interest-sink application

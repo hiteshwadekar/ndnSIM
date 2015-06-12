@@ -6,7 +6,6 @@
 #include "ns3/string.h"
 #include "ns3/uinteger.h"
 #include "ns3/packet.h"
-#include "ns3/simulator.h"
 
 #include "ns3/ptr.h"
 #include "ns3/callback.h"
@@ -67,15 +66,16 @@ namespace ll = boost::lambda;
 NS_LOG_COMPONENT_DEFINE("ndn.ControllerApp");
 
 using namespace std;
-
+using namespace nfd;
 
 namespace ns3 {
 namespace ndn {
 
-NS_OBJECT_ENSURE_REGISTERED(ControllerApp);
 
 const std::string ControllerApp::INFO_COMPONENT = "INFO";
 const std::string ControllerApp::HELLO_COMPONENT = "HELLO";
+
+NS_OBJECT_ENSURE_REGISTERED(ControllerApp);
 
 int ControllerApp::counter = 0;
 
