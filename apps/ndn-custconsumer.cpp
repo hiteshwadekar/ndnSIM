@@ -101,7 +101,9 @@ TypeId CustConsumer::GetTypeId(void) {
 	return tid;
 }
 
-CustConsumer::CustConsumer(){
+CustConsumer::CustConsumer()
+: m_firstTimeHello(true)
+{
 	//NS_LOG_FUNCTION_NOARGS ();
 	//m_seqMax = std::numeric_limits<uint32_t>::max();
 }
@@ -151,7 +153,7 @@ void CustConsumer::initialize()
 void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
 {
 	cout <<"\n Called scheduleHelloPacketEvent function ------- " <<endl;
-	scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::sendScheduledHelloInterest, this, seconds));
+	m_helloEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::sendScheduledHelloInterest, this, seconds));
 }
 
 
@@ -166,11 +168,7 @@ void
 CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
 {
 	cout<< "\n Expressing Hello Interest :" << interestName << endl;
-  	//Interest i(interestName);
-  	//i.setInterestLifetime(ndn::time::seconds(seconds));
-  	//i.setMustBeFresh(true);
-
-  	shared_ptr<Interest> interestConto = make_shared<Interest>();
+ 	shared_ptr<Interest> interestConto = make_shared<Interest>();
     UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
   	interestConto->setNonce(m_rand.GetValue());
   	interestConto->setName(interestName);
@@ -180,9 +178,6 @@ CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
   	m_transmittedInterests(interestConto, this, m_face);
   	m_face->onReceiveInterest(*interestConto);
   	std::cout << "\n";
-  //m_face.expressInterest(i,ndn::bind(&HelloProtocol::onContent,this,_1, _2),ndn::bind(&HelloProtocol::processInterestTimedOut,
-   //                                           this, _1));
-
 }
 
 void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
@@ -215,7 +210,17 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	cout <<"\n Numeber of times this function called ->  " << counter << endl;
 	cout << "\n Printing list value after sending Hello packets " <<endl;
 	m_gb_adList.writeLog();
-	scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
+
+	if(!m_helloEvent->IsRunning())
+	{
+		cout <<"\n This movement event is not running " << endl;
+		scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
+	}
+
+	if(!m_helloEvent->IsExpired())
+	{
+		cout <<"\n This movement event is not expired " << endl;
+	}
 }
 
 
@@ -413,6 +418,22 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 	return attrValue;
 }
 
+
+void CustConsumer::VerifyLinks()
+{
+	bool isReqtoController=false;
+	std::string strUpdateToController;
+	isReqtoController = m_gb_adList.isAdjBuildable();
+
+	AdjacencyList local_adList = CollectLinks();
+}
+
+
+
+std::string CustConsumer::SendUpdateToController()
+{
+
+}
 
 AdjacencyList CustConsumer::CollectLinks()
 {
@@ -632,8 +653,6 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 		  m_transmittedDatas(dPacket, this, m_face);
 		  m_face->onReceiveData(*dPacket);
 
-
-
 		  Adjacent *adjacent = m_gb_adList.findAdjacent(neighbor);
 		  if (adjacent->getStatus() == Adjacent::STATUS_INACTIVE)
 		  {
@@ -753,6 +772,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		m_gb_adList.incrementDataRcvCount(neighbor);
 		Adjacent::Status newStatus = m_gb_adList.getStatusOfNeighbor(neighbor);
 		if ((oldStatus - newStatus) != 0) {
+
 			//Initiate Controller updating call
 			// Build the database as well as controller synch
 			cout << "\n Status has been changed for Neighbor " << neighbor << endl;
@@ -762,6 +782,8 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 			cout << "\n Status didn't change for Neighbor " << neighbor << endl;
 			cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_gb_adList.getDataRcvCount(neighbor) << endl;
 		}
+
+		m_gb_adList.writeLog();
 
 		//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;
 	}

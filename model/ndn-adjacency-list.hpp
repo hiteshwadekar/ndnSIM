@@ -68,7 +68,7 @@ public:
   addAdjacents(AdjacencyList& adl);
 
   bool
-  isAdjLsaBuildable();
+  isAdjBuildable();
 
   int32_t
   getNumOfActiveNeighbor();

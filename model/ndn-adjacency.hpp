@@ -84,8 +84,13 @@ public:
   void
   setStatus(Status s)
   {
-    m_status = s;
+	  if ((m_status - s) != 0)
+	  {
+		  m_isStatusChanged=true;
+	  }
+	  m_status = s;
   }
+
 
   uint32_t
   getInterestTimedOutNo() const
@@ -180,6 +185,7 @@ private:
   uint32_t m_DataRcvCounter;
   uint64_t m_faceId;
   ConfParameter m_conf;
+  bool m_isStatusChanged;
 
 };
 }

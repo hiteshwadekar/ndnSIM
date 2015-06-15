@@ -108,7 +108,6 @@ protected:
   UniformVariable m_rand; ///< @brief nonce generator
   uint32_t m_signature;
 
-  bool m_firstTime;
   RandomVariable* m_random;
   std::string m_randomType;
 
@@ -139,13 +138,17 @@ protected:
   AdjacencyList m_gb_adList;
   AdjacencyList m_lc_adList;
   time::seconds m_adjControllerBuildInterval;
+  bool m_firstTimeHello;
   ConfParameter m_conf;
+  std::shared_ptr<ns3::EventId> m_helloEvent;
   void initialize();
   AdjacencyList CollectLinks();
   void scheduleHelloPacketEvent(uint32_t seconds);
   void sendScheduledHelloInterest(uint32_t seconds);
   void expressInterest(const Name& interestName, uint32_t seconds);
   void SendHelloDataPacket(shared_ptr<const Interest> interest);
+  void VerifyLinks();
+  std::string SendUpdateToController();
 
  };
 

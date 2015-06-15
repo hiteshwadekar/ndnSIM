@@ -21,6 +21,7 @@ Adjacent::Adjacent()
     , m_status(STATUS_INACTIVE)
     , m_interestTimedOutNo(0)
     , m_faceId(0)
+	,m_isStatusChanged(false)
 {
 }
 
