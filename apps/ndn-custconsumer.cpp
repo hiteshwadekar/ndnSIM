@@ -421,11 +421,72 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 
 void CustConsumer::VerifyLinks()
 {
+
 	bool isReqtoController=false;
-	std::string strUpdateToController;
+	std::stringstream strUpdateToController;
+
 	isReqtoController = m_gb_adList.isAdjBuildable();
 
+
 	AdjacencyList local_adList = CollectLinks();
+	std::list<Adjacent>& adjList1 = local_adList.getAdjList();
+	std::list<Adjacent>& adjList2 = m_gb_adList.getAdjList();
+
+	std::list<Adjacent>::iterator it1;
+	for (it1=adjList1.begin();it1!= adjList1.end(); it1++) {
+
+		Adjacent *adj = m_gb_adList.findAdjacent(it1->getName());
+		if(&adj!=NULL)
+		{
+			// compare each value with other one along with interest and data
+			if(adj == &(*it1))
+			{
+				if(adj->getInterestSentNo()>0 && adj->getDataRcvNo()==0)
+				{
+					// It means other NFD is not able to send the information
+					strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus() << "," << "FACE_DOWN";
+
+				}
+			}
+			else
+			{
+				// send this (*it) information to controller.
+
+
+			}
+
+		}
+		else
+		{
+			// This object has been added new in the current link.
+			// send this (*it) information to controller
+		}
+
+		if(strUpdateToController!=NULL)
+		{
+			strUpdateToController << ",";
+		}
+
+	}
+
+	if(strUpdateToController!=NULL)
+	{
+		// call controller synch function
+		NdnControllerString strControllerData = NdnControllerString("");
+		strControllerData.SetSourceNode(Names::FindName(GetNode()).c_str());
+
+
+
+
+	}
+
+	// reset gb_list and update to local list
+
+
+	if(!m_helloEvent->IsRunning())
+	{
+		// Schedule hello packet event.
+	}
 }
 
 

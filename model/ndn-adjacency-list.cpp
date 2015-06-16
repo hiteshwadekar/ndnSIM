@@ -261,17 +261,14 @@ bool
 AdjacencyList::isAdjBuildable()
 {
   for (std::list<Adjacent>::iterator it = m_adjList.begin(); it != m_adjList.end() ; it++) {
-	  if ((it->getStatus() == Adjacent::STATUS_INACTIVE || it->getStatus() == Adjacent::STATUS_UNKNOWN) && it->getInterestSentNo() > 0 && it->getDataRcvNo()== 0)
-	  {
-		  return true;
-	  }
-	  if ((it->getStatus() == Adjacent::STATUS_ACTIVE) && it->getInterestSentNo() > 0 && it->getDataRcvNo() == 0)
+	  if ((it->getStatus() == Adjacent::STATUS_INACTIVE || it->getStatus() == Adjacent::STATUS_UNKNOWN || it->getStatus() == Adjacent::STATUS_ACTIVE) && it->getInterestSentNo() > 0 && it->getDataRcvNo()== 0 && it->getChangedStatus())
 	  {
 		  return true;
 	  }
   }
   return false;
 }
+
 
 int32_t
 AdjacencyList::getNumOfActiveNeighbor()

@@ -168,6 +168,12 @@ public:
     return m_connectingFaceUri == faceUri;
   }
 
+  inline bool
+  getChangedStatus()
+  {
+	  return m_isStatusChanged;
+  }
+
   void
   writeLog();
 
