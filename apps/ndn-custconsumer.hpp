@@ -149,6 +149,10 @@ protected:
   void SendHelloDataPacket(shared_ptr<const Interest> interest);
   void VerifyLinks();
   std::string SendUpdateToController();
+  std::stringstream m_strUpdateToController;
+
+  void ControllerSync(std::stringstream& strUpdateToController);
+  void SendUpdateDataPacketToController(shared_ptr<const Interest> interest);
 
  };
 

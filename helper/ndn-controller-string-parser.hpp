@@ -41,7 +41,7 @@ static const std::string LINK_INFORMATION = "Link_Information:{";
 static const std::string NODE_PREFIX = "Node_Prefix:{";
 static const std::string APP_PREFIX = "App_Prefix:{";
 static const std::string CALPATH_PREFIX = "Calculated_Path:{";
-
+static const std::string LINK_UPDATE = "Link_Update:{";
 
 using namespace std;
 
@@ -68,6 +68,9 @@ public:
   std::vector<std::string>
   GetLinkInfo();
 
+  std::vector<std::string>
+  GetLinkUpdateInfo();
+
   std::string
   GetAppPrefixInfo();
 
@@ -82,6 +85,9 @@ public:
 
   std::string
   SetLinkInfo(string strLinkInfo);
+
+  std::string
+  SetLinkUpdateInfo(string strLinkInfo);
 
   std::string
   SetAppPrefixInfo(string strAppPrefix);

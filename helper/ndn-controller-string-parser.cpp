@@ -59,6 +59,18 @@ NdnControllerString::GetLinkInfo(){
 	return fields;
 }
 
+vector<std::string>
+NdnControllerString::GetLinkUpdateInfo(){
+	std::string strLinkInfo;
+	std::vector<std::string> fields;
+	if (!m_string.empty())
+	{
+		strLinkInfo = extractInformation(LINK_UPDATE,"}");
+		fields=extractLinkInformation(strLinkInfo,",");
+	}
+	return fields;
+}
+
 string
 NdnControllerString::GetAppPrefixInfo(){
 	return m_string;
@@ -104,6 +116,15 @@ NdnControllerString::SetLinkInfo(string strLinkInfo){
 	if(!strLinkInfo.empty())
 	{
 		m_string = m_string + LINK_INFORMATION + strLinkInfo + "}" +"," ;
+	}
+	return m_string;
+}
+
+string
+NdnControllerString::SetLinkUpdateInfo(string strLinkInfo){
+	if(!strLinkInfo.empty())
+	{
+		m_string = m_string + LINK_UPDATE + strLinkInfo + "}" +"," ;
 	}
 	return m_string;
 }
