@@ -233,6 +233,15 @@ AdjacencyList::getAdjList()
   return m_adjList;
 }
 
+void
+AdjacencyList::setAdjList(std::list<Adjacent>& newList)
+{
+	if (m_adjList.size() > 0) {
+		 m_adjList.clear();
+	}
+	m_adjList=newList;
+}
+
 /*
 bool
 AdjacencyList::isAdjLsaBuildable()

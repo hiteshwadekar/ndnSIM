@@ -986,6 +986,12 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
 		sendPathDataPacket(interest);
 	}
+	else if(strRequestType.compare("req_update") == 0)
+	{
+		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/req_update";
+		std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestNodePrefix << "  with acknowledge interest -> " << strPrefix << std::endl;
+		sendInterestPacket(strPrefix);
+	}
 	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
 	{
 			//strPrefix = "/";
@@ -1059,6 +1065,13 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 			StartSendingPathToNode(); // Start seding packets to individual nodes.
 		}
+	}
+	else if(strRequestType.compare("req_update") == 0)
+	{
+	   // We got the data packet for updating the routes.
+	  NdnControllerString strControllerUpdatedData = NdnControllerString(msg);
+	  std::string strSourceNodeUpdate =	strControllerUpdatedData.GetSourceNode();
+	  std::cout << "\n Received data packet for updating information from node  ->  " << strSourceNodeUpdate << "\t  information is -> " << msg << endl;
 	}
 	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
 	{

@@ -28,6 +28,9 @@ public:
   std::list<Adjacent>&
   getAdjList();
 
+  void
+  setAdjList(std::list<Adjacent>&);
+
   bool
   isNeighbor(const Name& adjName);
 

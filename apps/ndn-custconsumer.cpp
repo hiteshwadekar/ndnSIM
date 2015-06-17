@@ -201,14 +201,11 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	      m_gb_adList.incrementInterestSendCount((*it).getName());
 	      expressInterest(interestName,m_conf.getInterestResendTime());
 	    }
-	    /*
-	    else {
-	      registerPrefixes((*it).getName(), (*it).getConnectingFaceUri(),
-	                       (*it).getLinkCost(), ndn::time::milliseconds::max());
-	    }*/
 	  }
+
 	cout <<"\n Numeber of times this function called ->  " << counter << endl;
 	cout << "\n Printing list value after sending Hello packets " <<endl;
+
 	m_gb_adList.writeLog();
 
 	if(!m_helloEvent->IsRunning())
@@ -427,8 +424,8 @@ void CustConsumer::VerifyLinks()
 	// 1: Both list size, if yes compare each object with other
 	// 2: if, not, then if current list size greater than the old one, that case new object should send to controller, and rest of the objects will compare each other
 	// 3: if, current list is smaller than old one, then old's one object no more present as link, so need to send that object info to controller as link_removed
-    //
 
+	cout <<"\n VeryfyLinks: Called " << endl;
 	bool isReqtoController=false;
 	std::stringstream strUpdateToController;
 	int sizeList=0;
@@ -449,8 +446,6 @@ void CustConsumer::VerifyLinks()
 
 
 	std::list<Adjacent>::iterator it1;
-
-
 	if( sizeList==2 || sizeList==0 )
 	{
 		for (it1=adjList1.begin();it1!= adjList1.end();it1++)
@@ -568,28 +563,24 @@ void CustConsumer::VerifyLinks()
 	if(isReqtoController && strUpdateToController==NULL)
 	{
 		// mismatch occure somthing wrong in code
+		std::cout << "\n Mismatch occure in global list and local list comaparison, need to handle this" << std::endl;
 	}
 
 	if(strUpdateToController!=NULL)
 	{
 		ControllerSync(strUpdateToController);
 	}
-
-	// reset gb_list and update to local list
-	if(!m_helloEvent->IsRunning())
-	{
-		// Schedule hello packet event.
-	}
+	m_gb_adList.reset();
+	m_gb_adList.setAdjList(adjList1);
 }
-
 
 void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 {
 	// Check first in FIB if current prefix has available in case if prefix has down or cost increased.
 	// Prepare string for controller send.
 
+	cout <<"\n ControllerSync: Called " << endl;
 	std::stringstream strmodifiedControllerData;
-
 	NdnControllerString strControllerData = NdnControllerString("");
 	if(strUpdateToController!=NULL)
 	{
@@ -1030,6 +1021,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 			//Initiate Controller updating call
 			// Build the database as well as controller synch
 			cout << "\n Status has been changed for Neighbor " << neighbor << endl;
+			VerifyLinks();
 		}
 		else
 		{
