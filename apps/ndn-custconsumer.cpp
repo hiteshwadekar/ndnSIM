@@ -147,13 +147,18 @@ void CustConsumer::initialize()
 {
 	// Get all neighbor information
 	m_gb_adList = CollectLinks();
-	scheduleHelloPacketEvent(100);
+	scheduleHelloPacketEvent(30);
+	schedulecheckLinkEvent(60);
 }
 
 void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
 {
-	cout <<"\n Called scheduleHelloPacketEvent function ------- " <<endl;
 	m_helloEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::sendScheduledHelloInterest, this, seconds));
+}
+
+void CustConsumer::schedulecheckLinkEvent(uint32_t seconds)
+{
+	m_checkEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::VerifyLinks, this, seconds));
 }
 
 
@@ -167,7 +172,7 @@ CustConsumer::OnTimeout(uint32_t sequenceNumber)
 void
 CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
 {
-	cout<< "\n Expressing Hello Interest :" << interestName << endl;
+	cout<< "\n Expressing Hello Interest from consumer :" << interestName << endl;
  	shared_ptr<Interest> interestConto = make_shared<Interest>();
     UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
   	interestConto->setNonce(m_rand.GetValue());
@@ -184,11 +189,11 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 {
 
 	counter++;
-	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
+	cout <<"\n Called Consumer sendScheduledHelloInterest function ------- " <<endl;
 	cout << "\n Source node for Hello packets->  " << Names::FindName(GetNode())<<endl;
 	cout << "\n Printing list value before sending Hello packets " <<endl;
 	//m_gb_adList = CollectLinks();
-	m_gb_adList.writeLog();
+	//m_gb_adList.writeLog();
 	std::list<Adjacent> adjList = m_gb_adList.getAdjList();
 	for (std::list<Adjacent>::iterator it = adjList.begin(); it != adjList.end();
 	       ++it) {
@@ -204,20 +209,20 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	  }
 
 	cout <<"\n Numeber of times this function called ->  " << counter << endl;
-	cout << "\n Printing list value after sending Hello packets " <<endl;
-
-	m_gb_adList.writeLog();
 
 	if(!m_helloEvent->IsRunning())
 	{
 		cout <<"\n This movement event is not running " << endl;
-		scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
+		//scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
 	}
 
-	if(!m_helloEvent->IsExpired())
+	if(m_helloEvent->IsExpired())
 	{
-		cout <<"\n This movement event is not expired " << endl;
+		cout <<"\n This movement event is expired " << endl;
+		//cout << "\n Printing list value after sending Hello packets " <<endl;
+		//m_gb_adList.writeLog();
 	}
+
 }
 
 
@@ -418,14 +423,16 @@ std::string CustConsumer::getPrefix(Ptr<Node> NodeObj)
 
 
 
-void CustConsumer::VerifyLinks()
+void CustConsumer::VerifyLinks(uint32_t seconds)
 {
 	// For this algorithm, we will have to cover following cases
 	// 1: Both list size, if yes compare each object with other
 	// 2: if, not, then if current list size greater than the old one, that case new object should send to controller, and rest of the objects will compare each other
 	// 3: if, current list is smaller than old one, then old's one object no more present as link, so need to send that object info to controller as link_removed
+	cout <<"\n VeryfyLinks: Called for node -> " << Names::FindName(GetNode()).c_str()<<endl;
+	cout <<"\n Printing global list values ->  " << endl;
+	m_gb_adList.writeLog();
 
-	cout <<"\n VeryfyLinks: Called " << endl;
 	bool isReqtoController=false;
 	std::stringstream strUpdateToController;
 	int sizeList=0;
@@ -444,17 +451,16 @@ void CustConsumer::VerifyLinks()
 		sizeList=0;
 	}
 
-
 	std::list<Adjacent>::iterator it1;
 	if( sizeList==2 || sizeList==0 )
 	{
 		for (it1=adjList1.begin();it1!= adjList1.end();it1++)
 		{
 			Adjacent *adj = m_gb_adList.findAdjacent(it1->getName());
-			if(&adj!=NULL)
+			if(adj!=NULL)
 			{
 				// compare each value with other one along with interest and data
-				if(adj == &(*it1))
+				if(((*it1) == (*adj)))
 				{
 					if(adj->getInterestSentNo()>0 && adj->getDataRcvNo()==0)
 					{
@@ -495,7 +501,7 @@ void CustConsumer::VerifyLinks()
 				strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus() << "," << "LINK_ADDED";
 			}
 
-			if(strUpdateToController!=NULL)
+			if(!strUpdateToController.str().empty())
 			{
 				strUpdateToController << ",";
 			}
@@ -503,7 +509,6 @@ void CustConsumer::VerifyLinks()
 	}
 	else
 	{
-
 		for (it1=adjList2.begin();it1!= adjList2.end();it1++)
 		{
 					Adjacent *adj = local_adList.findAdjacent(it1->getName());
@@ -551,7 +556,7 @@ void CustConsumer::VerifyLinks()
 						strUpdateToController << it1->getName()  << "," << it1->getFaceId() << "," << it1->getLinkCost() << "," << it1->getStatus() << "," << "LINK_REMOVED";
 					}
 
-					if(strUpdateToController!=NULL)
+					if(!strUpdateToController.str().empty())
 					{
 						strUpdateToController << ",";
 					}
@@ -559,14 +564,13 @@ void CustConsumer::VerifyLinks()
 
 	}
 
-
 	if(isReqtoController && strUpdateToController==NULL)
 	{
 		// mismatch occure somthing wrong in code
 		std::cout << "\n Mismatch occure in global list and local list comaparison, need to handle this" << std::endl;
 	}
 
-	if(strUpdateToController!=NULL)
+	if(!strUpdateToController.str().empty())
 	{
 		ControllerSync(strUpdateToController);
 	}
@@ -580,6 +584,7 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 	// Prepare string for controller send.
 
 	cout <<"\n ControllerSync: Called " << endl;
+	cout <<"\n Printing values for controller -> " <<strUpdateToController.str() <<endl;
 	std::stringstream strmodifiedControllerData;
 	NdnControllerString strControllerData = NdnControllerString("");
 	if(strUpdateToController!=NULL)
@@ -595,36 +600,32 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 			std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
 			ndn::nfd::Fib& fib = fw->getFib();
 			for (size_t n = 0; n < fields.size(); n+=5)
+			{
+				int NextHopcounter=0;
+				for (const auto& fibEntry : fib)
 				{
-					int NextHopcounter=0;
-					if(fields[n+3].compare("LINK_COST")==0)
+					std::string strTempString = fibEntry.getPrefix().toUri().c_str();
+					if(strTempString.compare(fields[n]) == 0)
 					{
-						for (const auto& fibEntry : fib)
+						for (const auto& nh : fibEntry.getNextHops())
 						{
-							std::string strTempString = fibEntry.getPrefix().toUri().c_str();
-							if(strTempString.compare(fields[n]) == 0)
+							if(nh.getFace()->getId()!=l3->getFaceById(atoi(fields[n+1].c_str()))->getId())
 							{
-								for (const auto& nh : fibEntry.getNextHops())
-								{
-									if(nh.getFace()->getId()!=l3->getFaceById(atoi(fields[n+1].c_str()))->getId())
-									{
-										NextHopcounter++;
-									}
-									//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
-								}
+								NextHopcounter++;
 							}
-						}
-
-					}
-					if(NextHopcounter==0)
-					{
-						strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
-						if(n <= fields.size())
-						{
-							strmodifiedControllerData << ",";
+							//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
 						}
 					}
 				}
+				if(NextHopcounter==0)
+				{
+					strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
+					if(n <= fields.size())
+					{
+						strmodifiedControllerData << ",";
+					}
+				}
+			}
 		}
 	}
 
@@ -1021,7 +1022,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 			//Initiate Controller updating call
 			// Build the database as well as controller synch
 			cout << "\n Status has been changed for Neighbor " << neighbor << endl;
-			VerifyLinks();
+			VerifyLinks(30);
 		}
 		else
 		{
@@ -1029,7 +1030,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 			cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_gb_adList.getDataRcvCount(neighbor) << endl;
 		}
 
-		m_gb_adList.writeLog();
+		//m_gb_adList.writeLog();
 
 		//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;
 	}

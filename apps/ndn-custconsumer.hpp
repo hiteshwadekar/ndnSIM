@@ -141,13 +141,15 @@ protected:
   bool m_firstTimeHello;
   ConfParameter m_conf;
   std::shared_ptr<ns3::EventId> m_helloEvent;
+  std::shared_ptr<ns3::EventId> m_checkEvent;
   void initialize();
   AdjacencyList CollectLinks();
   void scheduleHelloPacketEvent(uint32_t seconds);
+  void schedulecheckLinkEvent(uint32_t seconds);
   void sendScheduledHelloInterest(uint32_t seconds);
   void expressInterest(const Name& interestName, uint32_t seconds);
   void SendHelloDataPacket(shared_ptr<const Interest> interest);
-  void VerifyLinks();
+  void VerifyLinks(uint32_t seconds);
   std::string SendUpdateToController();
   std::stringstream m_strUpdateToController;
 

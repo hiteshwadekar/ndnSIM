@@ -147,7 +147,7 @@ public:
   }
 
   bool
-  operator==(const Adjacent& adjacent) const;
+  operator==(Adjacent& adjacent);
 
 
   inline bool

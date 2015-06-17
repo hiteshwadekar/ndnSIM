@@ -136,13 +136,12 @@ ControllerApp::initialize()
 {
 	// Get all neighbor information
 	m_gb_adList = CollectLinks();
-	scheduleHelloPacketEvent(100);
+	scheduleHelloPacketEvent(30);
 }
 
 void
 ControllerApp::scheduleHelloPacketEvent(uint32_t seconds)
 {
-	cout <<"\n Called scheduleHelloPacketEvent function ------- " <<endl;
 	scheduler::schedule(ndn::time::seconds(seconds),bind(&ControllerApp::sendScheduledHelloInterest, this, seconds));
 }
 
@@ -155,7 +154,7 @@ ControllerApp::OnTimeout(uint32_t sequenceNumber)
 void
 ControllerApp::expressInterest(const Name& interestName, uint32_t seconds)
 {
-	cout<< "\n Expressing Hello Interest :" << interestName << endl;
+	cout<< "\n Expressing Hello Interest from controller :" << interestName << endl;
   	//Interest i(interestName);
   	//i.setInterestLifetime(ndn::time::seconds(seconds));
   	//i.setMustBeFresh(true);
@@ -179,7 +178,7 @@ void ControllerApp::sendScheduledHelloInterest(uint32_t seconds)
 {
 
 	counter++;
-	cout <<"\n Called sendScheduledHelloInterest function ------- " <<endl;
+	cout <<"\n Called Controller sendScheduledHelloInterest function ------- " <<endl;
 	cout << "\n Source node for Hello packets->  " << Names::FindName(GetNode())<<endl;
 	cout << "\n Printing list value before sending Hello packets " <<endl;
 	//m_gb_adList = CollectLinks();
@@ -1099,6 +1098,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 					cout << "\n Data count for neighbor  " << neighbor << " is -> "<< m_gb_adList.getDataRcvCount(neighbor) << endl;
 				}
 				//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;
+				m_gb_adList.writeLog();
 	}
 	else
 	{
