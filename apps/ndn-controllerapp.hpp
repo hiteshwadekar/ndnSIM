@@ -163,8 +163,16 @@ protected:
   void sendScheduledHelloInterest(uint32_t seconds);
   void expressInterest(const Name& interestName, uint32_t seconds);
   void SendHelloDataPacket(shared_ptr<const Interest> interest);
-
-
+  bool m_firstTimeHello;
+  std::shared_ptr<ns3::EventId> m_helloEvent;
+  std::shared_ptr<ns3::EventId> m_checkEvent;
+  void schedulecheckLinkEvent(uint32_t seconds);
+  void VerifyLinks(uint32_t seconds);
+  std::string SendUpdateToController();
+  std::stringstream m_strUpdateToController;
+  void ControllerSync(std::stringstream& strUpdateToController);
+  void SendUpdateDataPacketToController(shared_ptr<const Interest> interest);
+  void UpdateIncidency(Ptr<ControllerRouter> node, std::vector<string> fields);
 };
 
 } // namespace ndn

@@ -208,8 +208,6 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	    }
 	  }
 
-	cout <<"\n Numeber of times this function called ->  " << counter << endl;
-
 	if(!m_helloEvent->IsRunning())
 	{
 		cout <<"\n This movement event is not running " << endl;
@@ -222,7 +220,6 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 		//cout << "\n Printing list value after sending Hello packets " <<endl;
 		//m_gb_adList.writeLog();
 	}
-
 }
 
 

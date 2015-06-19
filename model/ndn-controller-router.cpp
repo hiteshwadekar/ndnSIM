@@ -57,6 +57,38 @@ void ControllerRouter::AddIncidency(shared_ptr<Face> faceId,
 	m_status = true;
 }
 
+bool ControllerRouter::UpdateIncidency(shared_ptr<Face> faceId,
+	Ptr<ControllerRouter> gr, size_t faceMetrics){
+	bool isUpdate=false;
+	std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
+	for (iter = m_incidencies.begin();iter!=m_incidencies.end();iter++)
+	{
+		if(gr == std::get<2>(*iter) && faceId == std::get<1>(*iter))
+		{
+			std::get<3>(*iter) == faceMetrics;
+			isUpdate=true;
+			break;
+		}
+	}
+	return isUpdate;
+}
+
+bool ControllerRouter::RemoveIncidency(shared_ptr<Face> faceId,
+		Ptr<ControllerRouter> gr, size_t faceMetrics){
+	bool isUpdate=false;
+	std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
+	for (iter = m_incidencies.begin();iter!=m_incidencies.end();iter++)
+	{
+		if(gr == std::get<2>(*iter) && faceId == std::get<1>(*iter))
+		{
+			m_incidencies.erase(iter);
+			isUpdate=true;
+			break;
+		}
+	}
+	return isUpdate;
+}
+
 void ControllerRouter::AddMultiPathIncidency(shared_ptr<Face> faceId,
 		Ptr<ControllerRouter> gr, size_t faceMetrics) {
 	m_multiPath_incidencies.push_back(std::make_tuple(this, faceId, gr, faceMetrics));

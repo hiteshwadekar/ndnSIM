@@ -137,12 +137,17 @@ ControllerApp::initialize()
 	// Get all neighbor information
 	m_gb_adList = CollectLinks();
 	scheduleHelloPacketEvent(30);
+	schedulecheckLinkEvent(60);
 }
 
-void
-ControllerApp::scheduleHelloPacketEvent(uint32_t seconds)
+void ControllerApp::scheduleHelloPacketEvent(uint32_t seconds)
 {
-	scheduler::schedule(ndn::time::seconds(seconds),bind(&ControllerApp::sendScheduledHelloInterest, this, seconds));
+	m_helloEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&ControllerApp::sendScheduledHelloInterest, this, seconds));
+}
+
+void ControllerApp::schedulecheckLinkEvent(uint32_t seconds)
+{
+	m_checkEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&ControllerApp::VerifyLinks, this, seconds));
 }
 
 void
@@ -176,13 +181,9 @@ ControllerApp::expressInterest(const Name& interestName, uint32_t seconds)
 
 void ControllerApp::sendScheduledHelloInterest(uint32_t seconds)
 {
-
 	counter++;
 	cout <<"\n Called Controller sendScheduledHelloInterest function ------- " <<endl;
 	cout << "\n Source node for Hello packets->  " << Names::FindName(GetNode())<<endl;
-	cout << "\n Printing list value before sending Hello packets " <<endl;
-	//m_gb_adList = CollectLinks();
-	m_gb_adList.writeLog();
 	std::list<Adjacent> adjList = m_gb_adList.getAdjList();
 	for (std::list<Adjacent>::iterator it = adjList.begin(); it != adjList.end();
 	       ++it) {
@@ -195,18 +196,21 @@ void ControllerApp::sendScheduledHelloInterest(uint32_t seconds)
 	      m_gb_adList.incrementInterestSendCount((*it).getName());
 	      expressInterest(interestName,m_conf.getInterestResendTime());
 	    }
-	    /*
-	    else {
-	      registerPrefixes((*it).getName(), (*it).getConnectingFaceUri(),
-	                       (*it).getLinkCost(), ndn::time::milliseconds::max());
-	    }*/
 	  }
-	cout <<"\n Numeber of times this function called ->  " << counter << endl;
-	cout << "\n Printing list value after sending Hello packets " <<endl;
-	m_gb_adList.writeLog();
-	scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
-}
 
+	if(!m_helloEvent->IsRunning())
+	{
+		cout <<"\n This movement event is not running " << endl;
+		//scheduleHelloPacketEvent(m_conf.getInfoInterestInterval());
+	}
+
+	if(m_helloEvent->IsExpired())
+	{
+		cout <<"\n This movement event is expired " << endl;
+		//cout << "\n Printing list value after sending Hello packets " <<endl;
+		//m_gb_adList.writeLog();
+	}
+}
 
 AdjacencyList ControllerApp::CollectLinks()
 {
@@ -322,6 +326,258 @@ std::string ControllerApp::extractNodeRequestType(std::string strPrefixName, int
 	*/
 }
 
+void ControllerApp::VerifyLinks(uint32_t seconds)
+{
+	// For this algorithm, we will have to cover following cases
+	// 1: Both list size, if yes compare each object with other
+	// 2: if, not, then if current list size greater than the old one, that case new object should send to controller, and rest of the objects will compare each other
+	// 3: if, current list is smaller than old one, then old's one object no more present as link, so need to send that object info to controller as link_removed
+	cout <<"\n VeryfyLinks: Called for node -> " << Names::FindName(GetNode()).c_str()<<endl;
+	cout <<"\n Printing global list values ->  " << endl;
+	m_gb_adList.writeLog();
+
+	bool isReqtoController=false;
+	std::stringstream strUpdateToController;
+	int sizeList=0;
+
+	AdjacencyList local_adList = CollectLinks();
+	isReqtoController = m_gb_adList.isAdjBuildable();
+
+	std::list<Adjacent>& adjList1 = local_adList.getAdjList();
+	std::list<Adjacent>& adjList2 = m_gb_adList.getAdjList();
+
+	if (m_gb_adList.getSize() > local_adList.getSize()) {
+		sizeList=1;
+	} else if(m_gb_adList.getSize() < local_adList.getSize()) {
+		sizeList=2;
+	} else{
+		sizeList=0;
+	}
+
+	std::list<Adjacent>::iterator it1;
+	if( sizeList==2 || sizeList==0 )
+	{
+		for (it1=adjList1.begin();it1!= adjList1.end();it1++)
+		{
+			Adjacent *adj = m_gb_adList.findAdjacent(it1->getName());
+			if(adj!=NULL)
+			{
+				// compare each value with other one along with interest and data
+				if(((*it1) == (*adj)))
+				{
+					if(adj->getInterestSentNo()>0 && adj->getDataRcvNo()==0)
+					{
+						// It means other NFD is not able to send the information
+						strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus() << "," << "FACE_DOWN";
+					}
+				}
+				else
+				{
+					// send this (*it) information to controller.
+					strUpdateToController << it1->getName()  << "," << it1->getFaceId() << "," << it1->getLinkCost() << "," << it1->getStatus();
+					if((it1->getStatus() - adj->getStatus())!=0)
+					{
+						if(it1->getStatus()==Adjacent::STATUS_ACTIVE)
+						{
+							strUpdateToController << "," << "FACE_UP";
+						}
+
+						if(it1->getStatus()==Adjacent::STATUS_INACTIVE)
+						{
+							strUpdateToController << "," << "FACE_DOWN";
+						}
+						continue;
+					}
+
+					if((it1->getLinkCost() != adj->getLinkCost()))
+					{
+						strUpdateToController << "," << "LINK_COST";
+						continue;
+					}
+				}
+
+			}
+			else
+			{
+				// This object has been added new in the current link.
+				// send this (*it) information to controller
+				strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus() << "," << "LINK_ADDED";
+			}
+
+			if(!strUpdateToController.str().empty())
+			{
+				strUpdateToController << ",";
+			}
+		}
+	}
+	else
+	{
+		for (it1=adjList2.begin();it1!= adjList2.end();it1++)
+		{
+					Adjacent *adj = local_adList.findAdjacent(it1->getName());
+					if(&adj!=NULL)
+					{
+						// compare each value with other one along with interest and data
+						if(adj == &(*it1))
+						{
+							if(it1->getInterestSentNo()>0 && it1->getDataRcvNo()==0)
+							{
+								// It means other NFD is not able to send the information
+								strUpdateToController << it1->getName()  << "," << it1->getFaceId() << "," << it1->getLinkCost() << "," << it1->getStatus() << "," << "FACE_DOWN";
+							}
+						}
+						else
+						{
+							// send this (*it) information to controller.
+							strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus();
+							if((adj->getStatus() - it1->getStatus())!=0)
+							{
+								if(adj->getStatus()==Adjacent::STATUS_ACTIVE)
+								{
+									strUpdateToController << "," << "FACE_UP";
+								}
+
+								if(adj->getStatus()==Adjacent::STATUS_INACTIVE)
+								{
+									strUpdateToController << "," << "FACE_DOWN";
+								}
+								continue;
+							}
+
+							if((adj->getLinkCost() != it1->getLinkCost()))
+							{
+								strUpdateToController << "," << "LINK_COST";
+								continue;
+							}
+						}
+
+					}
+					else
+					{
+						// This object has been added new in the current link.
+						// send this (*it) information to controller
+						strUpdateToController << it1->getName()  << "," << it1->getFaceId() << "," << it1->getLinkCost() << "," << it1->getStatus() << "," << "LINK_REMOVED";
+					}
+
+					if(!strUpdateToController.str().empty())
+					{
+						strUpdateToController << ",";
+					}
+		}
+
+	}
+
+	if(isReqtoController && strUpdateToController==NULL)
+	{
+		// mismatch occure somthing wrong in code
+		std::cout << "\n Mismatch occure in global list and local list comaparison, need to handle this" << std::endl;
+	}
+
+	if(!strUpdateToController.str().empty())
+	{
+		//ControllerSync(strUpdateToController);
+	}
+	m_gb_adList.reset();
+	m_gb_adList.setAdjList(adjList1);
+}
+
+void ControllerApp::ControllerSync(std::stringstream& strUpdateToController)
+{
+	// Check first in FIB if current prefix has available in case if prefix has down or cost increased.
+	// Prepare string for controller send.
+
+	cout <<"\n ControllerSync: Called " << endl;
+	cout <<"\n Printing values for controller -> " <<strUpdateToController.str() <<endl;
+	std::stringstream strmodifiedControllerData;
+	NdnControllerString strControllerData = NdnControllerString("");
+	if(strUpdateToController!=NULL)
+	{
+		strControllerData.SetSourceNode(Names::FindName(GetNode()).c_str());
+		strControllerData.SetLinkUpdateInfo(strUpdateToController.str());
+		std::vector<string> fields = strControllerData.GetLinkUpdateInfo();
+
+		if (!fields.empty() and fields.size() >= 5)
+		{
+			Ptr<Node> localNode = GetNode();
+			Ptr<ndn::L3Protocol> l3 = localNode->GetObject<ndn::L3Protocol>();
+			std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
+			ndn::nfd::Fib& fib = fw->getFib();
+			for (size_t n = 0; n < fields.size(); n+=5)
+			{
+				int NextHopcounter=0;
+				for (const auto& fibEntry : fib)
+				{
+					std::string strTempString = fibEntry.getPrefix().toUri().c_str();
+					if(strTempString.compare(fields[n]) == 0)
+					{
+						for (const auto& nh : fibEntry.getNextHops())
+						{
+							if(nh.getFace()->getId()!=l3->getFaceById(atoi(fields[n+1].c_str()))->getId())
+							{
+								NextHopcounter++;
+							}
+							//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+						}
+					}
+				}
+				if(NextHopcounter==0)
+				{
+					strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
+					if(n <= fields.size())
+					{
+						strmodifiedControllerData << ",";
+					}
+				}
+			}
+		}
+	}
+
+	if(strmodifiedControllerData!=NULL)
+	{
+		m_strUpdateToController << strmodifiedControllerData;
+		std::string strControllerUpdate = "/controller/" + Names::FindName(Ptr<Node>(GetNode())) + "/req_update";
+		sendInterestPacket(strControllerUpdate);
+	}
+
+}
+
+void ControllerApp::SendUpdateDataPacketToController(shared_ptr<const Interest> interest) {
+
+	if (!m_active)
+		return;
+	NS_LOG_FUNCTION_NOARGS ();
+	NS_LOG_FUNCTION(this << interest);
+
+	std::cout<< "CustConsumerApp: Sending local changed into data Packet to controller-> "<< interest->getName() << std::endl;
+	Name dataName(interest->getName());
+	auto dPacket = make_shared<Data>();
+	dPacket->setName(dataName);
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+
+
+	NdnControllerString strControllerData = NdnControllerString("");
+	strControllerData.SetSourceNode(Names::FindName(GetNode()).c_str());
+	strControllerData.SetLinkUpdateInfo(m_strUpdateToController.str());
+	std::string strTemplateNode=strControllerData.GetString();
+	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
+	//ndn::StackHelper::getKeyChain().sign(*dPacket);
+	Signature signature;
+	SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+	if (m_keyLocator.size() > 0){
+		signatureInfo.setKeyLocator(m_keyLocator);
+	}
+	signature.setInfo(signatureInfo);
+	signature.setValue(Block(&m_signature, sizeof(m_signature)));
+
+	dPacket->setSignature(signature);
+	dPacket->wireEncode();
+
+	std::cout << "\n CustConsumerApp: Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face->getId() << std::endl;
+	m_transmittedDatas(dPacket, this, m_face);
+	m_face->onReceiveData(*dPacket);
+	std::cout << "\n";
+
+}
 
 
 
@@ -775,6 +1031,7 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 				}
 
 				Ptr<Node> node1 = Names::Find<Node> (node->GetSourceNode());
+				//Ptr<Node> node1 = GetNode();
 				NS_ASSERT_MSG (node1 != 0, node->GetSourceNode() << "is not a Node");
 
 				Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
@@ -786,6 +1043,62 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 			}
 	}
 }
+
+void ControllerApp::UpdateIncidency(Ptr<ControllerRouter> sourceNode, std::vector<string> fields)
+{
+	if (!fields.empty() and fields.size() >= 4)
+	{
+		//Ptr<Node> node1 = GetNode();
+		Ptr<Node> node1 = Names::Find<Node> (sourceNode->GetSourceNode());
+		NS_ASSERT_MSG (node1 != 0,  sourceNode->GetSourceNode() << "is not a Node");
+
+		Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
+		NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
+
+		for (size_t n = 0; n < fields.size(); n+=4)
+		{
+
+			Ptr<ControllerRouter> otherNode = IsNodePresent(fields[n]);
+			if(otherNode==NULL)
+			{
+				otherNode = CreateObject<ControllerRouter>(fields[n]);
+				ns3::ndn::ControllerNodeList::Add(otherNode);
+			}
+
+			shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
+			if (fields[3].compare("FACE_DOWN")==0)
+			{
+				// Remove link from the adjancies
+				sourceNode->RemoveIncidency(face,otherNode,atoi(fields[n+2].c_str()));
+			}
+			else if(fields[3].compare("FACE_UP")==0)
+			{
+				// Add link to the adjancies
+				sourceNode->AddIncidency(face,otherNode,atoi(fields[n+2].c_str()));
+			}
+			else if(fields[3].compare("LINK_COST")==0)
+			{
+				// Update link cost only
+				sourceNode->UpdateIncidency(face,otherNode,atoi(fields[n+2].c_str()));
+			}
+			else if(fields[3].compare("LINK_ADDED")==0)
+			{
+				// Add new link into adjancies
+				sourceNode->AddIncidency(face,otherNode,atoi(fields[n+2].c_str()));
+			}
+			else if(fields[3].compare("LINK_REMOVED")==0)
+			{
+				// Remove link from adjancies
+				sourceNode->RemoveIncidency(face,otherNode,atoi(fields[n+2].c_str()));
+			}
+			else
+			{
+				cout << "\n Couldn't interepreted the status of the link -> " << fields[3]<< endl;
+			}
+		}
+	}
+}
+
 
 void ControllerApp::AddPrefix(Ptr<ControllerRouter> node, std::vector<string> fields)
 {
@@ -1071,6 +1384,27 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	  NdnControllerString strControllerUpdatedData = NdnControllerString(msg);
 	  std::string strSourceNodeUpdate =	strControllerUpdatedData.GetSourceNode();
 	  std::cout << "\n Received data packet for updating information from node  ->  " << strSourceNodeUpdate << "\t  information is -> " << msg << endl;
+
+	  Ptr<ControllerRouter> node = IsNodePresent(strSourceNodeUpdate);
+
+	  if(node==NULL)
+	  {
+		  cout <<"\n Node wasn't been presented in the database, hence creating a new reference and adding node into controller's database" << endl;
+		  node = CreateObject<ControllerRouter>(strSourceNodeUpdate);
+		  size_t k = ns3::ndn::ControllerNodeList::Add(node);
+
+		  AddIncidency(node, strControllerUpdatedData.GetLinkInfo());
+		  AddPrefix(node, strControllerUpdatedData.GetNodePrefixInfo());
+	  }
+	  else
+	  {
+		  UpdateIncidency(node,strControllerUpdatedData.GetLinkUpdateInfo());
+
+		  //CalculateRoutes();
+		  //CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+		  //StartSendingPathToNode(); // Start seding packets to individual nodes.
+	  }
+
 	}
 	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
 	{

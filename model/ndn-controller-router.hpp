@@ -73,7 +73,20 @@ public:
    */
   void
   AddIncidency(shared_ptr<Face> faceId, Ptr<ControllerRouter> ndn, size_t faceMetric);
-
+  /**
+   * @brief update edge to the node
+   * @param face Face of the edge
+   * @param ndn ControllerRouter of another node
+   */
+  bool
+  UpdateIncidency(shared_ptr<Face> faceId, Ptr<ControllerRouter> ndn, size_t faceMetric);
+  /**
+   * @brief Remove edge to the node
+   * @param face Face of the edge
+   * @param ndn ControllerRouter of another node
+   */
+  bool
+  RemoveIncidency(shared_ptr<Face> faceId, Ptr<ControllerRouter> gr, size_t faceMetrics);
   /**
    * @brief Add edge to the node
    * @param face Face of the edge
@@ -88,8 +101,6 @@ public:
    */
   void
   AddMultiPathIncidencies(std::list<Incidency>&);
-
-
   /**
    * @brief Add calculated path to the node
    * @param prefix name
@@ -132,6 +143,10 @@ public:
   GetPathInfo() const;
 
   void LinkInitalization(Ptr<ControllerRouter>,shared_ptr<Face>,Ptr<ControllerRouter>);
+
+  IncidencyList&
+  FindIncidency();
+
 
   // Information from BaseVertex
   int getID() const { return m_nID; }
