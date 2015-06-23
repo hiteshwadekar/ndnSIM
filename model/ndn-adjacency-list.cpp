@@ -242,6 +242,57 @@ AdjacencyList::setAdjList(std::list<Adjacent>& newList)
 	m_adjList=newList;
 }
 
+
+bool
+AdjacencyList::insertRetryPacketCount(const Name& neighbor, int32_t count)
+{
+	//if (m_retryPacketInfo.find(objAdjacent) == m_retryPacketInfo.end() )
+	//{
+		m_retryPacketInfo[neighbor]=count;
+	//}
+	//else
+	//{
+		//m_retryPacketInfo[objAdjacent].splice(m_retryPacketInfo[objAdjacent].end(),count);
+	//}
+	return true;
+}
+
+bool
+AdjacencyList::incrementRetryPacketCount(const Name& neighbor)
+{
+	if (m_retryPacketInfo.find(neighbor) == m_retryPacketInfo.end() )
+	{
+		return false;
+	}
+	else
+	{
+		m_retryPacketInfo[neighbor] = m_retryPacketInfo[neighbor] + 1;
+		return true;
+	}
+}
+
+int32_t
+AdjacencyList::getRetryPacketCount(const Name& neighbor)
+{
+	if ( m_retryPacketInfo.find(neighbor) == m_retryPacketInfo.end())
+	{
+		return -1;
+	}
+	else
+	{
+		return m_retryPacketInfo[neighbor];
+	}
+}
+
+void
+AdjacencyList::resetRetryPacketZero(){
+
+	for (std::map<Name,int32_t>::iterator it=m_retryPacketInfo.begin(); it!=m_retryPacketInfo.end(); ++it)
+	{
+	    it->second=0;
+	}
+}
+
 /*
 bool
 AdjacencyList::isAdjLsaBuildable()

@@ -2,6 +2,7 @@
 #define NDN_ADJACENCY_LIST_HPP
 
 #include <list>
+#include <map>
 #include <boost/cstdint.hpp>
 #include "ndn-adjacency.hpp"
 #include "ndn-conf-parameter.hpp"
@@ -15,6 +16,18 @@ class AdjacencyList
 public:
   AdjacencyList();
   ~AdjacencyList();
+
+  int32_t
+  getRetryPacketCount(const Name& adjName);
+
+  bool
+  insertRetryPacketCount(const Name& adjName, int32_t count);
+
+  void
+  resetRetryPacketZero();
+
+  bool
+  incrementRetryPacketCount(const Name& adjName);
 
   int32_t
   insert(Adjacent& adjacent);
@@ -96,6 +109,14 @@ public:
     }
   }
 
+  void
+  resetRetryPacketCount()
+  {
+	  if(m_retryPacketInfo.size()> 0){
+		  m_retryPacketInfo.clear();
+	  }
+  }
+
   Adjacent*
   findAdjacent(const Name& adjName);
 
@@ -114,6 +135,7 @@ private:
 
 private:
   std::list<Adjacent> m_adjList;
+  std::map<Name,int32_t> m_retryPacketInfo;
   ConfParameter m_conf;
 };
 

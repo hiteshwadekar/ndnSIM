@@ -204,6 +204,7 @@ void CustConsumer::sendScheduledHelloInterest(uint32_t seconds)
 	      interestName.append(HELLO_COMPONENT);
 	      interestName.append(INFO_COMPONENT);
 	      m_gb_adList.incrementInterestSendCount((*it).getName());
+	      m_gb_adList.incrementRetryPacketCount((*it).getName());
 	      expressInterest(interestName,m_conf.getInterestResendTime());
 	    }
 	  }
@@ -598,28 +599,41 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 			ndn::nfd::Fib& fib = fw->getFib();
 			for (size_t n = 0; n < fields.size(); n+=5)
 			{
-				int NextHopcounter=0;
-				for (const auto& fibEntry : fib)
-				{
-					std::string strTempString = fibEntry.getPrefix().toUri().c_str();
-					if(strTempString.compare(fields[n]) == 0)
-					{
-						for (const auto& nh : fibEntry.getNextHops())
-						{
-							if(nh.getFace()->getId()!=l3->getFaceById(atoi(fields[n+1].c_str()))->getId())
-							{
-								NextHopcounter++;
-							}
-							//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
-						}
-					}
-				}
-				if(NextHopcounter==0)
+				Name NeighborName(fields[n]);
+				if(m_gb_adList.getRetryPacketCount(NeighborName) > 12)
 				{
 					strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
 					if(n <= fields.size())
 					{
 						strmodifiedControllerData << ",";
+					}
+					m_gb_adList.insertRetryPacketCount(NeighborName,0);
+				}
+				else
+				{
+					int NextHopcounter=0;
+					for (const auto& fibEntry : fib)
+					{
+						std::string strTempString = fibEntry.getPrefix().toUri().c_str();
+						if(strTempString.compare(fields[n]) == 0)
+						{
+							for (const auto& nh : fibEntry.getNextHops())
+							{
+								if(nh.getFace()->getId()!=l3->getFaceById(atoi(fields[n+1].c_str()))->getId())
+								{
+									NextHopcounter++;
+								}
+								//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+							}
+						}
+					}
+					if(NextHopcounter==0)
+					{
+						strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
+						if(n <= fields.size())
+						{
+							strmodifiedControllerData << ",";
+						}
 					}
 				}
 			}
@@ -693,6 +707,7 @@ AdjacencyList CustConsumer::CollectLinks()
 	    		  objAdjacent.setInterestSentNo(0);
 	    		  objAdjacent.setDataRcvNo(0);
 	    		  objAList.insert(objAdjacent);
+	    		  objAList.insertRetryPacketCount(objAdjacent.getName(),0);
 		    }
 		}
 	 }
