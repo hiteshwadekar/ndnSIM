@@ -124,7 +124,7 @@ string
 NdnControllerString::SetLinkUpdateInfo(string strLinkInfo){
 	if(!strLinkInfo.empty())
 	{
-		m_string = m_string + LINK_UPDATE + strLinkInfo + "}" +"," ;
+		m_string = m_string + LINK_UPDATE + strLinkInfo + "}";
 	}
 	return m_string;
 }

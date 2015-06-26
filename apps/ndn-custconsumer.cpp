@@ -56,6 +56,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "helper/ndn-app-prefix-helper.hpp"
+#include "ns3/ndnSIM/helper/ndn-link-control-helper.hpp"
 
 namespace ll = boost::lambda;
 
@@ -148,19 +149,29 @@ void CustConsumer::initialize()
 	// Get all neighbor information
 	m_gb_adList = CollectLinks();
 	scheduleHelloPacketEvent(30);
+	//scheduleFailEvent(35);
 	schedulecheckLinkEvent(60);
 }
 
-void CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
+void
+CustConsumer::scheduleHelloPacketEvent(uint32_t seconds)
 {
 	m_helloEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::sendScheduledHelloInterest, this, seconds));
 }
 
-void CustConsumer::schedulecheckLinkEvent(uint32_t seconds)
+void
+CustConsumer::schedulecheckLinkEvent(uint32_t seconds)
 {
 	m_checkEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::VerifyLinks, this, seconds));
 }
 
+void
+CustConsumer::scheduleFailEvent(uint32_t seconds)
+{
+	cout <<"\n Called scheduleFailEvent"<<endl;
+	m_failEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&ndn::LinkControlHelper::FailLinkByName, "Node2", "Node3"));
+	//Simulator::Schedule(Seconds(10.0), ndn::LinkControlHelper::FailLink, node1, node2);
+}
 
 void
 CustConsumer::OnTimeout(uint32_t sequenceNumber)
@@ -463,12 +474,20 @@ void CustConsumer::VerifyLinks(uint32_t seconds)
 					if(adj->getInterestSentNo()>0 && adj->getDataRcvNo()==0)
 					{
 						// It means other NFD is not able to send the information
+						if(!strUpdateToController.str().empty())
+						{
+							strUpdateToController << ",";
+						}
 						strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus() << "," << "FACE_DOWN";
 					}
 				}
 				else
 				{
 					// send this (*it) information to controller.
+					if(!strUpdateToController.str().empty())
+					{
+						strUpdateToController << ",";
+					}
 					strUpdateToController << it1->getName()  << "," << it1->getFaceId() << "," << it1->getLinkCost() << "," << it1->getStatus();
 					if((it1->getStatus() - adj->getStatus())!=0)
 					{
@@ -496,13 +515,13 @@ void CustConsumer::VerifyLinks(uint32_t seconds)
 			{
 				// This object has been added new in the current link.
 				// send this (*it) information to controller
+				if(!strUpdateToController.str().empty())
+				{
+					strUpdateToController << ",";
+				}
 				strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus() << "," << "LINK_ADDED";
 			}
 
-			if(!strUpdateToController.str().empty())
-			{
-				strUpdateToController << ",";
-			}
 		}
 	}
 	else
@@ -518,11 +537,19 @@ void CustConsumer::VerifyLinks(uint32_t seconds)
 							if(it1->getInterestSentNo()>0 && it1->getDataRcvNo()==0)
 							{
 								// It means other NFD is not able to send the information
+								if(!strUpdateToController.str().empty())
+								{
+									strUpdateToController << ",";
+								}
 								strUpdateToController << it1->getName()  << "," << it1->getFaceId() << "," << it1->getLinkCost() << "," << it1->getStatus() << "," << "FACE_DOWN";
 							}
 						}
 						else
 						{
+							if(!strUpdateToController.str().empty())
+							{
+								strUpdateToController << ",";
+							}
 							// send this (*it) information to controller.
 							strUpdateToController << adj->getName()  << "," << adj->getFaceId() << "," << adj->getLinkCost() << "," << adj->getStatus();
 							if((adj->getStatus() - it1->getStatus())!=0)
@@ -582,7 +609,7 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 	// Prepare string for controller send.
 
 	cout <<"\n ControllerSync: Called " << endl;
-	cout <<"\n Printing values for controller -> " <<strUpdateToController.str() <<endl;
+	cout <<"\n Printing values for controller -> " << strUpdateToController.str() << "and source node name -> "<< Names::FindName(GetNode()).c_str() <<endl;
 	std::stringstream strmodifiedControllerData;
 	NdnControllerString strControllerData = NdnControllerString("");
 	if(strUpdateToController!=NULL)
@@ -600,13 +627,14 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 			for (size_t n = 0; n < fields.size(); n+=5)
 			{
 				Name NeighborName(fields[n]);
+
 				if(m_gb_adList.getRetryPacketCount(NeighborName) > 12)
 				{
-					strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
-					if(n <= fields.size())
+					if(!strmodifiedControllerData.str().empty())
 					{
 						strmodifiedControllerData << ",";
 					}
+					strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
 					m_gb_adList.insertRetryPacketCount(NeighborName,0);
 				}
 				else
@@ -628,21 +656,27 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 						}
 					}
 					if(NextHopcounter==0)
-					{
-						strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
-						if(n <= fields.size())
+				    {
+						if(!strmodifiedControllerData.str().empty())
 						{
 							strmodifiedControllerData << ",";
 						}
+						strmodifiedControllerData << fields[n]  << "," << fields[n+1] << "," << fields[n+2] << "," << fields[n+3] << "," << fields[n+4];
+						//if(n <= fields.size())
+						//{
+							//strmodifiedControllerData << ",";
+						//}
 					}
 				}
 			}
 		}
 	}
 
-	if(strmodifiedControllerData!=NULL)
+	if(!strmodifiedControllerData.str().empty())
 	{
-		m_strUpdateToController << strmodifiedControllerData;
+		cout << "\n Final link info to controller 1 -> " << strmodifiedControllerData.str() << endl;
+		m_strUpdateToController << strmodifiedControllerData.str();
+		cout << "\n Final link info to controller 2  -> " << m_strUpdateToController.str() << endl;
 		std::string strControllerUpdate = "/controller/" + Names::FindName(Ptr<Node>(GetNode())) + "/req_update";
 		SendInterestPacket(strControllerUpdate);
 	}

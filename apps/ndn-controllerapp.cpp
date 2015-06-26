@@ -487,7 +487,7 @@ void ControllerApp::ControllerSync(std::stringstream& strUpdateToController)
 	// Prepare string for controller send.
 
 	cout <<"\n ControllerSync: Called " << endl;
-	cout <<"\n Printing values for controller -> " <<strUpdateToController.str() <<endl;
+	cout <<"\n Printing values for controller -> " << strUpdateToController.str() <<endl;
 	std::stringstream strmodifiedControllerData;
 	NdnControllerString strControllerData = NdnControllerString("");
 	if(strUpdateToController!=NULL)
@@ -1046,6 +1046,8 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 
 void ControllerApp::UpdateIncidency(Ptr<ControllerRouter> sourceNode, std::vector<string> fields)
 {
+
+	cout <<"\n ControllerApp: UpdateIncidency Called " << endl;
 	if (!fields.empty() and fields.size() >= 4)
 	{
 		//Ptr<Node> node1 = GetNode();
@@ -1055,38 +1057,39 @@ void ControllerApp::UpdateIncidency(Ptr<ControllerRouter> sourceNode, std::vecto
 		Ptr<L3Protocol> ndn1 = node1->GetObject<L3Protocol> ();
 		NS_ASSERT_MSG (ndn1 != 0, "Ndn protocol hasn't been installed on a node, please install it first");
 
-		for (size_t n = 0; n < fields.size(); n+=4)
+		for (size_t n = 0; n < fields.size(); n+=5)
 		{
 
-			Ptr<ControllerRouter> otherNode = IsNodePresent(fields[n]);
+			Ptr<ControllerRouter> otherNode = IsNodePresent(fields[n].substr(1,fields[n].length()));
 			if(otherNode==NULL)
 			{
 				otherNode = CreateObject<ControllerRouter>(fields[n]);
 				ns3::ndn::ControllerNodeList::Add(otherNode);
 			}
 
-			shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (ndn1->getFaceById(atoi(fields[n+1].c_str())));
-			if (fields[3].compare("FACE_DOWN")==0)
+			shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace>(ndn1->getFaceById(atoi(fields[n+1].c_str())));
+			if (fields[n+4].compare("FACE_DOWN")==0)
 			{
 				// Remove link from the adjancies
-				sourceNode->RemoveIncidency(face,otherNode,atoi(fields[n+2].c_str()));
+				bool Isupdated = sourceNode->RemoveIncidency(face,otherNode,atoi(fields[n+2].c_str()));
+				cout << "\n UpdateIncidency: RemoveIncidency status  " << Isupdated << endl;
 			}
-			else if(fields[3].compare("FACE_UP")==0)
+			else if(fields[n+4].compare("FACE_UP")==0)
 			{
 				// Add link to the adjancies
 				sourceNode->AddIncidency(face,otherNode,atoi(fields[n+2].c_str()));
 			}
-			else if(fields[3].compare("LINK_COST")==0)
+			else if(fields[n+4].compare("LINK_COST")==0)
 			{
 				// Update link cost only
 				sourceNode->UpdateIncidency(face,otherNode,atoi(fields[n+2].c_str()));
 			}
-			else if(fields[3].compare("LINK_ADDED")==0)
+			else if(fields[n+4].compare("LINK_ADDED")==0)
 			{
 				// Add new link into adjancies
 				sourceNode->AddIncidency(face,otherNode,atoi(fields[n+2].c_str()));
 			}
-			else if(fields[3].compare("LINK_REMOVED")==0)
+			else if(fields[n+4].compare("LINK_REMOVED")==0)
 			{
 				// Remove link from adjancies
 				sourceNode->RemoveIncidency(face,otherNode,atoi(fields[n+2].c_str()));
@@ -1399,10 +1402,13 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	  else
 	  {
 		  UpdateIncidency(node,strControllerUpdatedData.GetLinkUpdateInfo());
-
 		  //CalculateRoutes();
-		  //CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
-		  //StartSendingPathToNode(); // Start seding packets to individual nodes.
+		  if(strSourceNodeUpdate.compare("Node3") == 0)
+		  {
+			//CalculateRoutes();
+			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+			StartSendingPathToNode(); // Start seding packets to individual nodes.
+		  }
 	  }
 
 	}

@@ -81,7 +81,8 @@ bool ControllerRouter::RemoveIncidency(shared_ptr<Face> faceId,
 	{
 		if(gr == std::get<2>(*iter) && faceId == std::get<1>(*iter))
 		{
-			m_incidencies.erase(iter);
+			//m_incidencies.erase(iter);
+			m_incidencies.remove(std::make_tuple(this, faceId, gr, faceMetrics));
 			isUpdate=true;
 			break;
 		}
