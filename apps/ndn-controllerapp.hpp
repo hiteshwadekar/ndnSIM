@@ -113,6 +113,8 @@ public:
   void initCalculationKPath();
   void Initialize();
   std::shared_ptr<nfd::Face> GetFaceId(Ptr<ControllerRouter> srcNode, Ptr<ControllerRouter> dstNode);
+  void SchedulerHandlingFailureCalc();
+
 
 
 

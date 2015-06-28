@@ -77,6 +77,7 @@ bool ControllerRouter::RemoveIncidency(shared_ptr<Face> faceId,
 		Ptr<ControllerRouter> gr, size_t faceMetrics){
 	bool isUpdate=false;
 	std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
+
 	for (iter = m_incidencies.begin();iter!=m_incidencies.end();iter++)
 	{
 		if(gr == std::get<2>(*iter) && faceId == std::get<1>(*iter))
@@ -106,13 +107,22 @@ void ControllerRouter::
 
 void ControllerRouter::AddPaths(Ptr<ControllerRouter> ndn, std::list<std::tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> lstPath) {
 
-	if ( m_pathInfoList.find(ndn) == m_pathInfoList.end() )
+	if (m_pathInfoList.find(ndn) == m_pathInfoList.end() )
 	{
 		m_pathInfoList[ndn]=lstPath;
 	}
 	else
 	{
 		m_pathInfoList[ndn].splice(m_pathInfoList[ndn].end(),lstPath);
+	}
+}
+
+
+void ControllerRouter::ResetPaths(){
+
+	if(m_pathInfoList.size()>0)
+	{
+		m_pathInfoList.clear();
 	}
 }
 
@@ -147,6 +157,17 @@ bool ControllerRouter::GetStatus() {
 
 void ControllerRouter::PrintInfo() {
 	std::cout << "SourceNode name -> " << m_sourcenode << std::endl;
+}
+
+void ControllerRouter::writelog(){
+
+	std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
+	for (iter = m_incidencies.begin();iter!=m_incidencies.end();iter++)
+	{
+		std::cout <<"\n" << std::endl;
+		std::cout <<"\n Neighbor is -> " << std::get<2>(*iter)->GetSourceNode()<<std::endl;
+		std::cout <<"\n Face is -> " << std::get<1>(*iter) << std::endl;
+	}
 }
 
 } // namespace ndn

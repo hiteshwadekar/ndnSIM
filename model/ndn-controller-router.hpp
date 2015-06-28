@@ -154,6 +154,9 @@ public:
 
   double Weight() const { return m_dWeight; }
   void Weight(double val) { m_dWeight = val; }
+  void writelog();
+
+  void ResetPaths();
 
   void PrintOut(std::ostream& out_stream)
   {

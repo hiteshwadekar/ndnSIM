@@ -628,6 +628,7 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 			{
 				Name NeighborName(fields[n]);
 
+				/*
 				if(m_gb_adList.getRetryPacketCount(NeighborName) > 12)
 				{
 					if(!strmodifiedControllerData.str().empty())
@@ -656,7 +657,7 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 						}
 					}
 					if(NextHopcounter==0)
-				    {
+				    {*/
 						if(!strmodifiedControllerData.str().empty())
 						{
 							strmodifiedControllerData << ",";
@@ -666,8 +667,8 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 						//{
 							//strmodifiedControllerData << ",";
 						//}
-					}
-				}
+					//}
+				//}
 			}
 		}
 	}

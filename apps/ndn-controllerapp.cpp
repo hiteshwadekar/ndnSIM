@@ -700,6 +700,7 @@ ControllerApp::CalculateRoutes()
     			continue;
     		else {
     			// cout << "  Node " << dist.first->GetObject<Node> ()->GetId ();
+    			source->ResetPaths();
     			if (std::get<0>(dist.second) == 0) {
     				// cout << " is unreachable" << endl;
     			}
@@ -789,7 +790,7 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 				  {
 						if((*src)!=(*dst))
 						{
-
+							(*src)->ResetPaths();
 							cout << "\n ----------- Start K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
 							YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(*src), my_graph.get_vertex(*dst));
 							int i=1;
@@ -1044,6 +1045,32 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 	}
 }
 
+
+void ControllerApp::SchedulerHandlingFailureCalc()
+{
+	cout <<"\n ControllerApp: SchedulerHandlingFailureCalc Called " << endl;
+	std::string strUpdateString1 = "Source_Node_Name:Node2,Link_Update:{/Node3,257,5,1,FACE_DOWN}";
+	std::string strUpdateString2 = "Source_Node_Name:Node3,Link_Update:{/Node2,257,5,1,FACE_DOWN}";
+
+	cout <<"\n ControllerApp: SchedulerHandlingFailureCalc string 1 -> " << strUpdateString1 <<endl;
+	cout <<"\n ControllerApp: SchedulerHandlingFailureCalc string 2 " << strUpdateString1 << endl;
+
+	NdnControllerString strControllerUpdatedData = NdnControllerString(strUpdateString1);
+	std::string strSourceNodeUpdate =	strControllerUpdatedData.GetSourceNode();
+	Ptr<ControllerRouter> node = IsNodePresent(strSourceNodeUpdate);
+	UpdateIncidency(node,strControllerUpdatedData.GetLinkUpdateInfo());
+
+	NdnControllerString strControllerUpdatedData2 = NdnControllerString(strUpdateString2);
+	std::string strSourceNodeUpdate1 =	strControllerUpdatedData2.GetSourceNode();
+	Ptr<ControllerRouter> node1 = IsNodePresent(strSourceNodeUpdate1);
+	UpdateIncidency(node1,strControllerUpdatedData2.GetLinkUpdateInfo());
+
+	CalculateRoutes();
+	//CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+	StartSendingPathToNode(); // Start seding packets to individual nodes.
+}
+
+
 void ControllerApp::UpdateIncidency(Ptr<ControllerRouter> sourceNode, std::vector<string> fields)
 {
 
@@ -1071,8 +1098,14 @@ void ControllerApp::UpdateIncidency(Ptr<ControllerRouter> sourceNode, std::vecto
 			if (fields[n+4].compare("FACE_DOWN")==0)
 			{
 				// Remove link from the adjancies
+				cout <<"\n Before updating the links for -> " << sourceNode->GetSourceNode() << endl;
+				sourceNode->writelog();
+
 				bool Isupdated = sourceNode->RemoveIncidency(face,otherNode,atoi(fields[n+2].c_str()));
 				cout << "\n UpdateIncidency: RemoveIncidency status  " << Isupdated << endl;
+
+				cout <<"\n After updating the links for -> " << sourceNode->GetSourceNode() << endl;
+				sourceNode->writelog();
 			}
 			else if(fields[n+4].compare("FACE_UP")==0)
 			{
@@ -1379,6 +1412,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 			//CalculateRoutes();
 			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 			StartSendingPathToNode(); // Start seding packets to individual nodes.
+			//SchedulerHandlingFailureCalc();
 		}
 	}
 	else if(strRequestType.compare("req_update") == 0)
@@ -1403,11 +1437,11 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 	  {
 		  UpdateIncidency(node,strControllerUpdatedData.GetLinkUpdateInfo());
 		  //CalculateRoutes();
-		  if(strSourceNodeUpdate.compare("Node3") == 0)
+		  if(strSourceNodeUpdate.compare("Node2") == 0)
 		  {
 			//CalculateRoutes();
-			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
-			StartSendingPathToNode(); // Start seding packets to individual nodes.
+			//CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+			//StartSendingPathToNode(); // Start seding packets to individual nodes.
 		  }
 	  }
 
