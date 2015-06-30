@@ -151,6 +151,15 @@ void ControllerApp::schedulecheckLinkEvent(uint32_t seconds)
 }
 
 void
+ControllerApp::scheduleFailEvent(uint32_t seconds)
+{
+	cout <<"\n Called scheduleFailEvent" <<endl;
+	m_failEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&ControllerApp::SchedulerHandlingFailureCalc, this, seconds));
+	//Simulator::Schedule(Seconds(10.0), ndn::LinkControlHelper::FailLink, node1, node2);
+}
+
+
+void
 ControllerApp::OnTimeout(uint32_t sequenceNumber)
 {
 	cout << "\n OnTimeout Called " << endl;
@@ -552,7 +561,8 @@ void ControllerApp::SendUpdateDataPacketToController(shared_ptr<const Interest> 
 	Name dataName(interest->getName());
 	auto dPacket = make_shared<Data>();
 	dPacket->setName(dataName);
-	dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+	//dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(10000));
 
 
 	NdnControllerString strControllerData = NdnControllerString("");
@@ -1045,7 +1055,7 @@ void ControllerApp::AddIncidency(Ptr<ControllerRouter> node, std::vector<string>
 }
 
 
-void ControllerApp::SchedulerHandlingFailureCalc()
+void ControllerApp::SchedulerHandlingFailureCalc(uint32_t seconds)
 {
 	cout <<"\n ControllerApp: SchedulerHandlingFailureCalc Called " << endl;
 	std::string strUpdateString1 = "Source_Node_Name:Node2,Link_Update:{/Node3,257,5,1,FACE_DOWN}";
@@ -1230,7 +1240,8 @@ void ControllerApp::sendPathDataPacket(std::shared_ptr<const Interest> interest)
 	Name dataName(interest->getName());
 	auto dPacket = make_shared<Data>();
 	dPacket->setName(dataName);
-	dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+	//dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(10000));
 	std::string strTemplateNode = getTheCalculationPath(extractNodeName(interest->getName().toUri(), 2));
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
 
@@ -1267,7 +1278,8 @@ void ControllerApp::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 		  Name dataName(interest->getName());
 		  auto dPacket = make_shared<Data>();
 		  dPacket->setName(dataName);
-		  dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+		  //dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+		  dPacket->setFreshnessPeriod(ndn::time::milliseconds(10000));
 		  dPacket->setContent(reinterpret_cast<const uint8_t*>(INFO_COMPONENT.c_str()),
 						INFO_COMPONENT.size());
 		  Signature signature;
@@ -1332,6 +1344,12 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
 		sendPathDataPacket(interest);
+
+		if(strInterestNodePrefix.compare("Node3")==0)
+		{
+			//SchedulerHandlingFailureCalc();
+			scheduleFailEvent(10);
+		}
 	}
 	else if(strRequestType.compare("req_update") == 0)
 	{
@@ -1411,7 +1429,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 			//CalculateRoutes();
 			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 			StartSendingPathToNode(); // Start seding packets to individual nodes.
-			SchedulerHandlingFailureCalc();
+			//SchedulerHandlingFailureCalc();
 		}
 	}
 	else if(strRequestType.compare("req_update") == 0)

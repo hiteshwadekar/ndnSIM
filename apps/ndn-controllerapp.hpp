@@ -113,10 +113,6 @@ public:
   void initCalculationKPath();
   void Initialize();
   std::shared_ptr<nfd::Face> GetFaceId(Ptr<ControllerRouter> srcNode, Ptr<ControllerRouter> dstNode);
-  void SchedulerHandlingFailureCalc();
-
-
-
 
 
 protected:
@@ -168,6 +164,7 @@ protected:
   bool m_firstTimeHello;
   std::shared_ptr<ns3::EventId> m_helloEvent;
   std::shared_ptr<ns3::EventId> m_checkEvent;
+  std::shared_ptr<ns3::EventId> m_failEvent;
   void schedulecheckLinkEvent(uint32_t seconds);
   void VerifyLinks(uint32_t seconds);
   std::string SendUpdateToController();
@@ -175,7 +172,10 @@ protected:
   void ControllerSync(std::stringstream& strUpdateToController);
   void SendUpdateDataPacketToController(shared_ptr<const Interest> interest);
   void UpdateIncidency(Ptr<ControllerRouter> node, std::vector<string> fields);
+  void scheduleFailEvent(uint32_t seconds);
+  void SchedulerHandlingFailureCalc(uint32_t seconds);
 };
+
 
 } // namespace ndn
 } // namespace ns3
