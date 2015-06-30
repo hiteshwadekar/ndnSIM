@@ -669,7 +669,6 @@ ControllerApp::CalculateRoutes()
     for (listitem=lstAllIncidencies.begin();listitem!=lstAllIncidencies.end();listitem++)
     {
     	std::cout << "\n Calulating Paths from Face of the source node ->  " << std::get<1>(*listitem)->getId()<< std::endl;
-
     	source->ResetMultiPathIncidencies();
     	source->AddMultiPathIncidency(std::get<1>(*listitem),std::get<2>(*listitem),std::get<3>(*listitem));
     	LinkInitalization(source,std::get<1>(*listitem),std::get<2>(*listitem));
@@ -700,7 +699,7 @@ ControllerApp::CalculateRoutes()
     			continue;
     		else {
     			// cout << "  Node " << dist.first->GetObject<Node> ()->GetId ();
-    			source->ResetPaths();
+    			//source->ResetPaths();
     			if (std::get<0>(dist.second) == 0) {
     				// cout << " is unreachable" << endl;
     			}
@@ -732,6 +731,7 @@ ControllerApp::CalculateRoutes()
 
 void
 ControllerApp::initCalculationKPath(){
+	my_graph.clear();
 	int ver_no = ControllerNodeList::GetNNodes();
 	if(ver_no > 2)
 	{
@@ -790,7 +790,6 @@ ControllerApp::CalculateKPathYanAlgorithm(int kpath){
 				  {
 						if((*src)!=(*dst))
 						{
-							(*src)->ResetPaths();
 							cout << "\n ----------- Start K PATH algorithm for destination  "<<(*dst)->GetSourceNode()<< "----------";
 							YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(*src), my_graph.get_vertex(*dst));
 							int i=1;
@@ -1065,8 +1064,8 @@ void ControllerApp::SchedulerHandlingFailureCalc()
 	Ptr<ControllerRouter> node1 = IsNodePresent(strSourceNodeUpdate1);
 	UpdateIncidency(node1,strControllerUpdatedData2.GetLinkUpdateInfo());
 
-	CalculateRoutes();
-	//CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+	//CalculateRoutes();
+	CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 	StartSendingPathToNode(); // Start seding packets to individual nodes.
 }
 
@@ -1412,7 +1411,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 			//CalculateRoutes();
 			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 			StartSendingPathToNode(); // Start seding packets to individual nodes.
-			//SchedulerHandlingFailureCalc();
+			SchedulerHandlingFailureCalc();
 		}
 	}
 	else if(strRequestType.compare("req_update") == 0)
