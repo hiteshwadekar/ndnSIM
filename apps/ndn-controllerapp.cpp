@@ -562,7 +562,7 @@ void ControllerApp::SendUpdateDataPacketToController(shared_ptr<const Interest> 
 	auto dPacket = make_shared<Data>();
 	dPacket->setName(dataName);
 	//dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
-	dPacket->setFreshnessPeriod(ndn::time::milliseconds(10000));
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(20000));
 
 
 	NdnControllerString strControllerData = NdnControllerString("");
@@ -644,6 +644,97 @@ void ControllerApp::LinkInitalization(Ptr<ControllerRouter> source, shared_ptr<F
 		  }
 	cout << "\n LinkInitalization -------> Stop -> "<<endl;
 }
+
+
+void
+ControllerApp::CalculateRoutesSinglePath()
+{
+  /**
+   * Implementation of route calculation is heavily based on Boost Graph Library
+   * See http://www.boost.org/doc/libs/1_49_0/libs/graph/doc/table_of_contents.html for more details
+   */
+
+    typedef std::list<tuple<std::shared_ptr<Name>,std::shared_ptr<Face>,size_t>> pathList;
+  // typedef graph_traits < NdnControllerRouterGraph >::vertex_descriptor vertex_descriptor;
+
+  // For now we doing Dijkstra for every node.  Can be replaced with Bellman-Ford or Floyd-Warshall.
+  // Other algorithms should be faster, but they need additional EdgeListGraph concept provided by
+  // the graph, which
+  // is not obviously how implement in an efficient manner
+
+  for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
+  {
+    Ptr<ControllerRouter> source = (*node);
+
+    if (source == NULL) {
+      NS_LOG_DEBUG("No node present in controller container");
+      continue;
+    }
+    std::cout << "\n *************************************************************************" <<std::endl;
+    std::cout << "\n Single path calculation for source node Name -> " << source->GetSourceNode() <<std::endl;
+    //std::list<ndn::ControllerRouter::Incidency> lstAllIncidencies = source->GetIncidencies();
+    //std::list<ndn::ControllerRouter::Incidency>::iterator listitem;
+
+    //for (listitem=lstAllIncidencies.begin();listitem!=lstAllIncidencies.end();listitem++)
+    //{
+    	//std::cout << "\n Calulating Paths from Face of the source node ->  " << std::get<1>(*listitem)->getId()<< std::endl;
+    	//source->ResetMultiPathIncidencies();
+    	//source->AddMultiPathIncidency(std::get<1>(*listitem),std::get<2>(*listitem),std::get<3>(*listitem));
+    	//LinkInitalization(source,std::get<1>(*listitem),std::get<2>(*listitem));
+
+        BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnControllerRouterGraph>));
+        BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
+
+        boost::NdnControllerRouterGraph graph;
+    	boost::DistancesMap distances;
+
+    	dijkstra_shortest_paths(graph, source,
+                            // predecessor_map (boost::ref(predecessors))
+                            // .
+                            distance_map(boost::ref(distances))
+                              .distance_inf(boost::WeightInf)
+                              .distance_zero(boost::WeightZero)
+                              .distance_compare(boost::WeightCompare())
+                              .distance_combine(boost::WeightCombine()));
+
+    	// NS_LOG_DEBUG (predecessors.size () << ", " << distances.size ());
+
+    	//Ptr<L3Protocol> L3protocol = (*node)->GetObject<L3Protocol>();
+    	//shared_ptr<nfd::Forwarder> forwarder = L3protocol->getForwarder();
+
+    	std::cout << "\n Reachability from Node: " << source->GetSourceNode() << std::endl;
+    	for (const auto& dist : distances) {
+    		if (dist.first == source)
+    			continue;
+    		else {
+    			// cout << "  Node " << dist.first->GetObject<Node> ()->GetId ();
+    			//source->ResetPaths();
+    			if (std::get<0>(dist.second) == 0) {
+    				// cout << " is unreachable" << endl;
+    			}
+    			else {
+    				pathList t1;
+    				cout << "\n Destination node name - > " << dist.first->GetSourceNode() << endl;
+    				cout << "\n Size of prefix list " <<	dist.first->GetLocalPrefixes().size() << endl;
+    				for (auto& prefix : dist.first->GetLocalPrefixes()) {
+    					cout << "prefix " << prefix->toUri().c_str() << " reachable via face " << std::get<0>(dist.second)->getId()
+                		 << " with distance " << std::get<1>(dist.second) << " with delay "
+                		 << std::get<2>(dist.second);
+    					t1.push_back(std::make_tuple (prefix, std::get<0>(dist.second), std::get<1>(dist.second)));
+    					//FibHelper::AddRoute(*node, *prefix, std::get<0>(dist.second),
+                                	//std::get<1>(dist.second));
+    				}
+    				source->AddPaths(dist.first,t1);
+    			}
+    		}
+    	}
+    	std::cout << "\n End Single path calculation for source Node Name -> " << source->GetSourceNode() << std::endl;
+    }
+  //}
+  std::cout<<"\n *************************************************************************"<<std::endl;
+}
+
+
 
 void
 ControllerApp::CalculateRoutes()
@@ -1241,7 +1332,7 @@ void ControllerApp::sendPathDataPacket(std::shared_ptr<const Interest> interest)
 	auto dPacket = make_shared<Data>();
 	dPacket->setName(dataName);
 	//dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
-	dPacket->setFreshnessPeriod(ndn::time::milliseconds(10000));
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(20000));
 	std::string strTemplateNode = getTheCalculationPath(extractNodeName(interest->getName().toUri(), 2));
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
 
@@ -1279,7 +1370,7 @@ void ControllerApp::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 		  auto dPacket = make_shared<Data>();
 		  dPacket->setName(dataName);
 		  //dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
-		  dPacket->setFreshnessPeriod(ndn::time::milliseconds(10000));
+		  dPacket->setFreshnessPeriod(ndn::time::milliseconds(20000));
 		  dPacket->setContent(reinterpret_cast<const uint8_t*>(INFO_COMPONENT.c_str()),
 						INFO_COMPONENT.size());
 		  Signature signature;
@@ -1348,7 +1439,7 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 		if(strInterestNodePrefix.compare("Node3")==0)
 		{
 			//SchedulerHandlingFailureCalc();
-			scheduleFailEvent(10);
+			//scheduleFailEvent(50);
 		}
 	}
 	else if(strRequestType.compare("req_update") == 0)
@@ -1427,6 +1518,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 		if(strSourceNode.compare("Node3") == 0)
 		{
 			//CalculateRoutes();
+			//CalculateRoutesSinglePath();
 			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 			StartSendingPathToNode(); // Start seding packets to individual nodes.
 			//SchedulerHandlingFailureCalc();

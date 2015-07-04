@@ -41,6 +41,7 @@ NS_LOG_COMPONENT_DEFINE("ndn.LinkControlHelper");
 namespace ns3 {
 namespace ndn {
 
+/*
 void
 LinkControlHelper::setErrorRate(Ptr<Node> node1, Ptr<Node> node2, double errorRate)
 {
@@ -74,17 +75,75 @@ LinkControlHelper::setErrorRate(Ptr<Node> node1, Ptr<Node> node2, double errorRa
     if (nd2->GetNode() == node1)
       nd2 = ppChannel->GetDevice(1);
 
-    ObjectFactory errorFactory("ns3::RateErrorModel");
-    errorFactory.Set("ErrorUnit", StringValue("ERROR_UNIT_PACKET"));
-    errorFactory.Set("ErrorRate", DoubleValue(errorRate));
-    if (errorRate <= 0) {
-      errorFactory.Set("IsEnabled", BooleanValue(false));
+    if (nd2->GetNode() == node2) {
+    	ObjectFactory errorFactory("ns3::RateErrorModel");
+    	errorFactory.Set("ErrorUnit", StringValue("ERROR_UNIT_PACKET"));
+    	errorFactory.Set("ErrorRate", DoubleValue(errorRate));
+    	if (errorRate <= 0) {
+    		errorFactory.Set("IsEnabled", BooleanValue(false));
+    	}
+    	nd1->SetAttribute("ReceiveErrorModel", PointerValue(errorFactory.Create<ErrorModel>()));
+    	nd2->SetAttribute("ReceiveErrorModel", PointerValue(errorFactory.Create<ErrorModel>()));
+    	return;
     }
-
-    nd1->SetAttribute("ReceiveErrorModel", PointerValue(errorFactory.Create<ErrorModel>()));
-    nd2->SetAttribute("ReceiveErrorModel", PointerValue(errorFactory.Create<ErrorModel>()));
+    NS_FATAL_ERROR("There is no link to fail between the requested nodes");
   }
 }
+
+*/
+
+void
+LinkControlHelper::setErrorRate(Ptr<Node> node1, Ptr<Node> node2, double errorRate)
+{
+  std::cout<<"\n setErrorRate called: -> "<<std::endl;
+
+  NS_LOG_FUNCTION(node1 << node2 << errorRate);
+  NS_ASSERT(node1 != nullptr && node2 != nullptr);
+  NS_ASSERT(errorRate <= 1.0);
+
+  Ptr<ndn::L3Protocol> ndn1 = node1->GetObject<ndn::L3Protocol>();
+  Ptr<ndn::L3Protocol> ndn2 = node2->GetObject<ndn::L3Protocol>();
+
+  NS_ASSERT(ndn1 != nullptr && ndn2 != nullptr);
+
+  // iterate over all faces to find the right one
+  for (const auto& face : ndn1->getForwarder()->getFaceTable()) {
+    shared_ptr<ndn::NetDeviceFace> ndFace = std::dynamic_pointer_cast<NetDeviceFace>(face);
+    if (ndFace == nullptr)
+      continue;
+
+    Ptr<PointToPointNetDevice> nd1 = ndFace->GetNetDevice()->GetObject<PointToPointNetDevice>();
+    if (nd1 == nullptr)
+      continue;
+
+    Ptr<Channel> channel = nd1->GetChannel();
+    if (channel == nullptr)
+      continue;
+
+    Ptr<PointToPointChannel> ppChannel = DynamicCast<PointToPointChannel>(channel);
+
+    Ptr<NetDevice> nd2 = ppChannel->GetDevice(0);
+    if (nd2->GetNode() == node1)
+      nd2 = ppChannel->GetDevice(1);
+
+    if (nd2->GetNode() == node2) {
+      ObjectFactory errorFactory("ns3::RateErrorModel");
+      errorFactory.Set("ErrorUnit", StringValue("ERROR_UNIT_PACKET"));
+      errorFactory.Set("ErrorRate", DoubleValue(errorRate));
+      if (errorRate <= 0) {
+        errorFactory.Set("IsEnabled", BooleanValue(false));
+      }
+
+      nd1->SetAttribute("ReceiveErrorModel", PointerValue(errorFactory.Create<ErrorModel>()));
+      nd2->SetAttribute("ReceiveErrorModel", PointerValue(errorFactory.Create<ErrorModel>()));
+      return;
+    }
+  }
+  NS_FATAL_ERROR("There is no link to fail between the requested nodes");
+}
+
+
+
 
 void
 LinkControlHelper::FailLink(Ptr<Node> node1, Ptr<Node> node2)

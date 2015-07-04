@@ -109,6 +109,22 @@ num_vertices(const NdnControllerRouterGraph& g)
   return g.GetVertices().size();
 }
 
+/*
+inline std::pair<graph_traits<NdnControllerRouterGraph>::out_edge_iterator,
+                 graph_traits<NdnControllerRouterGraph>::out_edge_iterator>
+out_edges(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
+{
+  return std::make_pair(u->GetIncidencies().begin(), u->GetIncidencies().end());
+}
+
+inline graph_traits<NdnControllerRouterGraph>::degree_size_type
+out_degree(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
+{
+	return u->GetIncidencies().size();
+}
+*/
+
+
 inline std::pair<graph_traits<NdnControllerRouterGraph>::out_edge_iterator,
                  graph_traits<NdnControllerRouterGraph>::out_edge_iterator>
 out_edges(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
@@ -121,6 +137,7 @@ out_degree(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const Nd
 {
 	return u->GetMultiPathIncidencies().size();
 }
+
 
 //////////////////////////////////////////////////////////////
 // Property maps
