@@ -1249,11 +1249,38 @@ void ControllerApp::AddPrefix(Ptr<ControllerRouter> node, std::vector<string> fi
 }
 
 void ControllerApp::sendInterestPacket(std::string strPrefix){
+
+	/*
+	uint32_t seq = std::numeric_limits<uint32_t>::max(); // invalid
+
+	while (m_retxSeqs.size()) {
+		seq = *m_retxSeqs.begin();
+		m_retxSeqs.erase(m_retxSeqs.begin());
+		break;
+	}
+
+	if (seq == std::numeric_limits<uint32_t>::max())
+	{
+		if (m_seqMax != std::numeric_limits<uint32_t>::max())
+		{
+			if (m_seq >= m_seqMax) {
+				return; // we are totally done
+			}
+		}
+	seq = m_seq++;
+	}
+*/
 	shared_ptr<Name> nameWithSequence = make_shared<Name>(strPrefix);
+	//nameWithSequence->appendSequenceNumber(seq);
 	shared_ptr<Interest> interestConto = make_shared<Interest>();
+
 	interestConto->setNonce(m_rand.GetValue());
 	interestConto->setName(*nameWithSequence);
+
 	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
+	//interestConto->setInterestLifetime(interestLifeTime);
+
+	//time::milliseconds interestLifeTime(m_interestLifeTime.GetMilliSeconds());
 	interestConto->setInterestLifetime(interestLifeTime);
 
 	m_transmittedInterests(interestConto, this, m_face);
@@ -1439,7 +1466,7 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 		if(strInterestNodePrefix.compare("Node3")==0)
 		{
 			//SchedulerHandlingFailureCalc();
-			//scheduleFailEvent(50);
+			scheduleFailEvent(50);
 		}
 	}
 	else if(strRequestType.compare("req_update") == 0)

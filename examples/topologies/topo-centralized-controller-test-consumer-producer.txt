@@ -1,0 +1,36 @@
+# topo-centralized-controller-test-consumer-producer.txt
+
+# This topology assuming that controller is centralized controller and node name is starting from node1.
+# any empty lines and lines starting with '#' symbol is ignored
+# The file should contain exactly two sections: router and link, each starting with the corresponding keyword
+# router section defines topology nodes and their relative positions (e.g., to use in visualizer)
+
+router
+
+# each line in this section represents one router and should have the following data
+# node  comment     yPos    xPos
+Node1   NA          1       1
+Node2   NA          1       2
+controller   NA          2       1
+Node3   NA          2       2
+Consumer   NA          3       1
+Producer   NA          3       2
+
+# Note that `node` can be any string. It is possible to access to the node by name using Names::Find, see examples.
+# link section defines point-to-point links between nodes and characteristics of these links
+
+link
+
+# Each line should be in the following format (only first two are required, the rest can be omitted)
+# srcNode   dstNode     bandwidth   metric  delay   queue
+# bandwidth: link bandwidth
+# metric: routing metric
+# delay:  link delay
+# queue:  MaxPackets for transmission queue on the link (both directions)
+controller       Node1       1Mbps       1       10ms    10
+Node1       Node3       1Mbps       2      10ms    10
+Node1       Node2       1Mbps       1       10ms    10
+Node2       Consumer       1Mbps       1       10ms    10
+Node3       Consumer       1Mbps       2       10ms    10
+Node3       Node2       1Mbps       2       10ms    10
+Node1       Producer       1Mbps       1       10ms    10

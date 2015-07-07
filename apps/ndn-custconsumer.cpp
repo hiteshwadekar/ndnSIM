@@ -115,16 +115,13 @@ void CustConsumer::StartApplication() {
 	NS_LOG_FUNCTION_NOARGS ();
 	App::StartApplication();
 	NS_LOG_DEBUG("NodeID: " << GetNode ()->GetId ());
-
 	FibHelper::AddRoute(GetNode(), m_prefix, m_face, 0);
-
-	std::cout<< "####################################### Collecting Link Information ###############################################################"<< std::endl;
-	std::cout << "\n";
+	//std::cout<< "####################################### Collecting Link Information ###############################################################"<< std::endl;
+	//std::cout << "\n";
 	initialize();
-	std::cout<< "####################################### Start Three Way Communication with Controller (Requesting routes)###############################################################"<< std::endl;
-	std::cout << "\n";
-
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
+	std::cout<< "####################################### Start Three Way Communication with ->  " << strNodeName << " Controller (Requesting routes)###############################################################"<< std::endl;
+	std::cout << "\n";
 	std::cout<< "CustConsumerApp: Sending an Interest Packets -> "<< "/controller/" + strNodeName + "/req_route" << std::endl;
 	std::string strPrefixToController = "/controller/" + strNodeName + "/req_route";
 	SendInterestPacket(strPrefixToController);
@@ -134,8 +131,6 @@ void CustConsumer::StartApplication() {
 	// StaticCast<fib::FibImpl> (fib)->modify (fibEntry,
 	//                                        ll::bind (&fib::Entry::UpdateStatus,
 	//                                                ll::_1, m_face, fib::FaceMetric::NDN_FIB_GREEN));
-
-
 }
 
 void CustConsumer::StopApplication() {
@@ -355,7 +350,7 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 	UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
 	interestConto->setNonce(m_rand.GetValue());
 	interestConto->setName(*nameWithSequence);
-	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
+	time::milliseconds interestLifeTime(ndn::time::seconds(20000));
 	interestConto->setInterestLifetime(interestLifeTime);
 	m_transmittedInterests(interestConto, this, m_face);
 	m_face->onReceiveInterest(*interestConto);

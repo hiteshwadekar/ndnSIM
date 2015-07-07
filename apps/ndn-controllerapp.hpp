@@ -133,6 +133,11 @@ protected:
   UniformVariable m_rand; ///< @brief nonce generator
   uint32_t m_signature;
 
+  uint32_t m_seq;      ///< @brief currently requested sequence number
+  uint32_t m_seqMax;   ///< @brief maximum number of sequence number
+  EventId m_sendEvent; ///< @brief EventId of pending "send packet" event
+  Time m_retxTimer;    ///< @brief Currently estimated retransmission timer
+  EventId m_retxEvent; ///< @brief Event to check whether or not retransmission should be performed
 
   Name m_keyLocator;
   double m_frequency; // Frequency of interest packets (in hertz)
@@ -143,6 +148,10 @@ protected:
   Graph my_graph;
 
 
+  struct RetxSeqsContainer : public std::set<uint32_t> {
+    };
+
+  RetxSeqsContainer m_retxSeqs; ///< \brief ordered set of sequence numbers to be retransmitted
 
   // Hello packets implementation
   static const std::string INFO_COMPONENT;
