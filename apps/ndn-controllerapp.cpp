@@ -136,8 +136,8 @@ ControllerApp::initialize()
 {
 	// Get all neighbor information
 	m_gb_adList = CollectLinks();
-	scheduleHelloPacketEvent(30);
-	schedulecheckLinkEvent(60);
+	//scheduleHelloPacketEvent(30);
+	//schedulecheckLinkEvent(60);
 }
 
 void ControllerApp::scheduleHelloPacketEvent(uint32_t seconds)
@@ -1381,6 +1381,37 @@ void ControllerApp::sendPathDataPacket(std::shared_ptr<const Interest> interest)
 }
 
 
+void ControllerApp::sendAckDataPacket(std::shared_ptr<const Interest> interest)
+{
+	if (!m_active)
+		return;
+	NS_LOG_FUNCTION_NOARGS ();
+	NS_LOG_FUNCTION(this << interest);
+
+	Name dataName(interest->getName());
+	auto dPacket = make_shared<Data>();
+	dPacket->setName(dataName);
+	//dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(20000));
+	//std::string strTemplateNode = getTheCalculationPath(extractNodeName(interest->getName().toUri(), 2));
+	//dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
+	Signature signature;
+	SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+	if (m_keyLocator.size() > 0) {
+		signatureInfo.setKeyLocator(m_keyLocator);
+	}
+	signature.setInfo(signatureInfo);
+	signature.setValue(Block(&m_signature, sizeof(m_signature)));
+
+	dPacket->setSignature(signature);
+	dPacket->wireEncode();
+
+	std::cout << "\n ControllerApp: ACK Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face << std::endl;
+	m_transmittedDatas(dPacket, this, m_face);
+	m_face->onReceiveData(*dPacket);
+	std::cout << "\n";
+}
+
 void ControllerApp::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 
 	  /* interest name: /<neighbor>/NLSR/INFO/<router> */
@@ -1436,7 +1467,6 @@ void ControllerApp::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 }
 
 
-
 void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	App::OnInterest(interest); // tracing inside
 	NS_LOG_FUNCTION(this << interest);
@@ -1455,6 +1485,8 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 	{
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/req_route";
 		std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestNodePrefix << "  with acknowledge interest -> " << strPrefix << std::endl;
+
+		sendAckDataPacket(interest);
 		sendInterestPacket(strPrefix);
 	}
 	else if(strRequestType.compare("res_route") == 0)
@@ -1462,17 +1494,18 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_route";
 		sendPathDataPacket(interest);
-
-		if(strInterestNodePrefix.compare("Node3")==0)
+		if(strInterestNodePrefix.compare("Producer")==0)
 		{
 			//SchedulerHandlingFailureCalc();
-			scheduleFailEvent(50);
+			//scheduleFailEvent(50);
 		}
 	}
 	else if(strRequestType.compare("req_update") == 0)
 	{
 		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/req_update";
 		std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestNodePrefix << "  with acknowledge interest -> " << strPrefix << std::endl;
+
+		sendAckDataPacket(interest);
 		sendInterestPacket(strPrefix);
 	}
 	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
@@ -1481,11 +1514,18 @@ void ControllerApp::OnInterest(std::shared_ptr<const Interest> interest) {
 			//SendInterestPacket(strPrefix);
 			SendHelloDataPacket(interest);
 	}
-	else{
-		strPrefix = "/";
-		sendInterestPacket(strPrefix);
+	else if(strRequestType.compare("res_updated_path") == 0)
+	{
+		std::cout << "\n CentralizedControllerApp: Sending data packet to  " << strInterestNodePrefix << "  with calculated distance "<< std::endl;
+		strPrefix = "/" + strInterestNodePrefix + "/controller" + "/res_updated_path";
+		sendPathDataPacket(interest);
 	}
-
+	else
+	{
+		strPrefix = "/";
+		sendAckDataPacket(interest);
+		//sendInterestPacket(strPrefix);
+	}
 }
 
 void ControllerApp::StartSendingPathToNode()
@@ -1505,6 +1545,26 @@ void ControllerApp::StartSendingPathToNode()
 		}
 	  }
 }
+
+
+void ControllerApp::StartSendingUpdatedCalPathToNode()
+{
+
+	std::cout << "\n ******* ****************************** Starting Controller to Consumer Communication for updated cost/link paths************************************************************"<<std::endl;
+	//std::string strInterestPrefix = "/" + extractNodeName(contentObject->getName().toUri(), 1) + "/controller" + "/res_route";
+	//std::cout << "\n CentralizedControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
+
+	for (ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
+	  {
+		Ptr<ControllerRouter> source = (*node);
+		if (source != NULL && source->GetSourceNode().compare("controller")!=0){
+			std::string strInterestPrefix = "/" + source->GetSourceNode() + "/controller" + "/res_updated_path";
+			std::cout << "\n ControllerApp: Sending interest packet to  " << strInterestPrefix << std::endl;
+			sendInterestPacket(strInterestPrefix);
+		}
+	  }
+}
+
 
 
 void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
@@ -1542,7 +1602,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 		AddPrefix(node, strControllerData.GetNodePrefixInfo());
 
 		//if(strSourceNode.compare("Node6") == 0)
-		if(strSourceNode.compare("Node3") == 0)
+		if(strSourceNode.compare("Producer") == 0)
 		{
 			//CalculateRoutes();
 			//CalculateRoutesSinglePath();
@@ -1576,8 +1636,8 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 		  if(strSourceNodeUpdate.compare("Node2") == 0)
 		  {
 			//CalculateRoutes();
-			//CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
-			//StartSendingPathToNode(); // Start seding packets to individual nodes.
+			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+			StartSendingPathToNode(); // Start seding packets to individual nodes.
 		  }
 	  }
 
@@ -1610,14 +1670,21 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 				//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;
 				m_gb_adList.writeLog();
 	}
+	else if(strRequestType.compare("res_route") == 0)
+	{
+		std::cout<<"\n Recevied ACK from consumer/producer for res_route" <<std::endl;
+	}
+	else if(strRequestType.compare("res_updated_path") == 0)
+	{
+		std::cout<<"\n Recevied ACK from consumer/producer for res_updated_path" <<std::endl;
+	}
 	else
 	{
-				// We got the data packet for updating the routes.
-				std::string msg1(reinterpret_cast<const char*>(contentObject->getContent().value()),
-									contentObject->getContent().value_size());
-				std::cout << "\n pRINTING DATA FROM OTHE NODE -> " << msg << endl;
+			// We got the data packet for updating the routes.
+			std::string msg1(reinterpret_cast<const char*>(contentObject->getContent().value()),
+								contentObject->getContent().value_size());
+			std::cout << "\n pRINTING DATA FROM OTHE NODE -> " << msg << endl;
 	}
-
 }
 
 void ControllerApp::OnNack(std::shared_ptr<const ndn::Interest> interest) {

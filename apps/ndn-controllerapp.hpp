@@ -114,6 +114,8 @@ public:
   void Initialize();
   std::shared_ptr<nfd::Face> GetFaceId(Ptr<ControllerRouter> srcNode, Ptr<ControllerRouter> dstNode);
   void CalculateRoutesSinglePath();
+  void sendAckDataPacket(std::shared_ptr<const Interest> interest);
+  void StartSendingUpdatedCalPathToNode();
 
 
 protected:

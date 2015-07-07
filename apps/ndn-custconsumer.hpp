@@ -120,7 +120,7 @@ protected:
   Time m_interestLifeTime;    ///< \brief LifeTime for interest packet
 
   void SendInterestPacket(std::string strPrefixToController);
-  void updateNodeLinkInfo(std::string strLinkInfo);
+  void updateNodeLinkInfo(std::string strLinkInfo, bool isFirstTime);
   void SendDataPacket(std::shared_ptr<const Interest> interest, bool toController);
   std::string GetLocalLinkInfo();
   std::string extractNodeName(std::string strPacketName);
@@ -154,9 +154,11 @@ protected:
   void VerifyLinks(uint32_t seconds);
   std::string SendUpdateToController();
   std::stringstream m_strUpdateToController;
+  std::string m_strUpdateToController1;
 
   void ControllerSync(std::stringstream& strUpdateToController);
   void SendUpdateDataPacketToController(shared_ptr<const Interest> interest);
+  void sendAckDataPacket(std::shared_ptr<const Interest> interest);
 
  };
 

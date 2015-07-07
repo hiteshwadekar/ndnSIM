@@ -143,9 +143,9 @@ void CustConsumer::initialize()
 {
 	// Get all neighbor information
 	m_gb_adList = CollectLinks();
-	scheduleHelloPacketEvent(30);
+	//scheduleHelloPacketEvent(30);
 	//scheduleFailEvent(35);
-	schedulecheckLinkEvent(60);
+	//schedulecheckLinkEvent(60);
 }
 
 void
@@ -288,9 +288,7 @@ bool CustConsumer::IsFIBMetricsUpdatable(std::string strPrefixName,std::shared_p
 }
 
 
-
-
-void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
+void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo, bool isFirstTime) {
 	// Update the FIB and face metrics with calculated distance by controller.
 	std::cout<<"\n";
 	std::cout << "CustConsumer:: (updateNodeLinkInfo): Updating FIB with the provided information "<<std::endl;
@@ -332,8 +330,12 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo) {
 		}
 	}
 
+	if(isFirstTime)
+	{
+		scheduleHelloPacketEvent(30);
+		schedulecheckLinkEvent(60);
+	}
 	std::cout << "\n ******* ****************************** Stopping Controller to Consumer Communication ************************************************************"<<std::endl;
-
 	// call FIB control command from NFD to update the fib check the status.
 
 }
@@ -350,7 +352,7 @@ void CustConsumer::SendInterestPacket(std::string strPrefixToController) {
 	UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
 	interestConto->setNonce(m_rand.GetValue());
 	interestConto->setName(*nameWithSequence);
-	time::milliseconds interestLifeTime(ndn::time::seconds(20000));
+	time::milliseconds interestLifeTime(ndn::time::seconds(1000000));
 	interestConto->setInterestLifetime(interestLifeTime);
 	m_transmittedInterests(interestConto, this, m_face);
 	m_face->onReceiveInterest(*interestConto);
@@ -604,7 +606,7 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 	// Prepare string for controller send.
 
 	cout <<"\n ControllerSync: Called " << endl;
-	cout <<"\n Printing values for controller -> " << strUpdateToController.str() << "and source node name -> "<< Names::FindName(GetNode()).c_str() <<endl;
+	cout <<"\n Printing values for controller -> " << strUpdateToController.str() << "   and source node name -> "<< Names::FindName(GetNode()).c_str() <<endl;
 	std::stringstream strmodifiedControllerData;
 	NdnControllerString strControllerData = NdnControllerString("");
 	if(strUpdateToController!=NULL)
@@ -671,8 +673,14 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 	if(!strmodifiedControllerData.str().empty())
 	{
 		cout << "\n Final link info to controller 1 -> " << strmodifiedControllerData.str() << endl;
+		if(!m_strUpdateToController.str().empty())
+		{
+			m_strUpdateToController <<",";
+		}
 		m_strUpdateToController << strmodifiedControllerData.str();
+		m_strUpdateToController1 = strmodifiedControllerData.str();
 		cout << "\n Final link info to controller 2  -> " << m_strUpdateToController.str() << endl;
+		cout << "\n Final link info to controller 2  -> " << m_strUpdateToController1 << endl;
 		std::string strControllerUpdate = "/controller/" + Names::FindName(Ptr<Node>(GetNode())) + "/req_update";
 		SendInterestPacket(strControllerUpdate);
 	}
@@ -840,7 +848,8 @@ void CustConsumer::SendUpdateDataPacketToController(shared_ptr<const Interest> i
 
 	NdnControllerString strControllerData = NdnControllerString("");
 	strControllerData.SetSourceNode(Names::FindName(GetNode()).c_str());
-	strControllerData.SetLinkUpdateInfo(m_strUpdateToController.str());
+	//strControllerData.SetLinkUpdateInfo(m_strUpdateToController.str());
+	strControllerData.SetLinkUpdateInfo(m_strUpdateToController1);
 	std::string strTemplateNode=strControllerData.GetString();
 	dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
 	//ndn::StackHelper::getKeyChain().sign(*dPacket);
@@ -958,6 +967,37 @@ void CustConsumer::SendHelloDataPacket(shared_ptr<const Interest> interest) {
 	  }
 }
 
+void CustConsumer::sendAckDataPacket(std::shared_ptr<const Interest> interest)
+{
+	if (!m_active)
+		return;
+	NS_LOG_FUNCTION_NOARGS ();
+	NS_LOG_FUNCTION(this << interest);
+
+	Name dataName(interest->getName());
+	auto dPacket = make_shared<Data>();
+	dPacket->setName(dataName);
+	//dPacket->setFreshnessPeriod(ndn::time::milliseconds(6000));
+	dPacket->setFreshnessPeriod(ndn::time::milliseconds(20000));
+	//std::string strTemplateNode = getTheCalculationPath(extractNodeName(interest->getName().toUri(), 2));
+	//dPacket->setContent(reinterpret_cast<const uint8_t*>(strTemplateNode.c_str()), (uint32_t) strTemplateNode.length());
+	Signature signature;
+	SignatureInfo signatureInfo(static_cast< ::ndn::tlv::SignatureTypeValue>(255));
+	if (m_keyLocator.size() > 0) {
+		signatureInfo.setKeyLocator(m_keyLocator);
+	}
+	signature.setInfo(signatureInfo);
+	signature.setValue(Block(&m_signature, sizeof(m_signature)));
+
+	dPacket->setSignature(signature);
+	dPacket->wireEncode();
+
+	std::cout << "\n CustConsumer: Sending ACK Data packet- > " << dPacket->getName () << " is sending from face -> " << m_face << std::endl;
+	m_transmittedDatas(dPacket, this, m_face);
+	m_face->onReceiveData(*dPacket);
+	std::cout << "\n";
+}
+
 string CustConsumer::extractNodeName(std::string strPacketName) {
 	std::vector<std::string> fields;
 	boost::algorithm::split(fields, strPacketName,
@@ -987,6 +1027,7 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 	{
 		strPrefix = "/controller/" + strNodeName + "/res_route";
 		std::cout << "\n CustConsumerApp: Sending interest packet ack to controller -> " << strPrefix << std::endl;
+		sendAckDataPacket(interest);
 		SendInterestPacket(strPrefix);
 	}
 	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
@@ -998,6 +1039,13 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 	else if(strRequestType.compare("req_update") == 0)
 	{
 		SendUpdateDataPacketToController(interest);
+	}
+	else if(strRequestType.compare("res_updated_path")==0)
+	{
+		strPrefix = "/controller/" + strNodeName + "/res_updated_path";
+		std::cout << "\n CustConsumerApp: Sending interest packet to controller -> " << strPrefix << std::endl;
+		sendAckDataPacket(interest);
+		SendInterestPacket(strPrefix);
 	}
 	else
 	{
@@ -1020,17 +1068,17 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 	if (strRequestType.compare("req_route") == 0)
 	{
 		//Do nothing...really? oowoow.
+		std::cout <<"\n Received ACK from controller req_route"<<std::endl;
 	}
 	else if(strRequestType.compare("res_route") == 0)
 	{
 		// We got the data packet for updating the routes.
 		std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 					contentObject->getContent().value_size());
-		updateNodeLinkInfo(msg);
+		updateNodeLinkInfo(msg,true);
 		std::cout << "\n" << endl;
 		std::cout<< "####################################### Stop Three Way Communication with Controller ###############################################################"<< std::endl;
-
-
+		/*
 		std::string strNode="";
 		std::cout<< "####################################### Testing updated paths by sending interest packets to each other ###############################################################"<< std::endl;
 		for (ns3::NodeList::Iterator node = ns3::NodeList::Begin(); node != ns3::NodeList::End();
@@ -1041,7 +1089,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 				strNode = "/" + strNode;
 				SendInterestPacket(strNode);
 			}
-		}
+		}*/
 	}
 	else if(strRequestType.compare(HELLO_COMPONENT) == 0)
 	{
@@ -1075,6 +1123,31 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		//m_gb_adList.writeLog();
 
 		//std::cout << "\n Printing strNeighbor information -> " << neighbor << endl;
+	}
+	else if(strRequestType.compare("req_update") == 0)
+	{
+		//Do nothing...really? oowoow.
+		std::cout <<"\n Received ACK from controller for req_update"<<std::endl;
+	}
+	else if(strRequestType.compare("res_updated_path") == 0)
+	{
+		// We got the updated data packet for updating the routes.
+		std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
+					contentObject->getContent().value_size());
+		updateNodeLinkInfo(msg,false);
+		std::cout << "\n" << endl;
+		/*
+		std::string strNode="";
+		std::cout<< "####################################### Testing updated paths by sending interest packets to each other ###############################################################"<< std::endl;
+		for (ns3::NodeList::Iterator node = ns3::NodeList::Begin(); node != ns3::NodeList::End();
+				 node++) {
+			strNode = Names::FindName(Ptr<Node>(*node));
+			if(strNode.compare("controller")!=0 && strNode.compare(strNodeName)!=0)
+			{
+				strNode = "/" + strNode;
+				SendInterestPacket(strNode);
+			}
+		}*/
 	}
 	else
 	{
