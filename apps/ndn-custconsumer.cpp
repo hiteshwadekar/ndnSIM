@@ -652,9 +652,10 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 								//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
 							}
 						}
-					}
-					if(NextHopcounter==0)
-				    {*/
+					}*/
+
+				    //if(NextHopcounter==0)
+				    //{
 						if(!strmodifiedControllerData.str().empty())
 						{
 							strmodifiedControllerData << ",";
@@ -679,13 +680,62 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 		}
 		m_strUpdateToController << strmodifiedControllerData.str();
 		m_strUpdateToController1 = strmodifiedControllerData.str();
+
 		cout << "\n Final link info to controller 2  -> " << m_strUpdateToController.str() << endl;
 		cout << "\n Final link info to controller 2  -> " << m_strUpdateToController1 << endl;
+		unregisterPrefix(m_strUpdateToController1);
 		std::string strControllerUpdate = "/controller/" + Names::FindName(Ptr<Node>(GetNode())) + "/req_update";
 		SendInterestPacket(strControllerUpdate);
 	}
 
 }
+
+void
+CustConsumer::unregisterPrefix(std::string strLinkInfo)
+{
+	std::cout <<"\n UnregisterPrefix called " <<std::endl;
+/*
+  if (faceId > 0) {
+    ControlParameters controlParameters;
+    controlParameters
+      .setName(namePrefix)
+      .setFaceId(faceId)
+      .setOrigin(128);
+    FibHelper::RemoveNextHop(controlParameters,GetNode());
+  }
+*/
+  //  /Node2,258,2,1,FACE_DOWN
+
+  Ptr<Node> localNode = GetNode();
+  Ptr<ndn::L3Protocol> l3 = localNode->GetObject<ndn::L3Protocol>();
+
+  std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
+  ndn::nfd::Fib& fib = fw->getFib();
+  std::vector<std::string> fields;
+  boost::algorithm::split(fields, strLinkInfo, boost::algorithm::is_any_of(","));
+
+  for (size_t n = 0; n < fields.size(); n+=4)
+  {
+	  for (const auto& fibEntry : fib) {
+	  		std::string strTempString = fibEntry.getPrefix().toUri().c_str();
+	  		if(strTempString.compare(fields[n]) == 0)
+			{
+				for (const auto& nh : fibEntry.getNextHops())
+				{
+					shared_ptr<Face> face = l3->getFaceById(atoi(fields[n+1].c_str()));
+					if(nh.getFace()->getId() == face->getId())
+					{
+						std::cout <<"\n FIB removed called " <<std::endl;
+						fib.removeNextHopFromAllEntries(face);
+					}
+					//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
+				}
+			}
+	  }
+  }
+}
+
+
 
 AdjacencyList CustConsumer::CollectLinks()
 {
@@ -1134,7 +1184,7 @@ void CustConsumer::OnData(shared_ptr<const Data> contentObject) {
 		// We got the updated data packet for updating the routes.
 		std::string msg(reinterpret_cast<const char*>(contentObject->getContent().value()),
 					contentObject->getContent().value_size());
-		updateNodeLinkInfo(msg,false);
+		updateNodeLinkInfo(msg,true);
 		std::cout << "\n" << endl;
 		/*
 		std::string strNode="";

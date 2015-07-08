@@ -841,6 +841,7 @@ ControllerApp::initCalculationKPath(){
 		for(ns3::ndn::ControllerNodeList::Iterator node = ns3::ndn::ControllerNodeList::Begin (); node != ns3::ndn::ControllerNodeList::End (); node++)
 		 {
 			std::cout <<"\n Source node is -> "<<(*node)->GetSourceNode()<<std::endl;
+			(*node)->ResetPaths();
 			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>> adjancyList = (*node)->GetIncidencies();
 			std::list<std::tuple<Ptr<ControllerRouter>, shared_ptr<Face>, Ptr<ControllerRouter>, size_t>>::iterator iter;
 			for (iter = adjancyList.begin();iter!=adjancyList.end();iter++){
@@ -1637,7 +1638,7 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 		  {
 			//CalculateRoutes();
 			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
-			StartSendingPathToNode(); // Start seding packets to individual nodes.
+			StartSendingUpdatedCalPathToNode(); // Start seding packets to individual nodes.
 		  }
 	  }
 

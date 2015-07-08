@@ -159,6 +159,7 @@ protected:
   void ControllerSync(std::stringstream& strUpdateToController);
   void SendUpdateDataPacketToController(shared_ptr<const Interest> interest);
   void sendAckDataPacket(std::shared_ptr<const Interest> interest);
+  void unregisterPrefix(std::string strLinkInfo);
 
  };
 
