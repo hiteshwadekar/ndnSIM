@@ -178,7 +178,7 @@ CustConsumer::OnTimeout(uint32_t sequenceNumber)
 void
 CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
 {
-	cout<< "\n Expressing Hello Interest from consumer :" << interestName << endl;
+	std::cout<< "\n Expressing Hello Interest from consumer sending from face ->  " << m_face->getId() << "interest name ->  "<< interestName << std::endl;
  	shared_ptr<Interest> interestConto = make_shared<Interest>();
     UniformVariable rand(0, std::numeric_limits<uint32_t>::max());
   	interestConto->setNonce(m_rand.GetValue());
@@ -706,35 +706,51 @@ CustConsumer::unregisterPrefix(std::string strLinkInfo)
 */
   //  /Node2,258,2,1,FACE_DOWN
 
+
+
   Ptr<Node> localNode = GetNode();
   Ptr<ndn::L3Protocol> l3 = localNode->GetObject<ndn::L3Protocol>();
-
   std::shared_ptr<ndn::nfd::Forwarder> fw = l3->getForwarder();
   ndn::nfd::Fib& fib = fw->getFib();
   std::vector<std::string> fields;
   boost::algorithm::split(fields, strLinkInfo, boost::algorithm::is_any_of(","));
-
-  for (size_t n = 0; n < fields.size(); n+=4)
+  for (size_t n = 0; n < fields.size(); n+=5)
   {
-	  for (const auto& fibEntry : fib) {
+
+	  /*
+	  if (l3->getFaceById(atoi(fields[n+1].c_str()))->getId() > 0) {
+		  ControlParameters controlParameters;
+		  Name namePrefix(fields[n]);
+		  controlParameters
+	        .setName(namePrefix)
+	        .setFaceId(l3->getFaceById(atoi(fields[n+1].c_str()))->getId())
+	      	.setOrigin(128);
+		  std::cout <<"\n FIB removed called " <<std::endl;
+		  FibHelper::RemoveNextHop(controlParameters,GetNode());
+	    }*/
+	  Name namePrefix(fields[n]);
+	  shared_ptr<fib::Entry> fibEntry = fib.findExactMatch(namePrefix);
+	  std::cout <<"\n FIB removed called " <<std::endl;
+	  fibEntry->removeNextHop(l3->getFaceById(atoi(fields[n+1].c_str())));
+	  /*
+	  for (auto& fibEntry : fib) {
 	  		std::string strTempString = fibEntry.getPrefix().toUri().c_str();
 	  		if(strTempString.compare(fields[n]) == 0)
 			{
 				for (const auto& nh : fibEntry.getNextHops())
 				{
-					shared_ptr<Face> face = l3->getFaceById(atoi(fields[n+1].c_str()));
-					if(nh.getFace()->getId() == face->getId())
+					//shared_ptr<Face> face = l3->getFaceById(atoi(fields[n+1].c_str()));
+					if(nh.getFace()->getId() == l3->getFaceById(atoi(fields[n+1].c_str()))->getId())
 					{
-						std::cout <<"\n FIB removed called " <<std::endl;
-						fib.removeNextHopFromAllEntries(face);
+						//nh.removeNextHop(l3->getFaceById(atoi(fields[n+1].c_str())));
+						fibEntry.removeNextHop(l3->getFaceById(atoi(fields[n+1].c_str())));
 					}
 					//std::cout << "  - " << nh.getFace() << ", " << nh.getFace()->getId() << ", " << nh.getCost() << std::endl;
 				}
 			}
-	  }
+	  }*/
   }
 }
-
 
 
 AdjacencyList CustConsumer::CollectLinks()
@@ -783,14 +799,17 @@ AdjacencyList CustConsumer::CollectLinks()
 	    		  if(face->isUp())
 	    		  {
 	    			  objAdjacent.setStatus(Adjacent::STATUS_ACTIVE);
+	    			  std::cout <<"\n Face "<<  face->getId() << " is acitve " <<std::endl;
 	    		  }
 	    		  else if(!face->isUp())
 	    		  {
 	    			  objAdjacent.setStatus(Adjacent::STATUS_INACTIVE);
+	    			  std::cout <<"\n Face "<<  face->getId() << " is inacitve " <<std::endl;
 	    		  }
 	    		  else
 	    		  {
 	    			  objAdjacent.setStatus(Adjacent::STATUS_UNKNOWN);
+	    			  std::cout <<"\n Face "<<  face->getId() << " is unknown " <<std::endl;
 	    		  }
 	    		  objAdjacent.setInterestSentNo(0);
 	    		  objAdjacent.setDataRcvNo(0);
