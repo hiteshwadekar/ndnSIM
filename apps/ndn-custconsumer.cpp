@@ -169,11 +169,27 @@ CustConsumer::scheduleFailEvent(uint32_t seconds)
 }
 
 void
+CustConsumer::scheduleBoostLinkCost(uint32_t seconds)
+{
+	m_boostLinkEvent = scheduler::schedule(ndn::time::seconds(seconds),bind(&CustConsumer::boostLinkCost, this, seconds));
+}
+
+void
+CustConsumer::boostLinkCost(uint32_t sequenceNumber)
+{
+	std::shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (GetNode()->GetObject<ndn::L3Protocol>()->getFaceById(atoi("258")));
+	face->setMetric(std::numeric_limits<uint32_t>::max());
+	shared_ptr<Name> namePrefix = make_shared<Name>("/Node3");
+	cout <<"\n Boost link cost called "<<endl;
+	FibHelper::AddRoute(GetNode(),*namePrefix,face,std::numeric_limits<uint32_t>::max());
+}
+
+
+void
 CustConsumer::OnTimeout(uint32_t sequenceNumber)
 {
 	cout << "\n OnTimeout Called " << endl;
 }
-
 
 void
 CustConsumer::expressInterest(const Name& interestName, uint32_t seconds)
@@ -438,6 +454,15 @@ void CustConsumer::VerifyLinks(uint32_t seconds)
 	cout <<"\n VeryfyLinks: Called for node -> " << Names::FindName(GetNode()).c_str()<<endl;
 	cout <<"\n Printing global list values ->  " << endl;
 	m_gb_adList.writeLog();
+
+
+	/*
+	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
+	if(strNodeName.compare("Node2")==0)
+	{
+		//scheduleBoostLinkCost(40);
+		boostLinkCost(40);
+	}*/
 
 	bool isReqtoController=false;
 	std::stringstream strUpdateToController;
@@ -799,17 +824,17 @@ AdjacencyList CustConsumer::CollectLinks()
 	    		  if(face->isUp())
 	    		  {
 	    			  objAdjacent.setStatus(Adjacent::STATUS_ACTIVE);
-	    			  std::cout <<"\n Face "<<  face->getId() << " is acitve " <<std::endl;
+	    			  std::cout <<"\n Face "<<  face->getId() << " is acitve and cost is " << face->getMetric() << std::endl;
 	    		  }
 	    		  else if(!face->isUp())
 	    		  {
 	    			  objAdjacent.setStatus(Adjacent::STATUS_INACTIVE);
-	    			  std::cout <<"\n Face "<<  face->getId() << " is inacitve " <<std::endl;
+	    			  std::cout <<"\n Face "<<  face->getId() << " is inacitve and cost is " << face->getMetric() <<std::endl;
 	    		  }
 	    		  else
 	    		  {
 	    			  objAdjacent.setStatus(Adjacent::STATUS_UNKNOWN);
-	    			  std::cout <<"\n Face "<<  face->getId() << " is unknown " <<std::endl;
+	    			  std::cout <<"\n Face "<<  face->getId() << " is unknown and and cost is " << face->getMetric() << std::endl;
 	    		  }
 	    		  objAdjacent.setInterestSentNo(0);
 	    		  objAdjacent.setDataRcvNo(0);

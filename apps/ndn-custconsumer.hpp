@@ -143,12 +143,16 @@ protected:
   std::shared_ptr<ns3::EventId> m_helloEvent;
   std::shared_ptr<ns3::EventId> m_checkEvent;
   std::shared_ptr<ns3::EventId> m_failEvent;
+  std::shared_ptr<ns3::EventId> m_boostLinkEvent;
   void initialize();
   AdjacencyList CollectLinks();
+
   void scheduleHelloPacketEvent(uint32_t seconds);
   void schedulecheckLinkEvent(uint32_t seconds);
   void scheduleFailEvent(uint32_t seconds);
   void sendScheduledHelloInterest(uint32_t seconds);
+  void scheduleBoostLinkCost(uint32_t seconds);
+
   void expressInterest(const Name& interestName, uint32_t seconds);
   void SendHelloDataPacket(shared_ptr<const Interest> interest);
   void VerifyLinks(uint32_t seconds);
@@ -160,6 +164,7 @@ protected:
   void SendUpdateDataPacketToController(shared_ptr<const Interest> interest);
   void sendAckDataPacket(std::shared_ptr<const Interest> interest);
   void unregisterPrefix(std::string strLinkInfo);
+  void boostLinkCost(uint32_t sequenceNumber);
 
  };
 

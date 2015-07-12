@@ -65,7 +65,7 @@ bool ControllerRouter::UpdateIncidency(shared_ptr<Face> faceId,
 	{
 		if(gr == std::get<2>(*iter) && faceId == std::get<1>(*iter))
 		{
-			std::get<3>(*iter) == faceMetrics;
+			std::get<3>(*iter) = faceMetrics;
 			isUpdate=true;
 			break;
 		}
