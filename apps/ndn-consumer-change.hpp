@@ -1,7 +1,7 @@
 #ifndef NDN_CONSUMER_CHANGE_H
 #define NDN_CONSUMER_CHANGE_H
 
-#include "ns3/ndnSIM/model/ndn-common.hpp"
+//#include "ns3/ndnSIM/model/ndn-common.hpp"
 
 #include "ndn-app.hpp"
 
@@ -21,6 +21,14 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
 
+#include "model/ndn-net-device-face.hpp"
+#include "ns3/random-variable.h"
+#include "ns3/ptr.h"
+#include "model/ndn-adjacency-list.hpp"
+#include "model/ndn-adjacency.hpp"
+#include "model/ndn-conf-parameter.hpp"
+#include "core/scheduler.hpp"
+
 namespace ns3 {
 namespace ndn {
 
@@ -38,7 +46,12 @@ public:
    * Sets up randomizer function and packet sequence number
    */
   ConsumerChange();
-  virtual ~ConsumerChange(){};
+
+  ~ConsumerChange();
+
+  // From App
+  virtual void
+  OnInterest (std::shared_ptr<const Interest> interest);
 
   // From App
   virtual void
@@ -79,13 +92,6 @@ protected:
   StopApplication();
 
   /**
-   * \brief Constructs the Interest packet and sends it using a callback to the underlying NDN
-   * protocol
-   */
-  virtual void
-  ScheduleNextPacket() = 0;
-
-  /**
    * \brief Checks if the packet need to be retransmitted becuase of retransmission timer expiration
    */
   void
@@ -105,8 +111,101 @@ protected:
   Time
   GetRetxTimer() const;
 
+  /**
+   * \brief Constructs the Interest packet and sends it using a callback to the underlying NDN
+   * protocol
+   */
+  virtual void
+  ScheduleNextPacket();
+
+  /**
+   * @brief Set type of frequency randomization
+   * @param value Either 'none', 'uniform', or 'exponential'
+   */
+  void
+  SetRandomize(const std::string& value);
+
+  /**
+   * @brief Get type of frequency randomization
+   * @returns either 'none', 'uniform', or 'exponential'
+   */
+  std::string
+  GetRandomize() const;
+
 protected:
+  bool m_firstTime;
+  //--------------------------------------------------------------------------------------------
+  Name m_prefix;
+  Name m_postfix;
+  uint32_t m_virtualPayloadSize;
+  Time m_freshness;
+  //list<TopologyReader::Link> m_linksList;
+  //Ptr<const Interest> con_pkt_interest;
   UniformVariable m_rand; ///< @brief nonce generator
+  uint32_t m_signature;
+
+  RandomVariable* m_random;
+  std::string m_randomType;
+  Name m_keyLocator;
+  double m_frequency; // Frequency of interest packets (in hertz)
+  Time m_offTime;             ///< \brief Time interval between packets
+  Name m_interestName;        ///< \brief NDN Name of the Interest (use Name)
+  Time m_interestLifeTime;    ///< \brief LifeTime for interest packet
+
+  std::string m_ProducerDataTestInterest;        ///< \brief NDN Name of the Interest (use Name)
+
+  void SendInterestPacket(std::string strPrefixToController);
+  void updateNodeLinkInfo(std::string strLinkInfo, bool isFirstTime);
+  void SendDataPacket(std::shared_ptr<const Interest> interest, bool toController);
+  std::string GetLocalLinkInfo();
+  std::string extractNodeName(std::string strPacketName);
+  std::string extractNodeRequestType(std::string strPrefixName, int index);
+  void getOSPFfromNodeName(std::string FromNodeName, std::string ToNodeName);
+  std::string getPrefix(Ptr<Node> Node);
+  bool IsFIBMetricsUpdatable(std::string strPrefixName, std::shared_ptr<NetDeviceFace> faceId, size_t faceMetrics);
+
+  // Hello packets implementation
+  static const std::string INFO_COMPONENT;
+  static const std::string HELLO_COMPONENT;
+
+  static int counter;
+
+  AdjacencyList m_gb_adList;
+  AdjacencyList m_lc_adList;
+  time::seconds m_adjControllerBuildInterval;
+  bool m_firstTimeHello;
+  ConfParameter m_conf;
+  std::shared_ptr<ns3::EventId> m_helloEvent;
+  std::shared_ptr<ns3::EventId> m_checkEvent;
+  std::shared_ptr<ns3::EventId> m_failEvent;
+  std::shared_ptr<ns3::EventId> m_boostLinkEvent;
+  std::shared_ptr<ns3::EventId> m_scheduleInterestProducer;
+  void initialize();
+  AdjacencyList CollectLinks();
+
+  void scheduleHelloPacketEvent(uint32_t seconds);
+  void schedulecheckLinkEvent(uint32_t seconds);
+  void scheduleFailEvent(uint32_t seconds);
+  void sendScheduledHelloInterest(uint32_t seconds);
+  void scheduleBoostLinkCost(uint32_t seconds);
+  void schedulePacketProducer(uint32_t seconds);
+
+  void expressInterest(const Name& interestName, uint32_t seconds);
+  void SendHelloDataPacket(shared_ptr<const Interest> interest);
+  void VerifyLinks(uint32_t seconds);
+  std::string SendUpdateToController();
+  std::stringstream m_strUpdateToController;
+  std::string m_strUpdateToController1;
+
+  void ControllerSync(std::stringstream& strUpdateToController);
+  void SendUpdateDataPacketToController(shared_ptr<const Interest> interest);
+  void sendAckDataPacket(std::shared_ptr<const Interest> interest);
+  void unregisterPrefix(std::string strLinkInfo);
+  void boostLinkCost(uint32_t sequenceNumber);
+  //-----------------------------------------------------------------------------------------------
+
+
+  //UniformVariable m_rand; ///< @brief nonce generator
 
   uint32_t m_seq;      ///< @brief currently requested sequence number
   uint32_t m_seqMax;   ///< @brief maximum number of sequence number
@@ -116,9 +215,9 @@ protected:
 
   Ptr<RttEstimator> m_rtt; ///< @brief RTT estimator
 
-  Time m_offTime;          ///< \brief Time interval between packets
-  Name m_interestName;     ///< \brief NDN Name of the Interest (use Name)
-  Time m_interestLifeTime; ///< \brief LifeTime for interest packet
+  //Time m_offTime;          ///< \brief Time interval between packets
+  //Name m_interestName;     ///< \brief NDN Name of the Interest (use Name)
+  //Time m_interestLifeTime; ///< \brief LifeTime for interest packet
 
   /// @cond include_hidden
   /**

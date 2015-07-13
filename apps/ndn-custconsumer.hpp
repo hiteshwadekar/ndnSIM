@@ -111,8 +111,6 @@ protected:
   RandomVariable* m_random;
   std::string m_randomType;
 
-
-
   Name m_keyLocator;
   double m_frequency; // Frequency of interest packets (in hertz)
   Time m_offTime;             ///< \brief Time interval between packets

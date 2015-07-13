@@ -2,7 +2,7 @@
 #define NDN_CONSUMER_CBR_CHANGE_H
 
 #include "ns3/ndnSIM/model/ndn-common.hpp"
-#include "ndn-consumer-change.hpp"
+#include "ndn-consumer.hpp"
 
 namespace ns3 {
 namespace ndn {
@@ -11,7 +11,7 @@ namespace ndn {
  * @ingroup ndn-apps
  * @brief Ndn application for sending out Interest packets at a "constant" rate (Poisson process)
  */
-class ConsumerCbrChange : public ConsumerChange {
+class ConsumerCbrChange : public Consumer {
 public:
   static TypeId
   GetTypeId();

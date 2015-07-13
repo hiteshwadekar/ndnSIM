@@ -82,19 +82,23 @@ TypeId CustConsumer::GetTypeId(void) {
 					.AddAttribute("Frequency",
 					"Frequency of interest packets", StringValue("1.0"),
 					MakeDoubleAccessor(&CustConsumer::m_frequency),
-					MakeDoubleChecker<double>()).AddAttribute("PayloadSize",
+					MakeDoubleChecker<double>())
+					.AddAttribute("PayloadSize",
 					"Virtual payload size for Content packets",
 					UintegerValue(1024),
 					MakeUintegerAccessor(&CustConsumer::m_virtualPayloadSize),
-					MakeUintegerChecker<uint32_t>()).AddAttribute("Freshness",
+					MakeUintegerChecker<uint32_t>()).
+					AddAttribute("Freshness",
 					"Freshness of data packets, if 0, then unlimited freshness",
 					TimeValue(Seconds(0)),
 					MakeTimeAccessor(&CustConsumer::m_freshness),
-					MakeTimeChecker()).AddAttribute("Signature",
+					MakeTimeChecker())
+					.AddAttribute("Signature",
 					"Fake signature, 0 valid signature (default), other values application-specific",
 					UintegerValue(0),
 					MakeUintegerAccessor(&CustConsumer::m_signature),
-					MakeUintegerChecker<uint32_t>()).AddAttribute("KeyLocator",
+					MakeUintegerChecker<uint32_t>())
+					.AddAttribute("KeyLocator",
 					"Name to be used for key locator.  If root, then key locator is not used",
 					NameValue(), MakeNameAccessor(&CustConsumer::m_keyLocator),
 					MakeNameChecker());
@@ -1140,6 +1144,11 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 		std::cout << "\n CustConsumerApp: Sending interest packet to controller -> " << strPrefix << std::endl;
 		sendAckDataPacket(interest);
 		SendInterestPacket(strPrefix);
+	}
+	else if(strRequestType.compare("producer_test")==0)
+	{
+		std::cout << "\n ConsumerChangeApp: Sending interest packet to Consumer -> " << interest->getName().toUri() << std::endl;
+		SendDataPacket(interest, false);
 	}
 	else
 	{

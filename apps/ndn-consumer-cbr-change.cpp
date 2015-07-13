@@ -44,9 +44,8 @@ ConsumerCbrChange::GetTypeId(void)
   static TypeId tid =
     TypeId("ns3::ndn::ConsumerCbrChange")
       .SetGroupName("Ndn")
-      .SetParent<ConsumerChange>()
+      .SetParent<Consumer>()
       .AddConstructor<ConsumerCbrChange>()
-
       .AddAttribute("Frequency", "Frequency of interest packets", StringValue("1.0"),
                     MakeDoubleAccessor(&ConsumerCbrChange::m_frequency), MakeDoubleChecker<double>())
 
@@ -58,9 +57,7 @@ ConsumerCbrChange::GetTypeId(void)
 
       .AddAttribute("MaxSeq", "Maximum sequence number to request",
                     IntegerValue(std::numeric_limits<uint32_t>::max()),
-                    MakeIntegerAccessor(&ConsumerCbrChange::m_seqMax), MakeIntegerChecker<uint32_t>())
-
-    ;
+                    MakeIntegerAccessor(&ConsumerCbrChange::m_seqMax), MakeIntegerChecker<uint32_t>());
 
   return tid;
 }
@@ -87,13 +84,13 @@ ConsumerCbrChange::ScheduleNextPacket()
   // std::cout << "next: " << Simulator::Now().ToDouble(Time::S) + mean << "s\n";
 
   if (m_firstTime) {
-    m_sendEvent = Simulator::Schedule(Seconds(0.0), &ConsumerChange::SendPacket, this);
+    m_sendEvent = Simulator::Schedule(Seconds(0.0), &Consumer::SendPacket, this);
     m_firstTime = false;
   }
   else if (!m_sendEvent.IsRunning())
     m_sendEvent = Simulator::Schedule((m_random == 0) ? Seconds(1.0 / m_frequency)
                                                       : Seconds(m_random->GetValue()),
-                                      &ConsumerChange::SendPacket, this);
+                                      &Consumer::SendPacket, this);
 }
 
 void
