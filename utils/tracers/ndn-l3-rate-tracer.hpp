@@ -32,6 +32,11 @@
 #include <map>
 #include <list>
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/tag.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/member.hpp>
+
 namespace ns3 {
 namespace ndn {
 
@@ -159,6 +164,7 @@ private:
   shared_ptr<std::ostream> m_os;
   Time m_period;
   EventId m_printEvent;
+  int m_interestCount;
 
   mutable std::map<shared_ptr<const Face>, std::tuple<Stats, Stats, Stats, Stats>> m_stats;
 };

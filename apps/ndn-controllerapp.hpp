@@ -148,6 +148,7 @@ protected:
   Time               m_interestLifeTime;    ///< \brief LifeTime for interest packet
   ControllerNodeContainer m_controller_node_container;
   Graph my_graph;
+  shared_ptr<std::ostream> m_outputStream;
 
 
   struct RetxSeqsContainer : public std::set<uint32_t> {

@@ -110,7 +110,21 @@ TypeId ControllerApp::GetTypeId(void) {
 
 ControllerApp::ControllerApp() {
 	// NS_LOG_FUNCTION_NOARGS ();
+
+	const std::string& file = "controller-rate-trace.txt";
+	if (file != "-") {
+	    shared_ptr<std::ofstream> os(new std::ofstream());
+	    os->open(file.c_str(), std::ios_base::out | std::ios_base::trunc);
+
+	    if (!os->is_open()) {
+	      NS_LOG_ERROR("File " << file << " cannot be opened for writing. Tracing disabled");
+	      return;
+	    }
+	    m_outputStream = os;
+	 }
 }
+
+
 
 // inherited from Application base class.
 void ControllerApp::StartApplication() {
@@ -681,7 +695,7 @@ ControllerApp::CalculateRoutesSinglePath()
     	//source->ResetMultiPathIncidencies();
     	//source->AddMultiPathIncidency(std::get<1>(*listitem),std::get<2>(*listitem),std::get<3>(*listitem));
     	//LinkInitalization(source,std::get<1>(*listitem),std::get<2>(*listitem));
-
+    	source->ResetPaths();
         BOOST_CONCEPT_ASSERT((boost::VertexListGraphConcept<boost::NdnControllerRouterGraph>));
         BOOST_CONCEPT_ASSERT((boost::IncidenceGraphConcept<boost::NdnControllerRouterGraph>));
 
@@ -1606,8 +1620,8 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 		if(strSourceNode.compare("Producer") == 0)
 		{
 			//CalculateRoutes();
-			//CalculateRoutesSinglePath();
-			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+			CalculateRoutesSinglePath();
+			//CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 			StartSendingPathToNode(); // Start seding packets to individual nodes.
 			//SchedulerHandlingFailureCalc();
 		}
@@ -1637,7 +1651,8 @@ void ControllerApp::OnData(std::shared_ptr<const Data> contentObject) {
 		  if(strSourceNodeUpdate.compare("Node2") == 0)
 		  {
 			//CalculateRoutes();
-			CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
+			CalculateRoutesSinglePath();
+			//CalculateKPathYanAlgorithm(3); // Calling Yan's K path algorithm.
 			StartSendingUpdatedCalPathToNode(); // Start seding packets to individual nodes.
 		  }
 	  }

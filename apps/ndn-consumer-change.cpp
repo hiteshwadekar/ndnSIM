@@ -270,7 +270,7 @@ ConsumerChange::boostLinkCost(uint32_t sequenceNumber)
 {
 	std::shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (GetNode()->GetObject<ndn::L3Protocol>()->getFaceById(atoi("258")));
 	face->setMetric(std::numeric_limits<uint32_t>::max());
-	shared_ptr<Name> namePrefix = make_shared<Name>("/Node3");
+	shared_ptr<Name> namePrefix = make_shared<Name>("/Node1");
 	cout <<"\n Boost link cost called "<<endl;
 	FibHelper::AddRoute(GetNode(),*namePrefix,face,std::numeric_limits<uint32_t>::max());
 }
@@ -432,7 +432,7 @@ void ConsumerChange::updateNodeLinkInfo(std::string strLinkInfo, bool isFirstTim
 	if(isFirstTime)
 	{
 		schedulePacketProducer(30);
-		scheduleHelloPacketEvent(30);
+		scheduleHelloPacketEvent(40);
 		schedulecheckLinkEvent(60);
 	}
 	std::cout << "\n ******* ****************************** Stopping Controller to Consumer Communication ************************************************************"<<std::endl;
@@ -1270,7 +1270,7 @@ ConsumerChange::SendPacket()
 
   // NS_LOG_INFO ("Requesting Interest: \n" << *interest);
   NS_LOG_INFO("> Interest for " << seq);
-  std::cout << " ConsumerChangeApp: Sending Interest to  " << m_interestName << "  with seq  " << seq << std::endl;
+  std::cout << " ConsumerChangeApp: Sending Interest to  " << m_ProducerDataTestInterest << "  with seq  " << seq <<  "from face  -> " << m_face->getId() << std::endl;
 
   WillSendOutInterest(seq);
 

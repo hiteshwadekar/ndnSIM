@@ -181,9 +181,9 @@ CustConsumer::scheduleBoostLinkCost(uint32_t seconds)
 void
 CustConsumer::boostLinkCost(uint32_t sequenceNumber)
 {
-	std::shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (GetNode()->GetObject<ndn::L3Protocol>()->getFaceById(atoi("258")));
+	std::shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (GetNode()->GetObject<ndn::L3Protocol>()->getFaceById(atoi("256")));
 	face->setMetric(std::numeric_limits<uint32_t>::max());
-	shared_ptr<Name> namePrefix = make_shared<Name>("/Node3");
+	shared_ptr<Name> namePrefix = make_shared<Name>("/Node1");
 	cout <<"\n Boost link cost called "<<endl;
 	FibHelper::AddRoute(GetNode(),*namePrefix,face,std::numeric_limits<uint32_t>::max());
 }
@@ -343,6 +343,9 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo, bool isFirstTime)
 				//FibHelper::AddRoute(GetNode(),*namePrefix,face,face->getMetric());
 				FibHelper::AddRoute(GetNode(),*namePrefix,face,atoi(prefixMetrics[k+3].c_str()));
 
+
+
+
 				std::cout << "\t\t\t \n After Updating the FIB -> " << std::endl;
 				IsFIBMetricsUpdatable(prefixMetrics[k+1],face,atoi(prefixMetrics[k+3].c_str()));
 
@@ -352,8 +355,8 @@ void CustConsumer::updateNodeLinkInfo(std::string strLinkInfo, bool isFirstTime)
 
 	if(isFirstTime)
 	{
-		scheduleHelloPacketEvent(30);
-		schedulecheckLinkEvent(60);
+		scheduleHelloPacketEvent(10);
+		schedulecheckLinkEvent(30);
 	}
 	std::cout << "\n ******* ****************************** Stopping Controller to Consumer Communication ************************************************************"<<std::endl;
 	// call FIB control command from NFD to update the fib check the status.
@@ -460,13 +463,13 @@ void CustConsumer::VerifyLinks(uint32_t seconds)
 	m_gb_adList.writeLog();
 
 
-	/*
 	std::string strNodeName = Names::FindName(Ptr<Node>(GetNode ()));
 	if(strNodeName.compare("Node2")==0)
 	{
 		//scheduleBoostLinkCost(40);
 		boostLinkCost(40);
-	}*/
+	}
+
 
 	bool isReqtoController=false;
 	std::stringstream strUpdateToController;
@@ -653,9 +656,8 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 			for (size_t n = 0; n < fields.size(); n+=5)
 			{
 				Name NeighborName(fields[n]);
-
-				/*
-				if(m_gb_adList.getRetryPacketCount(NeighborName) > 12)
+				std::cout << "\n ControllerSync: Printing getRetrycout ->   "<< m_gb_adList.getRetryPacketCount(NeighborName) << std::endl;
+				/*if(m_gb_adList.getRetryPacketCount(NeighborName) > 8)
 				{
 					if(!strmodifiedControllerData.str().empty())
 					{
@@ -682,7 +684,6 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 							}
 						}
 					}*/
-
 				    //if(NextHopcounter==0)
 				    //{
 						if(!strmodifiedControllerData.str().empty())
@@ -715,6 +716,11 @@ void CustConsumer::ControllerSync(std::stringstream& strUpdateToController)
 		unregisterPrefix(m_strUpdateToController1);
 		std::string strControllerUpdate = "/controller/" + Names::FindName(Ptr<Node>(GetNode())) + "/req_update";
 		SendInterestPacket(strControllerUpdate);
+	}
+	else
+	{
+		scheduleHelloPacketEvent(10);
+		schedulecheckLinkEvent(20);
 	}
 
 }
@@ -757,10 +763,22 @@ CustConsumer::unregisterPrefix(std::string strLinkInfo)
 		  std::cout <<"\n FIB removed called " <<std::endl;
 		  FibHelper::RemoveNextHop(controlParameters,GetNode());
 	    }*/
+
 	  Name namePrefix(fields[n]);
-	  shared_ptr<fib::Entry> fibEntry = fib.findExactMatch(namePrefix);
-	  std::cout <<"\n FIB removed called " <<std::endl;
-	  fibEntry->removeNextHop(l3->getFaceById(atoi(fields[n+1].c_str())));
+	  Name namePrefix_producer("/Producer");
+
+	  //shared_ptr<fib::Entry> fibEntry = fib.findExactMatch(namePrefix);
+	  //shared_ptr<fib::Entry> fibEntry1 = fib.findExactMatch(namePrefix_producer);
+	  std::cout <<"\n FIB removed called for prefix ->  " <<  fields[n] <<  " and face id is ->  " <<  fields[n+1] << std::endl;
+	  //fibEntry->removeNextHop(l3->getFaceById(atoi(fields[n+1].c_str())));
+	  //fibEntry1->removeNextHop(l3->getFaceById(atoi(fields[n+1].c_str())));
+
+	  std::shared_ptr<NetDeviceFace> face = dynamic_pointer_cast<NetDeviceFace> (GetNode()->GetObject<ndn::L3Protocol>()->getFaceById(atoi(fields[n+1].c_str())));
+	  IsFIBMetricsUpdatable(fields[n].c_str(),face,10);
+	  //fib.removeNextHopFromAllEntries(l3->getFaceById(atoi(fields[n+1].c_str())));
+	  fib.removeNextHopFromAllEntries(face);
+	  ndn::FibHelper::AddRoute("Node2", "/controller", "Node3", 0);
+	  IsFIBMetricsUpdatable(fields[n].c_str(),face,10);
 	  /*
 	  for (auto& fibEntry : fib) {
 	  		std::string strTempString = fibEntry.getPrefix().toUri().c_str();
@@ -975,7 +993,7 @@ void CustConsumer::SendDataPacket(shared_ptr<const Interest> interest, bool toCo
 	NS_LOG_FUNCTION_NOARGS ();
 	NS_LOG_FUNCTION(this << interest);
 
-	std::cout<< "CustConsumerApp: Sending a Data Packet -> "<< interest->getName() << std::endl;
+	//std::cout<< "CustConsumerApp: Sending a Data Packet -> "<< interest->getName() << std::endl;
 	Name dataName(interest->getName());
 	auto dPacket = make_shared<Data>();
 	dPacket->setName(dataName);
@@ -1147,7 +1165,7 @@ void CustConsumer::OnInterest(shared_ptr<const Interest> interest) {
 	}
 	else if(strRequestType.compare("producer_test")==0)
 	{
-		std::cout << "\n ConsumerChangeApp: Sending interest packet to Consumer -> " << interest->getName().toUri() << std::endl;
+		std::cout << "\n CustConsumerApp: Sending Data packet to Consumer -> " << interest->getName().toUri() << std::endl;
 		SendDataPacket(interest, false);
 	}
 	else

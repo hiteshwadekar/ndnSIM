@@ -73,8 +73,8 @@ struct graph_traits<NdnControllerRouterGraph> {
   typedef size_t vertices_size_type;
 
   // AdjacencyGraph concept
-  //typedef ns3::ndn::ControllerRouter::IncidencyList::iterator out_edge_iterator;
-  typedef ns3::ndn::ControllerRouter::MultiPathIncidencyList::iterator out_edge_iterator;
+  typedef ns3::ndn::ControllerRouter::IncidencyList::iterator out_edge_iterator;
+  //typedef ns3::ndn::ControllerRouter::MultiPathIncidencyList::iterator out_edge_iterator;
   typedef size_t degree_size_type;
 
   // typedef size_t edges_size_type;
@@ -109,7 +109,7 @@ num_vertices(const NdnControllerRouterGraph& g)
   return g.GetVertices().size();
 }
 
-/*
+
 inline std::pair<graph_traits<NdnControllerRouterGraph>::out_edge_iterator,
                  graph_traits<NdnControllerRouterGraph>::out_edge_iterator>
 out_edges(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
@@ -122,9 +122,9 @@ out_degree(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const Nd
 {
 	return u->GetIncidencies().size();
 }
-*/
 
 
+/*
 inline std::pair<graph_traits<NdnControllerRouterGraph>::out_edge_iterator,
                  graph_traits<NdnControllerRouterGraph>::out_edge_iterator>
 out_edges(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const NdnControllerRouterGraph& g)
@@ -137,7 +137,7 @@ out_degree(graph_traits<NdnControllerRouterGraph>::vertex_descriptor u, const Nd
 {
 	return u->GetMultiPathIncidencies().size();
 }
-
+*/
 
 //////////////////////////////////////////////////////////////
 // Property maps

@@ -30,6 +30,14 @@
 
 #include <fstream>
 #include <boost/lexical_cast.hpp>
+#include <boost/ref.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/algorithm/string.hpp>
+#include "boost/tuple/tuple.hpp"
+#include <boost/foreach.hpp>
+#include <boost/concept/assert.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 
 NS_LOG_COMPONENT_DEFINE("ndn.L3RateTracer");
 
@@ -222,7 +230,9 @@ L3RateTracer::PrintHeader(std::ostream& os) const
      << "\t"
      << "PacketRaw"
      << "\t"
-     << "KilobytesRaw";
+     << "KilobytesRaw"
+     << "\t"
+     <<"No_Of_Interest";
 }
 
 void
@@ -253,7 +263,25 @@ const double alpha = 0.8;
     os << "-1\tall\t";                                                                             \
   }                                                                                                \
   os << printName << "\t" << STATS(2).fieldName << "\t" << STATS(3).fieldName << "\t"              \
-     << STATS(0).fieldName << "\t" << STATS(1).fieldName / 1024.0 << "\n";
+     << STATS(0).fieldName << "\t" << STATS(1).fieldName / 1024.0 << "\t" << m_interestCount << "\n";
+
+
+#define PRINTER1(printName, fieldName)                                                              \
+  STATS(2).fieldName =                                                                             \
+    /*new value*/ alpha * RATE(0, fieldName) + /*old value*/ (1 - alpha) * STATS(2).fieldName;     \
+  STATS(3).fieldName = /*new value*/ alpha * RATE(1, fieldName) / 1024.0                           \
+                       + /*old value*/ (1 - alpha) * STATS(3).fieldName;                           \
+                                                                                                   \
+  os << time.ToDouble(Time::S) << "\t" << m_node << "\t";                                          \
+  if (stats.first != nullptr) {                                                                    \
+    os << stats.first->getId() << "\t" << stats.first->getLocalUri() << "\t";                      \
+  }                                                                                                \
+  else {                                                                                           \
+    os << "-1\tall\t";                                                                             \
+  }                                                                                                \
+  os << printName << "\t" << STATS(2).fieldName << "\t" << STATS(0).fieldName << "\t" << "\t" << m_interestCount << "\n";
+
+
 
 void
 L3RateTracer::Print(std::ostream& os) const
@@ -264,7 +292,8 @@ L3RateTracer::Print(std::ostream& os) const
     if (stats.first == nullptr)
       continue;
 
-    PRINTER("InInterests", m_inInterests);
+    //PRINTER("InInterests", m_inInterests);
+    PRINTER1("InInterests", m_inInterests);
     PRINTER("OutInterests", m_outInterests);
 
     PRINTER("InData", m_inData);
@@ -300,10 +329,39 @@ L3RateTracer::OutInterests(const Interest& interest, const Face& face)
 void
 L3RateTracer::InInterests(const Interest& interest, const Face& face)
 {
-  std::get<0>(m_stats[face.shared_from_this()]).m_inInterests++;
-  if (interest.hasWire()) {
-    std::get<1>(m_stats[face.shared_from_this()]).m_inInterests +=
-      interest.wireEncode().size();
+   	std::vector<std::string> fields;
+   	std::string strGetName = interest.getName().toUri();
+	boost::algorithm::split(fields,strGetName,boost::algorithm::is_any_of("/"));
+
+	/*
+	for (size_t n = 0; n < fields.size(); n++)
+		std::cout << n << ":::" << fields[n] << "\"\n";
+	std::cout << std::endl;
+*/
+
+	//if(index <= fields.size())
+	//{
+	//	return fields[index];
+	//}
+	//else
+	//{
+		//return fields[0];
+	//}
+
+  std::string strController = fields[1];
+  std::string strControllerReq = fields[3];
+  std::stringstream faceURL;
+  faceURL.str(std::string());
+  faceURL << face.getLocalUri();
+  if((strController.compare("controller")==0) && (strControllerReq.compare("req_route")==0 || strControllerReq.compare("res_route")==0 || strControllerReq.compare("req_update")==0 || strControllerReq.compare("res_updated_path")==0) && faceURL.str().compare("netDeviceFace://")==0)
+  {
+	  std::cout <<"\n Interest name at Controller -> " << interest.getName() << std::endl;
+	  std::get<0>(m_stats[face.shared_from_this()]).m_inInterests++;
+	  m_interestCount = m_interestCount + 1;
+	  if (interest.hasWire()) {
+	    std::get<1>(m_stats[face.shared_from_this()]).m_inInterests +=
+	    interest.wireEncode().size();
+	  }
   }
 }
 
